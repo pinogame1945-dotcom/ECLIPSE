@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "updated_utc": "2026-10-10T11:22:00Z",
+  "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
+  "proof_levels": [
+    "not_tested",
+    "probe_failed",
+    "read_parse_verified"
+  ],
+  "production_promotion_rule": "Must separately validate completeness, accurate fields, persistent deltas, source health, commercial usage and actual periodic runs before enabling.",
+  "sources": [
+    {
+      "source_id": "fortinet-psirt",
+      "vendor": "Fortinet",
+      "product_scope": "PSIRT published product advisories",
+      "collector_kind": "rss_html",
+      "discovery_url": "https://filestore.fortinet.com/fortiguard/rss/ir.xml",
+      "detail_sample_url": "https://fortiguard.fortinet.com/psirt/FG-IR-26-175",
+      "allowed_hosts": [
+        "filestore.fortinet.com",
+        "fortiguard.fortinet.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047330191",
+      "verified_capabilities": [
+        "official RSS: 50 entries",
+        "4 official detail HTML documents retrieved",
+        "affected/fixed version tables read",
+        "same-feed replay emitted zero events"
+      ],
+      "pending_gates": [
+        "verified true item update (not replay)",
+        "field-level impact and exploit booleans",
+        "durable store and expiry monitoring"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "microsoft-msrc",
+      "vendor": "Microsoft",
+      "product_scope": "MSRC CVRF publication set, not every Microsoft cloud service",
+      "collector_kind": "api_cvrf_xml",
+      "discovery_url": "https://api.msrc.microsoft.com/cvrf/v3.0/updates",
+      "detail_sample_url": "https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Sep",
+      "allowed_hosts": [
+        "api.msrc.microsoft.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
+      "verified_capabilities": [
+        "updates: 193 document references",
+        "Sep-2026 CVRF XML approx 32MB; 2772 vulnerability nodes",
+        "product tree and tracking XML nodes parsed"
+      ],
+      "pending_gates": [
+        "normalize CVRF ProductTree and status changes",
+        "bounded streaming for large XML",
+        "store versions/deltas"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "paloalto-advisories",
+      "vendor": "Palo Alto Networks",
+      "product_scope": "Palo Alto security advisories; tested listing was CRITICAL-filtered",
+      "collector_kind": "json",
+      "discovery_url": "https://security.paloaltonetworks.com/json?severity=CRITICAL&sort=-updated",
+      "detail_sample_url": "https://security.paloaltonetworks.com/json/CVE-2024-3400",
+      "allowed_hosts": [
+        "security.paloaltonetworks.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
+      "verified_capabilities": [
+        "filtered critical listing: 9 entries",
+        "individual CVE JSON detail obtained",
+        "affected and solution fields identified"
+      ],
+      "pending_gates": [
+        "remove severity filter for full-coverage design",
+        "test pagination/modified detection",
+        "structured affected versions proof"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "redhat-csaf",
+      "vendor": "Red Hat",
+      "product_scope": "Red Hat Product Security advisories through official CSAF (not legacy CVE list)",
+      "collector_kind": "csaf_csv_json",
+      "discovery_url": "https://security.access.redhat.com/data/csaf/v2/advisories/releases.csv",
+      "detail_sample_url": "https://security.access.redhat.com/data/csaf/v2/advisories/2026/rhsa-2026_80217.json",
+      "allowed_hosts": [
+        "security.access.redhat.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
+      "verified_capabilities": [
+        "official CSAF metadata and releases.csv available",
+        "official CSAF v2 detail retrieved; 2 vulnerabilities",
+        "legacy CVE listing endpoint had parse failures"
+      ],
+      "pending_gates": [
+        "CSV incrementals/last-modified validation",
+        "verify coverage of advisory types other than RHSA",
+        "field-by-field extraction tests"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "siemens-csaf",
+      "vendor": "Siemens",
+      "product_scope": "Siemens ProductCERT CSAF security advisories",
+      "collector_kind": "csaf_json",
+      "discovery_url": "https://cert-portal.siemens.com/productcert/csaf/ssa-feed-tlp-white.json",
+      "detail_sample_url": "https://cert-portal.siemens.com/productcert/csaf/ssa-827383.json",
+      "allowed_hosts": [
+        "cert-portal.siemens.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
+      "verified_capabilities": [
+        "841 advisory index entries",
+        "CSAF 2.0 detail 3 CVEs",
+        "product tree and remediation sections"
+      ],
+      "pending_gates": [
+        "validate rolling/latest delta handling",
+        "CSAF product-status version semantics",
+        "TLP scope and permitted reuse"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "yamaha-network",
+      "vendor": "Yamaha",
+      "product_scope": "Yamaha networking vulnerability notices, tested UTX200/UTX100 VPN advisory",
+      "collector_kind": "html",
+      "discovery_url": "https://network.yamaha.com/support/notice",
+      "detail_sample_url": "https://www.rtpro.yamaha.co.jp/RT/FAQ/Security/CVE-2026-85102.html",
+      "allowed_hosts": [
+        "network.yamaha.com",
+        "www.rtpro.yamaha.co.jp"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
+      "verified_capabilities": [
+        "notice listing and official detail fetched",
+        "2 CVE identifiers extracted from HTML",
+        "product and remediation text present"
+      ],
+      "pending_gates": [
+        "test additional Yamaha notice layouts",
+        "verify exact impacted firmware/branch extraction",
+        "structural HTML change detection"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "gitlab-security-releases",
+      "vendor": "GitLab",
+      "product_scope": "GitLab patch/security release notes, self-managed edition information",
+      "collector_kind": "atom_html",
+      "discovery_url": "https://docs.gitlab.com/releases/patch-releases.xml",
+      "detail_sample_url": "https://docs.gitlab.com/releases/patches/other-patches/patch-release-gitlab-ai-gateway-19-4-1-released/",
+      "allowed_hosts": [
+        "docs.gitlab.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
+      "verified_capabilities": [
+        "Atom release feed with 107 items",
+        "selected security patch article retrieved",
+        "CVE-2026-90970 found in article"
+      ],
+      "pending_gates": [
+        "security-only filtering vs ordinary patches",
+        "fix-version extraction tests",
+        "feed updates beyond rolling window"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "ubuntu-security-api",
+      "vendor": "Canonical Ubuntu",
+      "product_scope": "Ubuntu security notices (USN), NOT all Canonical offerings",
+      "collector_kind": "api_json",
+      "discovery_url": "https://ubuntu.com/security/notices.json?limit=5",
+      "detail_sample_url": "https://ubuntu.com/security/notices/USN-8911-1.json",
+      "allowed_hosts": [
+        "ubuntu.com"
+      ],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
+      "verified_capabilities": [
+        "5 USN list items received",
+        "USN-8911-1 detailed JSON retrieved",
+        "CVE/release_packages/instructions field names present"
+      ],
+      "pending_gates": [
+        "pagination and update audit",
+        "package/release status semantics",
+        "version normalization"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "google-chrome-release",
+      "vendor": "Google Chrome",
+      "product_scope": "Chrome release announcements only; security article scope unresolved",
+      "collector_kind": "atom_html",
+      "discovery_url": "https://chromereleases.googleblog.com/feeds/posts/default?alt=atom&max-results=10",
+      "detail_sample_url": "https://chromereleases.googleblog.com/",
+      "allowed_hosts": [
+        "chromereleases.googleblog.com"
+      ],
+      "verification_status": "probe_failed",
+      "last_verified_utc": null,
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
+      "verified_capabilities": [],
+      "pending_gates": [
+        "feed redirects outside current exact-host allowlist",
+        "verify publisher-owned redirect and disclosure feed",
+        "do not claim full security coverage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "atlassian-security",
+      "vendor": "Atlassian",
+      "product_scope": "Data Center Security Advisories and Bulletins",
+      "collector_kind": "html",
+      "discovery_url": "https://www.atlassian.com/trust/security/advisories",
+      "detail_sample_url": "https://confluence.atlassian.com/",
+      "allowed_hosts": [
+        "www.atlassian.com",
+        "confluence.atlassian.com"
+      ],
+      "verification_status": "probe_failed",
+      "last_verified_utc": null,
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
+      "verified_capabilities": [],
+      "pending_gates": [
+        "previous parser omitted confluence.atlassian.com links",
+        "validate official link + detailed bulletin parsing",
+        "cloud vs Data Center scope separate"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "cisco-openvuln",
+      "vendor": "Cisco",
+      "product_scope": "Cisco PSIRT/openVuln API; credentials required",
+      "collector_kind": "oauth_api",
+      "discovery_url": "https://sec.cloudapps.cisco.com/security/center/publicationListing.x",
+      "detail_sample_url": "https://sec.cloudapps.cisco.com/security/center/",
+      "allowed_hosts": [
+        "sec.cloudapps.cisco.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "authorized OAuth credentials not configured",
+        "API terms/rate limits and access scope",
+        "do not claim Cisco has passed validation"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    }
+  ]
+}
