@@ -185,6 +185,26 @@ def audit(root):
             raise ValueError("Malformed archive index")
         _archive(root, name, meta, cache)
     counts = Counter()
+    logdir = root / "events"
+    event_files = {p.name for p in logdir.iterdir()} if logdir.exists() else set()
+    if event_files != set(m["event_logs"]):
+        raise ValueError("Missing or untracked history event log")
+    for name, spec in m["event_logs"].items():
+        if not EVENTFILE.fullmatch(name):
+            raise ValueError("Invalid version event-log name")
+        body=(logdir/name).read_bytes()
+        if sha(body)!=spec.get("sha256") or len(body)!=spec.get("bytes"):
+            raise ValueError("Version transition log integrity failure")
+        try:
+            transitions=[json.loads(line) for line in gzip.decompress(body).splitlines()]
+        except (OSError, ValueError) as exc:
+            raise ValueError("Unreadable history event log") from exc
+        if len(transitions)!=spec.get("events"):
+            raise ValueError("Incomplete version transition log")
+        for event in transitions:
+            for field in ("before_archive","after_archive"):
+                if event.get(field) and event[field] not in m["archives"]:
+                    raise ValueError("Transition log points to missing source archive")
     for cid, row in m["latest"].items():
         if not CVE.fullmatch(cid) or not isinstance(row, dict):
             raise ValueError("Corrupt latest history row")
@@ -332,8 +352,23 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
             latest[cid] = dict(previous, last_seen_utc=observed.isoformat(timespec="seconds"),
                                last_delta_fetch_utc=source_at)
         events.append(descriptor)
-    # Remove old unreferenced archives only after the retention window.
-    referenced = {row["archive"] for row in latest.values() if row["archive"]}
+    # Version transition logs tie before/after raw source archives together.
+    event_logs = dict(old["event_logs"])
+    for fname, item in list(event_logs.items()):
+        if _time(item["observed_utc"]) < cutoff:
+            del event_logs[fname]
+    historical = set()
+    for fname, item in event_logs.items():
+        path = root / "events" / fname
+        if not path.is_file():
+            raise ValueError("Missing retained CVE history transition log")
+        raw_log = path.read_bytes()
+        if sha(raw_log) != item["sha256"] or len(raw_log) != item["bytes"]:
+            raise ValueError("Retained transition log tampered")
+        for event in (json.loads(line) for line in gzip.decompress(raw_log).splitlines()):
+            historical.update(x for x in (event.get("before_archive"),event.get("after_archive")) if x)
+    # Retain all source versions still referenced by any 65-day event.
+    referenced = {row["archive"] for row in latest.values() if row["archive"]} | historical
     for filename, meta in list(archives.items()):
         if filename not in referenced and _time(meta["observed_utc"]) < cutoff:
             del archives[filename]
@@ -358,7 +393,25 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
                                "records":len(records)}
         for cid in records:
             latest[cid]["archive"] = pack_name
-    if len(latest)>MAX_LATEST or len(archives)>MAX_ARCHIVES or sum(a["bytes"] for a in archives.values())>MAX_STORE_BYTES:
+    for event in events:
+        event["after_archive"] = latest[event["cve_id"]]["archive"]
+    event_blob = None
+    event_name = None
+    if events:
+        signature = sha(_canonical_bytes(events))
+        event_name = observed.strftime("%Y%m%dT%H%M%SZ") + "-" + signature[:12] + ".jsonl.gz"
+        if event_name in event_logs:
+            raise ValueError("History log filename collision")
+        event_blob = gzip.compress(b"".join(_canonical_bytes(e) for e in events), compresslevel=6, mtime=0)
+        if len(event_blob) > MAX_REPORT_BYTES:
+            raise ValueError("Oversize history event log")
+        event_logs[event_name] = {
+            "sha256":sha(event_blob), "bytes":len(event_blob),
+            "events":len(events),"observed_utc":observed.isoformat(timespec="seconds")}
+    if (len(latest)>MAX_LATEST or len(archives)>MAX_ARCHIVES
+            or len(event_logs)>MAX_ARCHIVES
+            or sum(a["bytes"] for a in archives.values()) +
+               sum(a["bytes"] for a in event_logs.values())>MAX_STORE_BYTES):
         raise ValueError("Rolling Git history budget exhausted; private Kaggle archive required")
     next_state = dict(old, latest=latest, archives=archives, event_logs=event_logs,
                       last_watermark_utc=watermark.isoformat(timespec="milliseconds"),
