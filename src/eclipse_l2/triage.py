@@ -246,7 +246,14 @@ def analyze(db: Path, *, as_of: date, policy: Policy | None = None,
                     writer.writerow({k:json.dumps(item[k],ensure_ascii=False) if k=="missing_fields" else item[k]
                                      for k in EXPORT_FIELDS})
                 yield item
-        selected = heapq.nsmallest(top,assessed_rows(),key=_sort_key)
+        if top == 0:
+            # heapq.nsmallest(0, iterable) never consumes iterable.
+            # All rows must still be evaluated and exported for an audit.
+            for _ in assessed_rows():
+                pass
+            selected = []
+        else:
+            selected = heapq.nsmallest(top,assessed_rows(),key=_sort_key)
         count = sum(totals.values())
         if vendor is None and product is None:
             observed=con.execute("SELECT COUNT(*) FROM cve_current").fetchone()[0]
