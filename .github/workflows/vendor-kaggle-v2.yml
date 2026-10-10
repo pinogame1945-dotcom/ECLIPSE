@@ -90,7 +90,19 @@ jobs:
             --registry config/vendor_source_registry.json \
             --db "$RUNNER_TEMP/ecl-child.sqlite3" \
             --out "$RUNNER_TEMP/ecl-collection-manifest.json" \
-            --max-items 8 > "$RUNNER_TEMP/ecl-collection-audit.json"
+            --max-items 8 > "$RUNNER_TEMP/ecl-collection-audit.json" || {
+              python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"ecl-collection-manifest.json"
+          if p.exists():
+              d=json.loads(p.read_text())
+              print(json.dumps([{"source":x["source_id"],"status":x["status"],
+                                 "errors":x["errors"],"attempted":x["candidates"]}
+                                for x in d["source_results"]],ensure_ascii=False))
+          PY
+              exit 1
+            }
           python -m eclipse_l0.vendor_kaggle_successor stage \
             --parent-db "$RUNNER_TEMP/ecl-parent.sqlite3" \
             --child-db "$RUNNER_TEMP/ecl-child.sqlite3" \
