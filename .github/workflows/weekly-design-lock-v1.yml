@@ -1,0 +1,35 @@
+name: Weekly report V1.0 design contract
+on:
+  pull_request:
+    paths:
+      - 'templates/weekly_v1/**'
+      - 'weekly_reports/locked_v1/**'
+      - '.github/workflows/weekly-design-lock-v1.yml'
+  workflow_dispatch:
+jobs:
+  style-lock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install XML validator
+        run: python -m pip install 'lxml>=5,<7'
+      - name: Validate approved weekly V1.0 report layouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(weekly_reports/locked_v1/*.pptx)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No submitted locked-v1 PPTX yet; template contract checks only."
+            python -m json.tool templates/weekly_v1/design_lock.json > /dev/null
+            python -m py_compile templates/weekly_v1/scripts/validate_design_v1.py
+          else
+            for pptx in "${files[@]}"; do
+              python templates/weekly_v1/scripts/validate_design_v1.py "$pptx"
+            done
+          fi
