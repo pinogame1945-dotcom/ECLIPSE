@@ -87,7 +87,41 @@ def connect(path: Path) -> sqlite3.Connection:
         ON vendor_document_events(source_id, advisory_id, event_id);
     """)
     db.commit()
+    _upgrade_legacy_event_constraint(db)
     return db
+
+
+def _upgrade_legacy_event_constraint(db: sqlite3.Connection) -> None:
+    """Transactional migration of the old 3-event CHECK to the 4-event model.
+
+    Existing GitHub Actions pilot databases are restored byte-for-byte first.
+    A new parser revision must not fail on yesterday's SQLite schema.
+    """
+    row = db.execute("""SELECT sql FROM sqlite_master
+                        WHERE type='table' AND name='vendor_document_events'""").fetchone()
+    if row is None:
+        raise ValueError("Missing vendor event schema")
+    if "extraction_revised" in row["sql"]:
+        return
+    if not all(x in row["sql"] for x in ("baseline","facts_updated","source_changed_only")):
+        raise ValueError("Unrecognized old vendor event schema; migration blocked")
+    with db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("ALTER TABLE vendor_document_events RENAME TO vendor_document_events_legacy")
+        db.execute("""CREATE TABLE vendor_document_events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_id TEXT NOT NULL, advisory_id TEXT NOT NULL,
+            event_kind TEXT NOT NULL CHECK(event_kind IN
+               ('baseline','facts_updated','source_changed_only','extraction_revised')),
+            observed_utc TEXT NOT NULL, version INTEGER NOT NULL
+        )""")
+        db.execute("""INSERT INTO vendor_document_events
+            (event_id,source_id,advisory_id,event_kind,observed_utc,version)
+            SELECT event_id,source_id,advisory_id,event_kind,observed_utc,version
+            FROM vendor_document_events_legacy""")
+        db.execute("DROP TABLE vendor_document_events_legacy")
+        db.execute("""CREATE INDEX ix_vendor_document_events
+            ON vendor_document_events(source_id, advisory_id, event_id)""")
 
 
 def observe(db: sqlite3.Connection, *, registry: dict, source_id: str,
