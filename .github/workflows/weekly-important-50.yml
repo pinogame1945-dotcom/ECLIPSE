@@ -86,7 +86,10 @@ jobs:
           assert not p['weekly_coverage_certified']
           print('### Fixed historical snapshot — NOT certified live weekly coverage')
           print(f"- All L1 CVEs retained: **{p['l1_total']}**")
-          print(f"- Important review candidates: **{p['selected']}** (target {p['target']})")
+          print(f"- L2 mandatory vendor/KEV review pool: **{p['selected']}** (not final top50)")
+          print(f"- L3 risk-ranked report-research shortlist: **{p['top50']}** (target {p['target']})")
+          print(f"- L3 vendor matches excluding KEV: **{p['top50_vendor']}**")
+          print(f"- L3 other high-risk non-KEV: **{p['top50_other']}**")
           print(f"- New KEV: **{p['mandatory_kev']}**")
           print(f"- Approved 126-vendor matches excluding overlapping KEV: **{p['mandatory_vendor_only']}**")
           print(f"- Other risk-selected: **{p['risk_selected']}**")
