@@ -134,6 +134,35 @@ class Page(HTMLParser):
             self.anchor_text = []
 
 
+class ArticleText(HTMLParser):
+    """Conservative main/article text only; never promotes candidates to CVE links."""
+    IGNORE={"script","style","nav","header","footer","aside","noscript","svg"}
+    def __init__(self):
+        super().__init__()
+        self._stack=[]
+        self._focus=0
+        self._excluded=0
+        self.text=[]
+    def handle_starttag(self,tag,attrs):
+        if tag in ("main","article"):
+            self._focus+=1
+        if tag in self.IGNORE:
+            self._excluded+=1
+        self._stack.append(tag)
+    def handle_endtag(self,tag):
+        # Ignore malformed HTML nesting by balancing nearest matching tag.
+        if tag not in self._stack:
+            return
+        idx=len(self._stack)-1-self._stack[::-1].index(tag)
+        closing=self._stack[idx:]
+        self._focus=max(0,self._focus-sum(x in ("main","article") for x in closing))
+        self._excluded=max(0,self._excluded-sum(x in self.IGNORE for x in closing))
+        del self._stack[idx:]
+    def handle_data(self,text):
+        if self._focus and not self._excluded:
+            self.text.append(text)
+
+
 def _page(raw):
     p = Page()
     p.feed(raw.decode("utf-8", "replace"))
@@ -346,11 +375,17 @@ def normalize(source, item, raw):
         # Only CVEs appearing in publisher-supplied feed title/individual URL
         # can be asserted. The page-wide CVEs remain separate candidates.
         scoped = _ids(item["title"]+" "+urlsplit(item["url"]).path)
+        article = ArticleText()
+        article.feed(raw.decode("utf-8", "replace"))
+        inside = _ids(" ".join(article.text))
         return {"title":item["title"][:500],"cve_ids":scoped,"affected":[],
-                "unreviewed_page_cve_candidates":_ids(fulltext)[:50],
+                "unreviewed_article_cve_candidates":inside[:150],
+                "unreviewed_page_cve_candidates":_ids(fulltext)[:150],
                 "evidence_fields":["publisher listing title","official detail URL",
+                                   "main/article HTML text CVE candidates UNVERIFIED",
                                    "page-wide CVE candidates UNVERIFIED"],
-                "extraction_notes":["No affected version assertion; page navigation may contain unrelated CVEs."]}
+                "extraction_notes":["Article-body CVE candidates remain UNLINKED until source-text audit.",
+                                    "No affected version assertion; page navigation may contain unrelated CVEs."]}
     raise ValueError("Unsupported normalizer")
 
 
