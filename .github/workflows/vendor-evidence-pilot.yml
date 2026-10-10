@@ -23,7 +23,7 @@ jobs:
       - name: Ensure all offline regression tests pass
         env:
           PYTHONPATH: src
-        run: python -m unittest tests.test_vendor_pilot tests.test_vendor_sources -v
+        run: python -m unittest discover -s tests -p "test_vendor*.py" -v
       - name: Read official source catalogs and save one detailed advisory per vendor
         env:
           PYTHONPATH: src
