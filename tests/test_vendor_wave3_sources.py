@@ -19,7 +19,8 @@ class ThirdWaveTests(unittest.TestCase):
   self.assertEqual(len(reg["sources"]),34)
   for sid in ["juniper-jsa","hpe-psirt","ibm-security-bulletins","netapp-psirt","jenkins-security","grafana-security","nginx-security","openssl-security","tomcat-security","wordpress-core-security"]:
    self.assertIn(sid,SUPPORTED)
-   self.assertEqual(S[sid]["verification_status"],"not_tested")
+   expected="probe_failed" if sid in ("juniper-jsa","hpe-psirt","ibm-security-bulletins","netapp-psirt") else "read_parse_verified"
+   self.assertEqual(S[sid]["verification_status"],expected)
    self.assertFalse(S[sid]["enabled_for_production"])
  def test_index_identification_and_scoped_article(self):
   for sid,ident,url,title in cases:

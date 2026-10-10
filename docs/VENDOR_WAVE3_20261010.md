@@ -9,3 +9,9 @@ No customer data, no hidden authenticated endpoints, no raw publisher HTML check
 Technical details: Jenkins/Grafana per-advisory URLs; Juniper/HPE/IBM/NetApp official publisher-specific index patterns; Tomcat by-major-branch and NGINX/OpenSSL aggregate catalogs (aggregate does NOT mean new individual CVEs); WordPress security announcement article URLs.
 
 GitHub Actions: `.github/workflows/vendor-wave3-probe.yml`. A source that passes a single article can next proceed to short-lived SQLite/idempotent replay; only then should a later PRIVATE Kaggle V3/V4 immutable generation be planned and verified. Weekly report coverage remains unverified. License review remains pending.
+
+
+## Evidence update (2026-10-10, wave3)
+Official read/parse from [Actions 38062701918](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918): **6/10 PASS**: Jenkins (20 CVE references), Grafana (1), nginx public aggregate (62), OpenSSL vulnerability aggregate (300), Tomcat 11 aggregate (86), WordPress security release (0 CVEs, announcement retained). These reference counts are not newly published distinct CVEs. Four source-specific probes failed and remain quarantined: Juniper, HPE, IBM (no validated index/detail links with current static HTML), NetApp (very large official RSS with no validated title/link pairs in bounded prefix). A failed parser or missing CVE count is never 'not affected'.
+
+The 6 successful sources are single sampled documents with no human review, no weekly completeness guarantee, no product/firmware version determination, and no legal republication approval. A separate branch-only SQLite proof is `.github/workflows/vendor-wave3-six-sqlite.yml`. The existing private Kaggle V1/V2 remain unchanged; do not count this proof as permanent storage.

@@ -1,0 +1,65 @@
+name: ECLIPSE wave3 six verified publishers SQLite evidence proof
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-wave3-six-sqlite.yml'
+      - 'src/eclipse_l0/vendor_wave3_sources.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'config/vendor_source_registry.json'
+      - 'tests/test_vendor_wave3_sources.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-wave3-six-sqlite-proof
+  cancel-in-progress: false
+jobs:
+  official-publisher-evidence-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm registry and strict HTML/CVE evidence tests
+        run: |
+          python -m eclipse_l0.vendor_registry
+          python -m unittest discover -s tests -p test_vendor_wave3_sources.py -v
+      - name: Six official live publisher samples, immutable local SQLite and duplicate-proof replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db output/vendor-wave3-six.sqlite3 \
+            --out output/vendor-wave3-six-receipt.json \
+            --sources jenkins-security,grafana-security,nginx-security,openssl-security,tomcat-security,wordpress-core-security \
+            --max-items 1
+          python - <<'PY'
+          import json, pathlib, sqlite3
+          r=json.loads(pathlib.Path('output/vendor-wave3-six-receipt.json').read_text())
+          x=r["db_counts"]
+          if r["sources_pass"]!=6 or r["sources_failed"] or x["advisories"]!=6 or x["versions"]!=6 or x["events"]!=6 or x["integrity"]!="ok":
+              raise SystemExit("Unverified or missing one-shot ledger sample; NO PRODUCTION PROMOTION")
+          with sqlite3.connect("file:output/vendor-wave3-six.sqlite3?mode=ro",uri=True) as db:
+              if db.execute("PRAGMA quick_check").fetchone()[0]!="ok":raise SystemExit("SQLite invalid")
+              total=db.execute("SELECT COUNT(*) FROM vendor_documents").fetchone()[0]
+              if total!=6:raise SystemExit("Wrong documented source count")
+          print("WAVE3_SIX_LOCAL_LEDGER_VERIFIED")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-wave3-six-short-lived-evidence-only
+          path: |
+            output/vendor-wave3-six.sqlite3
+            output/vendor-wave3-six-receipt.json
+          retention-days: 7
+          if-no-files-found: warn

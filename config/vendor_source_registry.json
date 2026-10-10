@@ -1260,11 +1260,12 @@
       "allowed_hosts": [
         "supportportal.juniper.net"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Official publisher listing did not yield validated HTML detail links; investigate authorized RSS/API or SSR feed",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1273,7 +1274,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "failed_live_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918"
     },
     {
       "source_id": "hpe-psirt",
@@ -1285,11 +1287,12 @@
       "allowed_hosts": [
         "support.hpe.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Official publisher listing did not yield validated HTML detail links; investigate authorized RSS/API or SSR feed",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1298,7 +1301,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "failed_live_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918"
     },
     {
       "source_id": "ibm-security-bulletins",
@@ -1310,11 +1314,12 @@
       "allowed_hosts": [
         "www.ibm.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Official publisher listing did not yield validated HTML detail links; investigate authorized RSS/API or SSR feed",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1323,7 +1328,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "failed_live_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918"
     },
     {
       "source_id": "netapp-psirt",
@@ -1335,11 +1341,12 @@
       "allowed_hosts": [
         "security.netapp.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Bounded official RSS partial content had no validated individual item+link pairs; content format or overlarge inline entry must be reviewed",
         "Publisher RSS URL discovered via third-party index; must prove HTTPS publisher content, item identity and official details on a real Actions runner.",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
@@ -1349,7 +1356,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "failed_live_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918"
     },
     {
       "source_id": "jenkins-security",
@@ -1361,11 +1369,16 @@
       "allowed_hosts": [
         "www.jenkins.io"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1386,11 +1399,16 @@
       "allowed_hosts": [
         "grafana.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1411,11 +1429,16 @@
       "allowed_hosts": [
         "nginx.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1436,11 +1459,16 @@
       "allowed_hosts": [
         "www.openssl-library.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1461,11 +1489,16 @@
       "allowed_hosts": [
         "tomcat.apache.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1486,11 +1519,16 @@
       "allowed_hosts": [
         "wordpress.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:13:13Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+      "verified_capabilities": [
+        "Official publisher index verified to exact advisory/document, HTTPS detail retrieved and parsed in Actions 38062701918",
+        "CVE strings retained only as unreviewed advisory-level references; no verified affected versions",
+        "One-shot live sample only, not complete weekly coverage"
+      ],
       "pending_gates": [
+        "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"
@@ -1796,5 +1834,56 @@
     "production": false,
     "complete_publisher_coverage": false,
     "changes_to_main": false
+  },
+  "wave3_20261010": {
+    "official_sources_attempted": 10,
+    "new_read_parse_verified": 6,
+    "unverified_held": 4,
+    "evidence_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+    "production": false,
+    "main_unchanged": true,
+    "old_kaggle_unchanged": true,
+    "details": [
+      {
+        "source_id": "juniper-jsa",
+        "verification_status": "probe_failed"
+      },
+      {
+        "source_id": "hpe-psirt",
+        "verification_status": "probe_failed"
+      },
+      {
+        "source_id": "ibm-security-bulletins",
+        "verification_status": "probe_failed"
+      },
+      {
+        "source_id": "netapp-psirt",
+        "verification_status": "probe_failed"
+      },
+      {
+        "source_id": "jenkins-security",
+        "verification_status": "read_parse_verified"
+      },
+      {
+        "source_id": "grafana-security",
+        "verification_status": "read_parse_verified"
+      },
+      {
+        "source_id": "nginx-security",
+        "verification_status": "read_parse_verified"
+      },
+      {
+        "source_id": "openssl-security",
+        "verification_status": "read_parse_verified"
+      },
+      {
+        "source_id": "tomcat-security",
+        "verification_status": "read_parse_verified"
+      },
+      {
+        "source_id": "wordpress-core-security",
+        "verification_status": "read_parse_verified"
+      }
+    ]
   }
 }
