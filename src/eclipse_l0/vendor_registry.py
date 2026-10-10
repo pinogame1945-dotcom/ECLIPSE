@@ -96,6 +96,20 @@ def validate(registry: dict) -> dict:
             if not re.fullmatch(r"https://github\.com/pinogame1945-dotcom/ECLIPSE/actions/runs/[0-9]+",str(pilot.get("run_url",""))):
                 raise ValueError("Missing official Actions pilot evidence: "+sid)
             _date(pilot.get("last_run_utc"))
+        cross = source.get("cross_run_evidence")
+        if cross is not None:
+            if state != "read_parse_verified" or not isinstance(cross,dict):
+                raise ValueError("Cross-run proof must belong to verified official sources: "+sid)
+            if cross.get("verification_level") != "short_lived_artifact_replay_only":
+                raise ValueError("Cross-run evidence is not production persistence: "+sid)
+            if cross.get("lifecycle") != "not_durable_7_day_actions_artifact":
+                raise ValueError("Cross-run retention cannot be promoted without separate durable proof: "+sid)
+            if cross.get("sample_advisories_retained") != 1 or cross.get("source_data_review") != "parsed_unreviewed":
+                raise ValueError("Unexpected cross-run scope or approval claim: "+sid)
+            for field in ("previous_successful_run_url","current_successful_run_url"):
+                if not re.fullmatch(r"https://github\.com/pinogame1945-dotcom/ECLIPSE/actions/runs/[0-9]+",str(cross.get(field,""))):
+                    raise ValueError("Missing cross-run actions evidence: "+sid)
+            _date(cross.get("verified_at_utc"))
         evidence = source.get("evidence_run_url")
         when = source.get("last_verified_utc")
         if state == "read_parse_verified":
