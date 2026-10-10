@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:01:00Z",
+  "updated_utc": "2026-10-10T12:09:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -71,6 +71,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -132,6 +141,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -193,6 +211,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -254,6 +281,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -315,6 +351,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -377,6 +422,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -438,6 +492,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -499,6 +562,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
@@ -586,6 +658,15 @@
         "parsed_fields_human_reviewed": false,
         "source_wide_completeness_assessed": false,
         "scope": "Small per-source sample; not a coverage or SLA claim"
+      },
+      "structured_extraction_revision": {
+        "semantic_parser_revision": "vendor_semantics_20261010_v3",
+        "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230",
+        "extraction_revised_event_proven": true,
+        "publisher_security_content_updated_event_proven": false,
+        "verified_source_ingest": true,
+        "accuracy_reviewed": false,
+        "approval_state": "not_ready_for_customer_auto_claims"
       }
     },
     {
