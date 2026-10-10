@@ -1,6 +1,7 @@
 """Synthetic independent vendor/CVE database linking; never alters source DBs."""
 from pathlib import Path
 import sqlite3
+import json
 import tempfile
 import unittest
 
@@ -37,8 +38,8 @@ class VendorCVEInteroperabilityTest(unittest.TestCase):
                            [("CVE-2026-100001","PUBLISHED","a"*64),
                             ("CVE-2026-100002","REJECTED","b"*64)])
             db.executemany("INSERT INTO warehouse_metadata VALUES (?,?)",
-                           [("source_index_sha256","c"*64),
-                            ("source_archive_sha256","d"*64)])
+                           [("source_index_sha256",json.dumps("c"*64)),
+                            ("source_archive_sha256",json.dumps("d"*64))])
 
     def test_matched_rejected_pending_and_unassigned(self):
         result=link_audit(self.vendor,self.cve,self.registry)
