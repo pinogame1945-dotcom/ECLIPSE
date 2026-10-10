@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 from datetime import datetime, timezone
+from contextlib import closing
 from html.parser import HTMLParser
 from io import StringIO
 import json
@@ -139,7 +140,7 @@ def _page(raw):
 
 
 def _ids(text):
-    return sorted(set(CVE.findall(text)))  # CVE text is not always body-scoped
+    return sorted(set(x.upper() for x in CVE.findall(text)))  # page-wide candidates are not impact assertions
 
 
 def _safe_candidates(entries, source, count):
@@ -390,7 +391,7 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
     except Exception as exc:
         status["errors"].append("discovery: "+type(exc).__name__+": "+str(exc)[:200])
         return status
-    with connect(db_path) as db:
+    with closing(connect(db_path)) as db:
         for item in candidates:
             try:
                 size = MAX_DOCUMENT if sid == "microsoft-msrc" else MAX_FEED
@@ -411,7 +412,7 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 if first["event"]=="facts_updated":status["updates"]+=1
                 status["details"].append({"id":item["id"],"source_url":item["url"],
                     "first_event":first["event"],"source_sha256":key,
-                    "asserted_cve_count":len(facts["cve_ids"]),
+                    "provisional_cve_count":len(facts["cve_ids"]),
                     "affected_rows_unreviewed":len(facts["affected"]),
                     "extraction_review":"parsed_unreviewed"})
             except Exception as exc:
@@ -428,7 +429,7 @@ def run(*,registry:dict,db_path:Path,source_ids:list[str],max_items:int):
     if any(x not in sources or x not in SUPPORTED for x in source_ids):
         raise ValueError("Unknown/unsupported source")
     results=[ingest_source(registry,sources[sid],db_path,max_items) for sid in source_ids]
-    with connect(db_path) as db:
+    with closing(connect(db_path)) as db:
         counts={"advisories":db.execute("SELECT COUNT(*) FROM vendor_documents").fetchone()[0],
                 "versions":db.execute("SELECT COUNT(*) FROM vendor_document_versions").fetchone()[0],
                 "events":db.execute("SELECT COUNT(*) FROM vendor_document_events").fetchone()[0],
