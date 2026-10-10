@@ -187,6 +187,79 @@ class WeeklyEvidenceTests(unittest.TestCase):
             create(cve_db=self.cve,vendor_db=self.vendor,registry_path=self.registry_path,
                    start=date(2026,10,11),end=self.end,out=self.root/"bad.zip")
 
+    def test_three_layer_handoff_keeps_all_cves_and_explains_attention(self):
+        from eclipse_l0.weekly_triage import create as make_tiers,verify as verify_tiers
+        p=self.root/"base-week.zip"
+        self._build(p)
+        first=self.root/"tier-one.zip"
+        second=self.root/"tier-two.zip"
+        result=make_tiers(source=p,out=first)
+        self.assertEqual(result["l1_total"],4)
+        self.assertEqual(result["l2_total"],3)
+        self.assertEqual(result["l3_total"],3)
+        self.assertEqual(result["watch_or_inactive"],1)
+        self.assertEqual(verify_tiers(first)["l1_total"],4)
+        make_tiers(source=p,out=second)
+        self.assertEqual(first.read_bytes(),second.read_bytes())
+        with zipfile.ZipFile(first) as z:
+            base_bytes=z.read("source-weekly-evidence.zip")
+            self.assertEqual(base_bytes,p.read_bytes())
+            idx=json.loads(z.read("triage_index.json"))
+            lines=[json.loads(x) for x in z.read("priority_candidates.jsonl").splitlines()]
+            details=[json.loads(x) for x in z.read("deep_dive_candidates.jsonl").splitlines()]
+            quality=json.loads(z.read("triage_quality.json"))
+        self.assertEqual(idx["l2_buckets_all_candidates"]["P0_NEW_KEV"],1)
+        self.assertEqual(idx["l2_buckets_all_candidates"]["P2_CNA_CVSS_CRITICAL"],2)
+        self.assertEqual(idx["l2_buckets_all_candidates"]["INACTIVE_REJECTED_OR_OTHER"],1)
+        self.assertEqual(lines[0]["cve_id"],"CVE-2026-50002")
+        self.assertIn("CISA_KEV_ADDED_TO_CATALOG_IN_WINDOW",lines[0]["source_reason_tags"])
+        self.assertEqual({x["cve_id"] for x in lines},
+                         {"CVE-2026-50001","CVE-2026-50002","CVE-2026-50005"})
+        self.assertTrue(all(x["actual_customer_impact"]=="NOT_ASSESSED" for x in lines))
+        self.assertTrue(all(x["client_impact_verified"] is False for x in details))
+        self.assertTrue(any("NO_OFFICIAL_VENDOR_ADVISORY_IN_FIXED_SNAPSHOT" in x["evidence_gaps"]
+                            for x in details))
+        self.assertTrue(quality["cve_full_corpus_unrestricted_by_vendor"])
+        self.assertFalse(quality["weekly_coverage_certified"])
+
+    def test_three_layer_manifest_tamper_and_new_ranking_disagree_fail(self):
+        from eclipse_l0.weekly_triage import create as make_tiers,verify as verify_tiers,sha as digest
+        p=self.root/"base-week.zip"
+        self._build(p)
+        triage=self.root/"original-three-layer.zip"
+        make_tiers(source=p,out=triage)
+        changed=self.root/"tampered-three-layer.zip"
+        with zipfile.ZipFile(triage) as z:
+            content={name:z.read(name) for name in z.namelist()}
+        rankings=[json.loads(v) for v in content["priority_candidates.jsonl"].splitlines()]
+        rankings.pop()  # adversary drops a major CVE but attempts to update hashes
+        content["priority_candidates.jsonl"]="".join(
+            json.dumps(x,sort_keys=True)+"\\n" for x in rankings).encode()
+        meta=json.loads(content["triage_manifest.json"])
+        meta["member_sha256"]["priority_candidates.jsonl"]=digest(content["priority_candidates.jsonl"])
+        meta["member_bytes"]["priority_candidates.jsonl"]=len(content["priority_candidates.jsonl"])
+        content["triage_manifest.json"]=json.dumps(meta).encode()
+        with zipfile.ZipFile(changed,"w") as z:
+            for name,value in content.items():
+                z.writestr(name,value)
+        with self.assertRaisesRegex(ValueError,"Recomputed deterministic triage"):
+            verify_tiers(changed)
+
+    def test_three_layer_fails_on_misleading_cve_numeric_signal(self):
+        from eclipse_l0.weekly_triage import classify
+        row={"cve_id":"CVE-2026-50001","record_state":"PUBLISHED",
+             "week_reasons":[],"kev":{"present":False,"date_added":None},
+             "cvss":{"base_score":9.8,"attribution":"CVE_CNA"},
+             "epss":{"probability":0.1,"score_date":"NOT_PRESENT_IN_WAREHOUSE"},
+             "linked_vendor_documents":[]}
+        actual=classify(row)
+        self.assertEqual(actual["attention_bucket"],"P2_CNA_CVSS_CRITICAL")
+        self.assertEqual(actual["vendor_document_keys"],[])
+        self.assertFalse(actual["selected_for_weekly_report"])
+        row["cvss"]["base_score"]=float("nan")
+        with self.assertRaisesRegex(ValueError,"Non-finite"):
+            classify(row)
+
     def test_full_cve_required_fails_for_partial_synthetic_fixture(self):
         with self.assertRaisesRegex(ValueError,"403696"):
             create(cve_db=self.cve,vendor_db=self.vendor,registry_path=self.registry_path,
