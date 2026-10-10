@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:40:00Z",
+  "updated_utc": "2026-10-10T12:53:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -924,5 +924,21 @@
     "subsequent_versioned_ingestion_enabled": false,
     "production_monitoring_enabled": false,
     "commercial_reuse_approved": false
+  },
+  "actual_cve_warehouse_read_only_join": {
+    "status": "INDEPENDENT_REAL_403696_CVE_MATCH_VERIFIED",
+    "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053519543",
+    "cve_snapshot_records": 403696,
+    "vendor_snapshot_advisories": 125,
+    "vendor_snapshot_versions": 202,
+    "cve_source_index_sha256": "1b19b50fedb034390463a68222948b365f6b6dc39dcd1904218dd880abe504d2",
+    "linked_published_pairs": 11066,
+    "linked_rejected_pairs": 13,
+    "unmatched_pairs": 3,
+    "unassigned_vendor_documents": 23,
+    "pairs_not_unique_cve_count": true,
+    "vendor_cve_links_human_reviewed": false,
+    "customer_exposure_verified": false,
+    "cve_and_vendor_data_modified": false
   }
 }
