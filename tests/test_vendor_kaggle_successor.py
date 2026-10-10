@@ -42,6 +42,9 @@ class VendorSuccessorTest(unittest.TestCase):
         self.patch=patch("eclipse_l0.vendor_kaggle.EXPECTED_SOURCE_DIGEST",self.fixture.digest)
         self.patch.start()
         self.addCleanup(self.patch.stop)
+        self.patch_child=patch("eclipse_l0.vendor_kaggle_successor.EXPECTED_SOURCE_DIGEST",self.fixture.digest)
+        self.patch_child.start()
+        self.addCleanup(self.patch_child.stop)
 
     def _stage(self):
         return stage(self.parent,self.child,self.idx,self.manifest,self.root/"v2",self.registry)
