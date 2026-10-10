@@ -169,6 +169,12 @@ class CustomerProductReportTests(unittest.TestCase):
 
     def test_source_pin_and_cve_count_are_checked(self):
         self.add_cve(1001)
+        from eclipse_l0.warehouse import SOURCE_INDEX_SHA256,SOURCE_SHA256
+        with self.assertRaisesRegex(ValueError,"pinned full snapshot"):
+            build_report(self.db,self.inventory,self.out,as_of=date(2026,10,10),expected_count=403696,demo=True)
+        _meta(self.con,"source_index_sha256",SOURCE_INDEX_SHA256)
+        _meta(self.con,"source_archive_sha256",SOURCE_SHA256)
+        self.con.commit()
         with self.assertRaisesRegex(ValueError,"coverage"):
             build_report(self.db,self.inventory,self.out,as_of=date(2026,10,10),expected_count=403696,demo=True)
 
