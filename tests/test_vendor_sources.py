@@ -118,6 +118,22 @@ class ManufacturerVersionStoreTest(unittest.TestCase):
             "SELECT event_kind FROM vendor_document_events ORDER BY event_id")],
             ["baseline","source_changed_only","extraction_revised","facts_updated"])
 
+    def test_parser_upgrade_during_html_byte_change_not_misreported_as_vendor_change(self):
+        first=copy.deepcopy(self.kwargs)
+        first["facts"]["_extractor_revision"]="v1"
+        self.assertEqual(observe(self.db,**first)["event"],"baseline")
+        after=copy.deepcopy(first)
+        after["observed_utc"]="2026-10-10T11:46:00Z"
+        after["source_sha256"]="b"*64
+        after["facts"]["_extractor_revision"]="v2"
+        after["facts"]["title"]="SYNTHETIC parser changed visible title"
+        self.assertEqual(observe(self.db,**after)["event"],"extraction_revised")
+        third=copy.deepcopy(after)
+        third["observed_utc"]="2026-10-10T11:47:00Z"
+        third["source_sha256"]="c"*64
+        third["facts"]["title"]="SYNTHETIC new security disclosure"
+        self.assertEqual(observe(self.db,**third)["event"],"facts_updated")
+
     def test_disallow_unverified_source_and_http_url(self):
         wrong={**self.kwargs,"source_id":"cisco-openvuln"}
         with self.assertRaisesRegex(ValueError,"not read/parse"):
