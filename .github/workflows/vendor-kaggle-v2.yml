@@ -1,0 +1,139 @@
+name: ECLIPSE immutable PRIVATE vendor Kaggle generation 2
+
+# Standalone 1-time successor, never touches CVE/KEV/EPSS or existing vendor v1.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-kaggle-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-private-vendor-generation-2-once
+  cancel-in-progress: false
+
+jobs:
+  create-successor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline snapshot ancestry and tampering tests
+        run: python -m unittest discover -s tests -p 'test_vendor_kaggle_successor.py' -v
+      - run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Fetch PRE-upload trusted vendor v1 index from separate successful seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || exit 2
+          mkdir -p "$RUNNER_TEMP/ecl-v1-index" "$RUNNER_TEMP/ecl-v1-files" "$RUNNER_TEMP/ecl-identity" "$RUNNER_TEMP/ecl-v2-stage" trusted
+          gh run download 38052640331 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-kaggle-trusted-source-index --dir "$RUNNER_TEMP/ecl-v1-index"
+          mapfile -t found < <(find "$RUNNER_TEMP/ecl-v1-index" -name vendor-evidence-index.json -type f)
+          test "${#found[@]}" -eq 1 || { echo "::error::Trusted first-generation index missing"; exit 3; }
+          cp "${found[0]}" trusted/vendor-evidence-index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from eclipse_l0.vendor_kaggle import validate_index
+          validate_index(json.loads(Path('trusted/vendor-evidence-index.json').read_text()))
+          print('VERIFIED_TRUSTED_PARENT_INDEX=YES')
+          PY
+      - name: Restore authentic PRIVATE Kaggle v1 from original trusted digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          kaggle datasets init -p "$RUNNER_TEMP/ecl-identity" >/dev/null
+          ref="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          t=json.loads((Path(os.environ['RUNNER_TEMP'])/'ecl-identity/dataset-metadata.json').read_text())['id']
+          if not t.endswith('/INSERT_SLUG_HERE'):raise SystemExit('Unexpected Kaggle account')
+          print(t.replace('INSERT_SLUG_HERE','eclipse-vendor-evidence-20261010-v1'))
+          PY
+          )"
+          echo "::add-mask::$ref"
+          for name in vendor-evidence-index.json part-0000.dbpart; do
+            ok=0
+            for attempt in 1 2 3; do
+              if kaggle datasets download "$ref" --file "$name" --path "$RUNNER_TEMP/ecl-v1-files" \
+                --unzip --force --quiet >/dev/null 2>&1 && test -s "$RUNNER_TEMP/ecl-v1-files/$name"; then
+                ok=1; break
+              fi
+              sleep 4
+            done
+            test "$ok" = 1 || { echo "::error::Missing Kaggle v1 file $name"; exit 4; }
+          done
+          python -m eclipse_l0.vendor_kaggle restore \
+            --trusted-index trusted/vendor-evidence-index.json \
+            --downloaded "$RUNNER_TEMP/ecl-v1-files" \
+            --out "$RUNNER_TEMP/ecl-parent.sqlite3" \
+            --registry config/vendor_source_registry.json > "$RUNNER_TEMP/ecl-parent-receipt.json"
+          cp "$RUNNER_TEMP/ecl-parent.sqlite3" "$RUNNER_TEMP/ecl-child.sqlite3"
+      - name: Incremental unreviewed official vendor observations without touching CVE DB
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db "$RUNNER_TEMP/ecl-child.sqlite3" \
+            --out "$RUNNER_TEMP/ecl-collection-manifest.json" \
+            --max-items 8 > "$RUNNER_TEMP/ecl-collection-audit.json"
+          python -m eclipse_l0.vendor_kaggle_successor stage \
+            --parent-db "$RUNNER_TEMP/ecl-parent.sqlite3" \
+            --child-db "$RUNNER_TEMP/ecl-child.sqlite3" \
+            --parent-index trusted/vendor-evidence-index.json \
+            --collection-manifest "$RUNNER_TEMP/ecl-collection-manifest.json" \
+            --registry config/vendor_source_registry.json \
+            --dest "$RUNNER_TEMP/ecl-v2-stage" \
+            > "$RUNNER_TEMP/ecl-v2-stage-receipt.json"
+      - name: Create NEW private successor v2, never alter v1 or CVE datasets
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/ecl-v2-stage"
+          kaggle datasets init -p "$stage" >/dev/null
+          ref="$(python - "$stage" <<'PY'
+          import json,sys
+          from pathlib import Path
+          p=Path(sys.argv[1])/'dataset-metadata.json'
+          meta=json.loads(p.read_text())
+          old=meta.get('id','')
+          if not old.endswith('/INSERT_SLUG_HERE'):raise SystemExit('Wrong Kaggle owner')
+          ref=old.replace('INSERT_SLUG_HERE','eclipse-vendor-evidence-20261010-v2')
+          meta.update(id=ref,title='ECLIPSE Vendor Evidence PRIVATE Generation 2',
+            description='New PRIVATE append-only source-linked normalized vendor facts. Parent v1 retained; no customer assets or raw vendor publisher bodies.',
+            licenses=[{'name':'other'}])
+          p.write_text(json.dumps(meta,indent=2,sort_keys=True)+'\n')
+          print(ref)
+          PY
+          )"
+          echo "::add-mask::$ref"
+          if kaggle datasets status "$ref" >/dev/null 2>&1; then
+            echo "::error::Version 2 exists. Refuse to overwrite; use independent verification"
+            exit 5
+          fi
+          if ! kaggle datasets create -p "$stage" --quiet --keep-tabular --dir-mode skip >/dev/null 2>&1; then
+            kaggle datasets status "$ref" >/dev/null 2>&1 || { echo "::error::V2 upload failed"; exit 6; }
+          fi
+          echo "PRIVATE_VENDOR_GENERATION_2=CREATED"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-vendor-v2-trusted-preupload-index
+          path: |
+            ${{ runner.temp }}/ecl-v2-stage/vendor-evidence-v2-index.json
+            ${{ runner.temp }}/ecl-v2-stage-receipt.json
+          retention-days: 7
+          if-no-files-found: error
