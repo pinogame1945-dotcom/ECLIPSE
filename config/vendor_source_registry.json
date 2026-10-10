@@ -972,13 +972,15 @@
       "discovery_url": "https://helpx.adobe.com/security.html",
       "detail_sample_url": "https://helpx.adobe.com/security/products/acrobat/apsb26-141.html",
       "allowed_hosts": [
-        "helpx.adobe.com"
+        "helpx.adobe.com",
+        "www.adobe.com"
       ],
       "verification_status": "not_tested",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Ensure migrated Adobe Trust Center redirects stay on exact Adobe-operated hosts; page ID matching required",
         "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
         "Audit main/article extraction and product/version semantics with exact publisher fields",
         "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
