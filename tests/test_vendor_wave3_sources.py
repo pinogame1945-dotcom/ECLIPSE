@@ -57,7 +57,7 @@ class ThirdWaveTests(unittest.TestCase):
        "<link>https://evil.invalid/advisory/ntap-20260130-0001</link></item></channel></rss>").encode()
   got=discover_wave3(s,xml)
   self.assertEqual(len(got),1)
-  self.assertEqual(len(discover_wave3(s,xml+b"<item><title>truncated")),1)
+  self.assertEqual(len(discover_wave3(s,xml.replace(b"</channel></rss>",b"<item><title>truncated"))),1)
   self.assertEqual(got[0]["id"],"NTAP-20260130-0010")
  def test_nginx_solo_page_after_verified_heading(self):
   s=S["nginx-security"]
