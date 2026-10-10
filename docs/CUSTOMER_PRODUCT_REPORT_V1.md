@@ -76,7 +76,8 @@ python -m eclipse_reports.customer_products \
   --as-of 2026-10-10 --days 90 --mode recent
 python -m eclipse_reports.customer_product_slides \
   --report-json /private/customer-report/customer-product-report.json \
-  --out /private/customer-report/customer-product-report.pptx
+  --out /private/customer-report/customer-product-report.pptx \
+  --briefs-ja /private/customer-report/analyst-approved-summaries-ja.json
 ```
 
 `recent` (default) reports CVE records published/updated in the
@@ -110,3 +111,26 @@ fictional; there is no automation for real customer uploads or delivery.
    source freshness monitoring. Avoid inventing false certainty from CVSS/EPSS.
 
 Existing early-warning research is **not** part of the customer report path.
+
+
+### Customer-facing language quality (v2)
+
+The PPTX is written for the recipient, not developers. It does **not** render
+raw English vulnerability descriptions, JSON predicates, machine queue codes,
+developer explanations, or internal schema labels. It summarizes the monitored
+products, candidate CVEs, confirmed-exploitation signal, Japanese impact
+version intervals, and actions that genuinely need customer verification.
+
+Detailed Japanese CVE descriptions are shown **only** when a human-approved
+`--briefs-ja` mapping (`{"CVE-xxxx-yyyy": "確認済みの日本語要約"}`) is supplied.
+There is no fabricated automatic translation: if an entry lacks a reviewed
+Japanese description, it remains in the CVE table with an authoritative link,
+not an English paragraph. This input and the inventory should be private for
+actual clients. `config/SYNTHETIC-approved-ja-cve-briefs.json` is a demo sample
+for only eight public-source CVEs.
+
+The PowerPoint does not display private development metadata. Raw original
+source strings, structured version JSON and technical provenance remain in
+the machine-readable evidence files for internal audit, not on the client
+slides. A full customer release still requires qualified technical and legal
+review and validated vendor fixes.
