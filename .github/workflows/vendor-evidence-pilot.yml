@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - feature/vendor-source-registry-20261010
+    paths:
+      - '.github/workflows/vendor-evidence-pilot.yml'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'tests/test_vendor_pilot.py'
   workflow_dispatch:
 permissions:
   contents: read
