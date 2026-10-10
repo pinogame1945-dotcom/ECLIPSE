@@ -25,9 +25,6 @@ def inspect_facts(facts: dict, source_id: str) -> dict:
     unresolved=facts.get("unresolved_product_ids",[])
     if unresolved:
         notes.append("Some CSAF publisher product IDs have no matching product label.")
-    source_version_text=any(
-        bool(a.get("affected_versions_raw") or a.get("versions_raw")) for a in affected
-    )
     explicit_remediations=len(rems)+sum(bool(a.get("remediation_raw")) for a in affected)
     product_labels=sum(bool(a.get("product_name_from_csaf") or a.get("product_release") or a.get("product")) for a in affected)
     statuses_present={k:sum(x.get("status")==k for x in statuses if isinstance(x,dict))
@@ -51,6 +48,7 @@ def inspect_facts(facts: dict, source_id: str) -> dict:
         "normalized_fixed_version_ranges_verified":0,
         "actual_exploitation_state":"NOT_ASSESSED",
         "detected_html_cve_candidates_unlinked":len(facts.get("unreviewed_page_cve_candidates",[])),
+        "detected_article_cve_candidates_unlinked":len(facts.get("unreviewed_article_cve_candidates",[])),
         "evidence_field_paths":len(facts.get("evidence_fields",[])),
         "cautions":notes,
     }
@@ -63,5 +61,6 @@ def summarize_source_quality(details: list[dict]) -> dict:
             "sampled_affected_evidence_rows":sum(x.get("field_quality",{}).get("affected_entries_unreviewed",0) for x in details),
             "sampled_explicit_remediation_rows":sum(x.get("field_quality",{}).get("remediation_entries_unreviewed",0) for x in details),
             "docs_with_unresolved_csaf_product_ids":sum(bool(x.get("field_quality",{}).get("csaf_unresolved_product_ids")) for x in details),
+            "docs_with_article_cve_candidates_unlinked":sum(bool(x.get("field_quality",{}).get("detected_article_cve_candidates_unlinked")) for x in details),
             "verified_product_exposure_assessments":0,
             "vendor_wide_coverage_assured":False}
