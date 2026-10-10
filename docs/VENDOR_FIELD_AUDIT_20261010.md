@@ -46,3 +46,14 @@ Live one-shot limited run is in `.github/workflows/vendor-evidence-pilot.yml`, w
 5. Check permissions, commercial reuse constraints and source availability monitoring before scheduled customer service.
 
 Success is **measured evidence coverage**, not an assumed 100% hit rate across all products.
+
+## Additional bounded validation: publisher field meanings and extractor revisions
+
+[Run 38050684230](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050684230) revalidated all nine official connectors (17 tracked advisory documents), SQLite `quick_check=ok`. The run made a safe **extractor version revision**, NOT a publisher security disclosure claim: all 17 sampled documents were classified `extraction_revised`, no `facts_updated` events. This is deliberately safer than attributing a parser deployment to a vulnerability change.
+
+- **Palo Alto Networks CNA:** sampled documents exposed **4 remedy/workaround text entries**, now retained with exact `containers.cna.solutions[*].value` or `containers.cna.workarounds[*].value` evidence path, plus the previously collected 6 affected entries. These strings **have not** been interpreted as automatically verified fixed versions.
+- **Ubuntu USN:** sampled notices' `release_packages` containers are retained as per-release package counts and types with source paths. Their actual package-level fixed versions are **not** asserted.
+- **Siemens/Red Hat CSAF:** structured CVE, publisher product labels, `product_status` (including `fixed` and `first_fixed` only where explicitly published) and remediation targets are preserved separately. No regex conversion of these statuses into guessed affected-version intervals.
+- **GitLab/Atlassian HTML:** `<main>`/`<article>` CVE candidates are collected separately from unrelated header/footer/sidebar/navigation text; even this body-scoped set is **unreviewed** and is never silently added to `cve_ids`.
+
+The higher SQLite version count in this run includes extraction changes and dynamic HTML bytes. It is **not** a count of newly discovered vulnerabilities. The original CVE/Kaggle corpus has not been altered.
