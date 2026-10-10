@@ -80,7 +80,7 @@ jobs:
               --dest output/vendor-evidence.sqlite3 \
               --bootstrap --report output/vendor-replay-provenance.json
           fi
-      - name: Expand unseen publisher advisories (up to 6 per source) with historical refresh
+      - name: Expand unseen publisher advisories (up to 8 per source) with historical refresh
         env:
           PYTHONPATH: src
         run: |
@@ -89,7 +89,7 @@ jobs:
             --registry config/vendor_source_registry.json \
             --db output/vendor-evidence.sqlite3 \
             --out output/vendor-evidence-manifest.json \
-            --max-items 6
+            --max-items 8
       - name: Validate saved state after collection (fail closed)
         env:
           PYTHONPATH: src
