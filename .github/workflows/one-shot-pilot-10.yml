@@ -1,0 +1,80 @@
+name: ECLIPSE one-shot official 10-record preflight
+
+# Created once for the first bounded real-data verification. Does NOT schedule
+# CVE all-record backfill and does NOT commit any source data to this repository.
+on:
+  push:
+    paths:
+      - .github/workflows/one-shot-pilot-10.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-one-shot-official-pilot-10
+  cancel-in-progress: false
+
+jobs:
+  official-source-pilot:
+    if: github.event.head_commit.added != null
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the CISA official KEV catalog (hard limit 25 MiB)
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output/pilot
+          curl --fail --location --retry 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 90 \
+            --max-filesize 26214400 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            --output downloads/kev.json
+          test "$(wc -c < downloads/kev.json)" -le 26214400
+          python -m json.tool downloads/kev.json >/dev/null
+      - name: Validate KEV and import up to 10 official CVE records
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.pilot --kev-json downloads/kev.json \
+            --out output/pilot --limit 10
+      - name: Write audit summary and fail closed on serious integrity problems
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = Path('output/pilot/pilot-manifest.json')
+          if not manifest.exists():
+              with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a') as f:
+                  f.write('## ECLIPSE official pilot: no manifest produced\n')
+              raise SystemExit('Pilot manifest not produced')
+          p=json.loads(manifest.read_text())
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a') as f:
+              f.write('## ECLIPSE official pilot (10 CVE sample only)\n\n')
+              for key in ('kev_catalog_rows','selected_kev_identifiers','cve_records_imported','cve_records_missing_or_invalid'):
+                  f.write(f'- {key}: **{p[key]}**\n')
+              f.write(f"- SQLite quick check: **{p['sqlite_audit']['sqlite_quick_check']}**\n")
+              f.write('- Source: official CISA KEV and CVE List V5; public records only.\n')
+              f.write('- NOT full backfill, NOT durable storage, NOT customer impact assessment.\n')
+          assert p['selected_kev_identifiers'] == 10, 'Sample size mismatch'
+          assert p['sqlite_audit']['sqlite_quick_check'] == 'ok', 'SQLite integrity failure'
+          assert p['sqlite_counts']['kev_present'] == p['kev_catalog_rows'], 'KEV baseline mismatch'
+          assert p['cve_records_imported'] + p['cve_records_missing_or_invalid'] == 10
+          PY
+      - name: Save public source audit (7 days; no raw CVE archive)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-real-data-pilot-10
+          path: |
+            output/pilot/pilot-manifest.json
+            output/pilot/pilot-cve-observations.csv
+          retention-days: 7
+          if-no-files-found: warn
