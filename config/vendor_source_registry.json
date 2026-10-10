@@ -1408,6 +1408,7 @@
         "One-shot live sample only, not complete weekly coverage"
       ],
       "pending_gates": [
+        "INTERMITTENT source listing: live probe passed in run 38062701918, but a separate 6-source SQLite run 38062807641 failed Grafana index discovery. Do not enable continuous monitoring until the index is reliable.",
         "One-shot SQLite event/idempotent replay and multi-advisory data quality validation",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
@@ -1417,7 +1418,14 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "index_reliability_caution": {
+        "observed_live_success_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062701918",
+        "observed_subsequent_failure_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38062807641",
+        "state": "INTERMITTENT_INDEX",
+        "passed_once": true,
+        "production": false
+      }
     },
     {
       "source_id": "nginx-security",
