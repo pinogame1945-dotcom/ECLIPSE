@@ -119,6 +119,51 @@ class ImportantReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not reproducible"):
             verify(altered)
 
+    def test_old_kev_and_metadata_update_cannot_defeat_fresh_disclosure(self):
+        import sqlite3
+        with sqlite3.connect(self.fixture.cve) as db:
+            source_hash = "f" * 64
+            # High old KEV + huge EPSS should still NOT become a new event.
+            db.execute("INSERT INTO cve_current VALUES (?,?,?,?,?,?)",
+                       ("CVE-2026-50007", "PUBLISHED", source_hash,
+                        "2026-01-12T00:00:00Z", "2026-10-09T00:00:00Z", "2026-10-10T00:00:00Z"))
+            db.execute("INSERT INTO warehouse_summary VALUES (?,?,?,?,?,?)",
+                       ("CVE-2026-50007", "Old KEV with metadata revision", "Synthetic only",
+                        10.0, "cvssV3_1", "CRITICAL"))
+            db.execute("INSERT INTO warehouse_epss VALUES (?,?,?)",
+                       ("CVE-2026-50007", 0.99, 0.99))
+            db.execute("INSERT INTO kev_current VALUES (?,?,?,?,?)",
+                       ("CVE-2026-50007", 1, "2026-03-01", source_hash, "2026-10-10"))
+            # Brand new non-vendor CVE with no KEV should compete for the report.
+            db.execute("INSERT INTO cve_current VALUES (?,?,?,?,?,?)",
+                       ("CVE-2026-50006", "PUBLISHED", "e" * 64,
+                        "2026-10-08T00:00:00Z", "2026-10-08T01:00:00Z", "2026-10-10"))
+            db.execute("INSERT INTO warehouse_summary VALUES (?,?,?,?,?,?)",
+                       ("CVE-2026-50006", "Brand new nonvendor risk", "Synthetic only",
+                        9.8, "cvssV3_1", "CRITICAL"))
+        base=self.root / "new-source.zip"
+        self.fixture._build(base)
+        data=compute(base.read_bytes(),self.policy.read_bytes(),target=3)
+        top=[json.loads(x) for x in data["top50_research_candidates.jsonl"].splitlines()]
+        top_ids={x["cve_id"] for x in top}
+        self.assertEqual(top_ids,{"CVE-2026-50002","CVE-2026-50001","CVE-2026-50006"})
+        self.assertNotIn("CVE-2026-50007",top_ids)
+        ledger={x["cve_id"]:x for x in
+                [json.loads(t) for t in data["decision_ledger.jsonl"].splitlines()]}
+        self.assertEqual(ledger["CVE-2026-50007"]["temporal_event_basis"],
+                         "CVE_METADATA_UPDATED_ONLY_CHANGE_UNVERIFIED")
+        self.assertFalse(ledger["CVE-2026-50007"]["selected_for_top50_research"])
+        index=json.loads(data["important_index.json"])
+        self.assertEqual(index["top50_newly_published_non_kev"],2)
+
+    def test_new_kev_always_survives_even_if_target_is_smaller(self):
+        base=self.source.read_bytes()
+        data=compute(base,self.policy.read_bytes(),target=1)
+        top=[json.loads(x) for x in data["top50_research_candidates.jsonl"].splitlines()]
+        self.assertEqual([x["cve_id"] for x in top],["CVE-2026-50002"])
+        self.assertEqual(top[0]["shortlist_basis"],"NEW_KEV_MANDATORY")
+        self.assertTrue(base)
+
     def test_risk_ranking_and_cap_do_not_confuse_expired_kev(self):
         base = self.source.read_bytes()
         # The base fixture has mandatory KEV + one affected vendor. Increase
@@ -133,7 +178,10 @@ class ImportantReviewTests(unittest.TestCase):
                            ["important_index.json"])
         self.assertEqual(index["important_review_candidate_count"], 3)
         self.assertEqual(index["discretionary_risk_count"], 1)
-        self.assertEqual(index["top50_research_count"], 3)
+        # Old publication + mere metadata update + old EPSS is not a new weekly event.
+        self.assertEqual(index["top50_research_count"], 2)
+        self.assertEqual(index["top50_newly_published_non_kev"], 1)
+        self.assertTrue(index["metadata_updates_without_confirmed_change_excluded_from_top50"])
         self.assertEqual(index["mandatory_new_kev_count"], 1)
         self.assertEqual(index["mandatory_126_vendor_count_excluding_new_kev_overlap"], 1)
         self.assertTrue(base)
