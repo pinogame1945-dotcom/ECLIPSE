@@ -380,7 +380,7 @@ def normalize(source, item, raw):
 def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
     sid = source["source_id"]
     status = {"source_id":sid,"status":"FAIL","candidates":0,"saved":0,"replay_unchanged":0,
-              "baseline":0,"updates":0,"errors":[],"details":[]}
+              "baseline":0,"updates":0,"source_only_changes":0,"errors":[],"details":[]}
     if source.get("verification_status")!="read_parse_verified":
         status["errors"].append("Not verified; blocked by registry")
         return status
@@ -392,6 +392,22 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
         status["errors"].append("discovery: "+type(exc).__name__+": "+str(exc)[:200])
         return status
     with closing(connect(db_path)) as db:
+        # On later runs re-check one older tracked advisory as well as current
+        # front-of-feed candidates. Do not equate rolling-feed disappearance
+        # with withdrawal. The historical URL is a verified official host.
+        existing = db.execute("""SELECT advisory_id,source_url FROM vendor_documents
+                                 WHERE source_id=? ORDER BY last_observed_utc ASC,
+                                 advisory_id ASC LIMIT 3""", (sid,)).fetchall()
+        selected_ids = {x["id"] for x in candidates}
+        for row in existing:
+            if row["advisory_id"] in selected_ids:
+                continue
+            if not _host_allowed(row["source_url"],source["allowed_hosts"]):
+                raise ValueError("Previously tracked source URL outside official allowlist")
+            candidates.append({"id":row["advisory_id"],"url":row["source_url"],
+                               "title":row["advisory_id"]})
+            break
+        status["candidates"] = len(candidates)
         for item in candidates:
             try:
                 size = MAX_DOCUMENT if sid == "microsoft-msrc" else MAX_FEED
@@ -410,6 +426,7 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 status["replay_unchanged"]+=1
                 if first["event"]=="baseline":status["baseline"]+=1
                 if first["event"]=="facts_updated":status["updates"]+=1
+                if first["event"]=="source_changed_only":status["source_only_changes"]+=1
                 status["details"].append({"id":item["id"],"source_url":item["url"],
                     "first_event":first["event"],"source_sha256":key,
                     "provisional_cve_count":len(facts["cve_ids"]),
