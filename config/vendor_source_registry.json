@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:57:00Z",
+  "updated_utc": "2026-10-10T12:59:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -970,5 +970,22 @@
     "vendor_content_human_reviewed": false,
     "original_cve_kaggle_untouched": true,
     "operational_constraint": "Further generations need pinned source index, strict transactional continuity and fresh-runner independent readback; do not use the 7-day Actions artifact as permanent state."
+  },
+  "actual_cve_warehouse_v2_read_only_join": {
+    "status": "INDEPENDENT_REAL_403696_CVE_V2_MATCH_VERIFIED",
+    "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053838061",
+    "cve_snapshot_records": 403696,
+    "vendor_snapshot_advisories": 160,
+    "vendor_snapshot_versions": 241,
+    "cve_source_index_sha256": "1b19b50fedb034390463a68222948b365f6b6dc39dcd1904218dd880abe504d2",
+    "linked_published_pairs": 12279,
+    "linked_rejected_pairs": 17,
+    "unmatched_pairs": 3,
+    "unassigned_vendor_documents": 30,
+    "counts_mean_document_CVE_pairs_not_unique_CVEs": true,
+    "vendor_CVE_links_human_reviewed": false,
+    "affected_product_version_consistency_verified": false,
+    "customer_exposure_verified": false,
+    "cve_and_vendor_sources_modified": false
   }
 }
