@@ -39,7 +39,7 @@ class ExpansionSourceTests(unittest.TestCase):
         self.assertFalse(facts["affected"])
         self.assertNotIn("CVE-2026-11111",facts["cve_ids"])
         self.assertNotIn("fixed_version",facts)
-        self.assertEqual(x["verification_status"],"not_tested")
+        self.assertEqual(x["verification_status"],"read_parse_verified")
 
     def test_debian_list_not_confused_with_tracker_and_no_fake_product_fix(self):
         x=SRC["debian-dsa"]
@@ -77,15 +77,18 @@ class ExpansionSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"does not match"):
             normalize(x,item,raw)
 
-    def test_neither_unverified_source_can_pollute_persistent_registry(self):
-        # Only post-live proof can set verified sources for SQLite observation.
-        import tempfile
-        from pathlib import Path
-        with tempfile.TemporaryDirectory() as tmp:
-            for source_id in ("mozilla-mfsa","debian-dsa"):
-                state=ingest_source(REGISTRY,SRC[source_id],Path(tmp)/"pilot.db",1,Stub({}))
-                self.assertEqual(state["status"],"FAIL")
-                self.assertEqual(state["saved"],0)
-                self.assertIn("Not verified",state["errors"][0])
+    def test_both_sources_promoted_only_with_real_live_proof_not_to_customer(self):
+        self.assertTrue(all(SRC[s]["verification_status"]=="read_parse_verified"
+                            for s in ("mozilla-mfsa","debian-dsa")))
+        for sid in ("mozilla-mfsa","debian-dsa"):
+            source=SRC[sid]
+            proof=source["publisher_expansion_live_probe"]
+            self.assertEqual(proof["sampled_advisories"],2)
+            self.assertFalse(proof["production_enabled"])
+            self.assertFalse(proof["sqlite_history_verified"])
+            self.assertFalse(proof["accuracy_reviewed"])
+            self.assertFalse(source["enabled_for_production"])
+            self.assertEqual(source["live_polling"],"not_enabled")
+
 
 if __name__=="__main__":unittest.main()
