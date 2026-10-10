@@ -43,7 +43,14 @@ def link_audit(vendor_db: Path,cve_db: Path, registry: dict, *, check_full_cve_c
             raise ValueError("Missing vendor evidence ledger")
         if not {"cve_current","warehouse_metadata"}.issubset(cve_tables):
             raise ValueError("Not a full ECLIPSE CVE warehouse; refuse to join")
-        meta={x["key"]:x["value"] for x in cve.execute("SELECT key,value FROM warehouse_metadata")}
+        # The real warehouse stores all metadata using json.dumps(), including
+        # SHA strings. Direct regex matching sees double quotes and fails.
+        meta={}
+        for x in cve.execute("SELECT key,value FROM warehouse_metadata"):
+            try:
+                meta[x["key"]]=json.loads(x["value"])
+            except (ValueError,TypeError) as exc:
+                raise ValueError("Invalid JSON-encoded CVE snapshot metadata") from exc
         if any(not re.fullmatch(r"[0-9a-f]{64}",meta.get(key,"")) for key in REQUIRED_META):
             raise ValueError("CVE snapshot index/original archive hashes missing")
         cve_count=cve.execute("SELECT COUNT(*) FROM cve_current").fetchone()[0]
