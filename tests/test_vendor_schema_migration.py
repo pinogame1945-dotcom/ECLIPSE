@@ -32,8 +32,10 @@ class EventMigrationTest(unittest.TestCase):
                 db=connect(dbpath)
                 try:
                     got=list(db.execute("SELECT event_id,event_kind,version FROM vendor_document_events ORDER BY event_id"))
-                    self.assertEqual([(x[0],x[1],x[2]) for x in got],
-                                     [(75,"baseline",1),(76,"source_changed_only",2)])
+                    expected = [(75,"baseline",1),(76,"source_changed_only",2)]
+                    if run == 2:
+                        expected.append((77,"extraction_revised",3))
+                    self.assertEqual([(x[0],x[1],x[2]) for x in got], expected)
                     db.execute("""INSERT INTO vendor_document_events
                        (source_id,advisory_id,event_kind,observed_utc,version)
                        VALUES ('siemens-csaf','SSA-001','extraction_revised',
