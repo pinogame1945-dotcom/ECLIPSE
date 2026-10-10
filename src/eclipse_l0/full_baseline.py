@@ -159,9 +159,16 @@ def members(zf: zipfile.ZipFile) -> tuple[list[zipfile.ZipInfo], dict]:
         'uncompressed_bytes_claimed': total}
 
 
-def process(archive: Path, stage: Path, limit: int, shard_size: int = 500) -> dict:
-    if limit not in ALLOWED or not 1 <= shard_size <= 1000:
-        raise ValueError('Only approved bounded sampling gates are allowed')
+def process(archive: Path, stage: Path, limit: int | None, shard_size: int = 500) -> dict:
+    """Stage bounded sample or *all* members (limit=None) without dropping source bytes.
+
+    Full mode deliberately uses non-ZIP .cvepack files in the staging root:
+    Kaggle must not automatically expand them into hundreds of thousands of
+    individual files. The bytes *inside* each .cvepack remain standard ZIP.
+    """
+    full = limit is None
+    if (not full and limit not in ALLOWED) or not 1 <= shard_size <= (2500 if full else 1000):
+        raise ValueError('Only approved bounded gates or explicit full-source mode')
     stage.mkdir(parents=True, exist_ok=True)
     source_digest = sha(archive)
     source = {'archive_filename': archive.name, 'archive_bytes': archive.stat().st_size,
@@ -188,19 +195,20 @@ def process(archive: Path, stage: Path, limit: int, shard_size: int = 500) -> di
                     raise ValueError('Nested member is not a ZIP')
         with zipfile.ZipFile(active) as zf:
             selected, stats = members(zf)
-            if len(selected) < limit:
-                raise ValueError(f'Snapshot contains {len(selected)} CVE records, fewer than {limit}')
+            target_count = len(selected) if full else limit
+            if len(selected) < target_count or not selected:
+                raise ValueError(f'Snapshot contains {len(selected)} CVEs, fewer than {target_count}')
             shard_docs = []
-            for start in range(0, limit, shard_size):
-                batch = selected[start:min(limit, start + shard_size)]
-                name = f'{start:06d}-{start + len(batch) - 1:06d}.zip'
-                dest = stage / 'shards' / name
+            for start in range(0, target_count, shard_size):
+                batch = selected[start:min(target_count, start + shard_size)]
+                name = f'{start:06d}-{start + len(batch) - 1:06d}.' + ('cvepack' if full else 'zip')
+                dest = stage / name if full else stage / 'shards' / name
                 if dest.exists():
                     # Don't silently reuse a modified shard. Re-validate below after full pass.
                     pass
                 else:
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    tmp = dest.with_suffix('.zip.tmp')
+                    tmp = dest.with_name(dest.name + '.tmp')
                     try:
                         with zipfile.ZipFile(tmp, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as out:
                             for info in batch:
@@ -224,13 +232,14 @@ def process(archive: Path, stage: Path, limit: int, shard_size: int = 500) -> di
                         baseline_raw = zf.read(original)
                         if check.read(cve_id + '.json') != baseline_raw:
                             raise ValueError('Shard body differs from official archive: ' + cve_id)
-                shard_docs.append({'file': 'shards/' + name, 'records': len(batch),
+                shard_docs.append({'file': name if full else 'shards/' + name, 'records': len(batch),
                                    'bytes': dest.stat().st_size, 'sha256': sha(dest)})
     # Distinct entry count is based on fully verified source-selected members.
-    manifest = {**source, **stats, 'records_staged': limit,
+    manifest = {**source, **stats, 'records_staged': target_count,
                 'shards': shard_docs, 'layout': 'direct_or_single_nested_zip',
                 'selection': 'DETERMINISTIC_SHA256_CVE_ID_SAMPLE_NOT_STATISTICALLY_VALIDATED',
-                'status': 'VERIFIED_BOUNDED_SAMPLE_NOT_FULL_BACKFILL'}
+                'status': ('VERIFIED_FULL_SOURCE_BYTES_STAGED_NOT_KAGGLE_VERIFIED' if full else
+                           'VERIFIED_BOUNDED_SAMPLE_NOT_FULL_BACKFILL')}
     write_json(stage / 'manifest.json', manifest)
     return manifest
 
