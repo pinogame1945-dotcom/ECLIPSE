@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - feature/vendor-source-registry-20261010
+    paths:
+      - '.github/workflows/vendor-batch2-probe.yml'
+      - 'experiments/vendor_batch2_probe.py'
   workflow_dispatch:
 permissions:
   contents: read
