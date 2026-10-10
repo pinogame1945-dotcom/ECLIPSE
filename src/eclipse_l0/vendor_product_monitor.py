@@ -136,7 +136,9 @@ def _claims(facts):
 
 def _matches(inventory,row):
     label=row.get("product_name")
-    if not isinstance(label,str) or not label.strip():
+    if not isinstance(label,str) or not 1<=len(label.strip())<=MAX_TITLE:
+        # A valid official CSAF catalog may contain huge descriptive labels;
+        # those cannot equal a bounded private-inventory product label.
         return False
     if inventory["name_key"]!=_normalized(label):
         return False
@@ -236,8 +238,9 @@ def match_customer_products(db_path,inventory_path,registry):
             # silently apply the strongest/worst status to the wrong SKU.
             label_pid=defaultdict(set)
             for claim in claims:
-                if isinstance(claim.get("product_name"),str):
-                    label_pid[_normalized(claim["product_name"])].add(claim["product_id"])
+                label=claim.get("product_name")
+                if isinstance(label,str) and 1<=len(label.strip())<=MAX_TITLE:
+                    label_pid[_normalized(label)].add(claim["product_id"])
             for product in relevant:
                 matching=[row for row in claims if _matches(product,row)]
                 if not matching:
