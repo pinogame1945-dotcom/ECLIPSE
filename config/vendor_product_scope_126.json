@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "source_workbook_basename": "ECLIPSE_標準監視ソース調査_126候補_20261010.xlsx",
+  "source_workbook_sha256": "2ef5de9c39e076a6f1756794e68a39fdaad634b86ba2c0857a868736ace27e00",
+  "workbook_shared_by_user": true,
+  "whole_workbook_published": false,
+  "verified_input_rows": 126,
+  "priority_counts": {
+    "P0": 65,
+    "P1": 60,
+    "P2": 1
+  },
+  "registered_source_count": 36,
+  "read_parse_verified_count": 27,
+  "private_kaggle_v3_source_count": 24,
+  "inspection_kind": "SOURCE_LEVEL_SINGLE_SAMPLE_ONLY_NOT_PRODUCT_CVE_MAPPING",
+  "summary_grades": {
+    "A": 10,
+    "B": 18,
+    "C": 7,
+    "D": 6,
+    "E": 85
+  },
+  "grade_policy": {
+    "A": "Official source within target family parsed; exact product/version/CVE not verified",
+    "B": "Subset of product family source parsed; listed remaining targets not verified",
+    "C": "Publisher-related article or different target only; not product coverage",
+    "D": "Potential official connector registered but not successfully parsed",
+    "E": "No relevant official connector registered"
+  },
+  "relations": [
+    {
+      "row_ids": [
+        "01-001",
+        "02-009",
+        "03-020"
+      ],
+      "source_id": "cisco-public-advisories",
+      "relation": "partial",
+      "rationale": "Cisco PSIRT publisher listing proven, listed product/feature combinations not validated"
+    },
+    {
+      "row_ids": [
+        "01-004",
+        "02-010",
+        "06-045"
+      ],
+      "source_id": "hpe-psirt",
+      "relation": "failed",
+      "rationale": "HPE PSIRT static index/detail did not pass"
+    },
+    {
+      "row_ids": [
+        "01-004",
+        "02-010"
+      ],
+      "source_id": "juniper-jsa",
+      "relation": "failed",
+      "rationale": "Juniper full JSA official index not parsed"
+    },
+    {
+      "row_ids": [
+        "01-005"
+      ],
+      "source_id": "yamaha-network",
+      "relation": "publisher",
+      "rationale": "Yamaha UTX sample, not specified RTX/NVR/SWX device match"
+    },
+    {
+      "row_ids": [
+        "02-010"
+      ],
+      "source_id": "juniper-mist-security-rss",
+      "relation": "partial",
+      "rationale": "Juniper Mist security RSS only, not Aruba or complete Juniper JSA"
+    },
+    {
+      "row_ids": [
+        "03-018"
+      ],
+      "source_id": "paloalto-advisories",
+      "relation": "partial",
+      "rationale": "Palo Alto advisory source tested, CRITICAL-limited pilot not complete product or severity coverage"
+    },
+    {
+      "row_ids": [
+        "03-019"
+      ],
+      "source_id": "fortinet-psirt",
+      "relation": "partial",
+      "rationale": "Fortinet official PSIRT sample, no proof for every device/revision"
+    },
+    {
+      "row_ids": [
+        "03-023",
+        "12-104"
+      ],
+      "source_id": "ivanti-security-advisory-rss",
+      "relation": "publisher",
+      "rationale": "Official Ivanti blog RSS, product-specific Connect Secure/EPMM advisories unproven"
+    },
+    {
+      "row_ids": [
+        "04-026"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "partial",
+      "rationale": "MSRC CVRF does not guarantee every Defender cloud product update"
+    },
+    {
+      "row_ids": [
+        "05-034"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "partial",
+      "rationale": "MSRC CVRF includes only its published advisory corpus, product version links unreviewed"
+    },
+    {
+      "row_ids": [
+        "05-035"
+      ],
+      "source_id": "android-security-bulletins",
+      "relation": "partial",
+      "rationale": "Android only, not Chrome or ChromeOS"
+    },
+    {
+      "row_ids": [
+        "05-035"
+      ],
+      "source_id": "google-chrome-releases",
+      "relation": "failed",
+      "rationale": "Google Chrome source deliberately postponed after unsuccessful official probes"
+    },
+    {
+      "row_ids": [
+        "05-036"
+      ],
+      "source_id": "apple-security-releases",
+      "relation": "aligned",
+      "rationale": "Official Apple security releases, versions unreviewed"
+    },
+    {
+      "row_ids": [
+        "05-037"
+      ],
+      "source_id": "mozilla-mfsa",
+      "relation": "aligned",
+      "rationale": "Mozilla MFSA family, versions unreviewed"
+    },
+    {
+      "row_ids": [
+        "05-038",
+        "06-052"
+      ],
+      "source_id": "redhat-csaf",
+      "relation": "partial",
+      "rationale": "Red Hat CSAF family, precise RHEL/Openshift/KVM mapping unreviewed"
+    },
+    {
+      "row_ids": [
+        "05-039"
+      ],
+      "source_id": "ubuntu-security-api",
+      "relation": "aligned",
+      "rationale": "Official Ubuntu USN, exact distribution package exposure unreviewed"
+    },
+    {
+      "row_ids": [
+        "05-041"
+      ],
+      "source_id": "debian-dsa",
+      "relation": "aligned",
+      "rationale": "Official Debian DSA, full Security Tracker completeness not established"
+    },
+    {
+      "row_ids": [
+        "06-046"
+      ],
+      "source_id": "vmware-broadcom-vmsa",
+      "relation": "failed",
+      "rationale": "VMware VMSA static listing could not yield validated official detail"
+    },
+    {
+      "row_ids": [
+        "06-047"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "partial",
+      "rationale": "MSRC Hyper-V/Windows Server source-level candidate, product assertions unreviewed"
+    },
+    {
+      "row_ids": [
+        "07-054"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "publisher",
+      "rationale": "MSRC does not establish full Azure/Entra ID service security coverage"
+    },
+    {
+      "row_ids": [
+        "07-056",
+        "08-062"
+      ],
+      "source_id": "oracle-security-patches",
+      "relation": "failed",
+      "rationale": "Oracle public CPU collector failed source-scoped detail extraction"
+    },
+    {
+      "row_ids": [
+        "08-063"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "partial",
+      "rationale": "MSRC SQL Server potential, Azure SQL complete coverage not demonstrated"
+    },
+    {
+      "row_ids": [
+        "08-064"
+      ],
+      "source_id": "postgresql-security",
+      "relation": "aligned",
+      "rationale": "PostgreSQL upstream security advisory source tested; exact version impact unreviewed"
+    },
+    {
+      "row_ids": [
+        "08-068"
+      ],
+      "source_id": "ibm-security-bulletins",
+      "relation": "failed",
+      "rationale": "IBM security bulletin index/detail extraction not successful"
+    },
+    {
+      "row_ids": [
+        "09-071"
+      ],
+      "source_id": "nginx-security",
+      "relation": "partial",
+      "rationale": "NGINX Open Source only, not F5 NGINX Plus"
+    },
+    {
+      "row_ids": [
+        "09-073"
+      ],
+      "source_id": "apache-httpd-security",
+      "relation": "partial",
+      "rationale": "Apache HTTP Server official aggregate only, not Struts/Kafka"
+    },
+    {
+      "row_ids": [
+        "09-073"
+      ],
+      "source_id": "tomcat-security",
+      "relation": "partial",
+      "rationale": "Apache Tomcat official major-release aggregate only"
+    },
+    {
+      "row_ids": [
+        "09-074"
+      ],
+      "source_id": "wordpress-core-security",
+      "relation": "aligned",
+      "rationale": "WordPress Core security news, excludes themes/plugins"
+    },
+    {
+      "row_ids": [
+        "09-076"
+      ],
+      "source_id": "openssl-security",
+      "relation": "aligned",
+      "rationale": "Official OpenSSL aggregated vulnerability catalog"
+    },
+    {
+      "row_ids": [
+        "09-079",
+        "03-024"
+      ],
+      "source_id": "nginx-security",
+      "relation": "publisher",
+      "rationale": "NGINX OSS is not F5 BIG-IP/NGINX Plus security-advisory proof"
+    },
+    {
+      "row_ids": [
+        "10-081"
+      ],
+      "source_id": "gitlab-security-releases",
+      "relation": "aligned",
+      "rationale": "Official GitLab patch releases, installed versions not verified"
+    },
+    {
+      "row_ids": [
+        "10-082"
+      ],
+      "source_id": "atlassian-security",
+      "relation": "partial",
+      "rationale": "Atlassian Data Center advisories, excludes Cloud and untested products"
+    },
+    {
+      "row_ids": [
+        "10-083"
+      ],
+      "source_id": "jenkins-security",
+      "relation": "aligned",
+      "rationale": "Official Jenkins core/plugin security advisories"
+    },
+    {
+      "row_ids": [
+        "11-088"
+      ],
+      "source_id": "microsoft-msrc",
+      "relation": "partial",
+      "rationale": "MSRC may cover Exchange/SharePoint but not all Microsoft 365 SaaS updates"
+    },
+    {
+      "row_ids": [
+        "11-094"
+      ],
+      "source_id": "sap-security-patch-days",
+      "relation": "publisher",
+      "rationale": "SAP public monthly patch day news only, not authenticated SAP product Security Notes"
+    },
+    {
+      "row_ids": [
+        "11-096"
+      ],
+      "source_id": "adobe-security-bulletins",
+      "relation": "partial",
+      "rationale": "Adobe public bulletins, Acrobat/AEM/ColdFusion scope must be individually validated"
+    },
+    {
+      "row_ids": [
+        "14-117"
+      ],
+      "source_id": "siemens-csaf",
+      "relation": "aligned",
+      "rationale": "Siemens ProductCERT official CSAF, per-product fixes/versions unreviewed"
+    }
+  ],
+  "unmapped_row_ids_are_E": true,
+  "prohibits": [
+    "claiming complete vendor or product coverage",
+    "claiming customer vulnerability applicability",
+    "claiming a CVE is exploitable merely from source mention",
+    "treating missing source as absence of vulnerability",
+    "publishing the uploaded original workbook to public GitHub",
+    "enabling production collection or altering main"
+  ],
+  "manual_review_required": true,
+  "licensed_redistribution_approved": false,
+  "stable_source_count_criterion": "Representative read/parse is not operational SLA",
+  "creation_basis": "Uploaded user workbook compared with feature-branch official source registry"
+}
