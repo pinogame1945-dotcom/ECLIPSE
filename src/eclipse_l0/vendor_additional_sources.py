@@ -109,8 +109,9 @@ def normalize_html(source:dict,item:dict,raw:bytes) -> dict:
                 "DSA-"+m.group(1)+"-"+m.group(2)==ident
                 for m in DSA.finditer(page_text)):
             raise ValueError("Debian announcement did not contain its DSA ID")
-        match=re.search(r"\bCVE\s+ID\s*:\s*(.*?)\b(?:Several|For the stable|The following|A|Security|Debian)\b",
-                        page_text,re.I)
+        match=re.search(
+            r"\bCVE\s+ID\s*:\s*((?:CVE-\d{4}-\d{4,}(?:[\s,;]+|$)){1,200})",
+            page_text,re.I)
         # DSA mail usually prints CVE ID on a line and may wrap. Candidate
         # IDs within this scoped section are trustworthy; otherwise hold them
         # for human review rather than attach arbitrary page links.
