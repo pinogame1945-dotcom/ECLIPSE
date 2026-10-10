@@ -171,6 +171,31 @@ class SourcePilotOfflineTest(unittest.TestCase):
         self.assertEqual(facts["affected"],[])
         self.assertNotIn("fixed_version",facts)
 
+    def test_blocked_external_redirect_is_visible_degradation_not_pass(self):
+        source=self.sources["atlassian-security"]
+        unsafe="https://confluence.atlassian.com/security/cve-2020-5260"
+        safe="https://confluence.atlassian.com/security/cve-2026-22001"
+        listing=("<html><body><main><a href='"+unsafe+"'>CVE-2020-5260</a>"
+                 "<a href='"+safe+"'>CVE-2026-22001</a></main></body></html>").encode()
+        page=("<html><body><main><h1>CVE-2026-22001</h1>"
+              "<p>This synthetic test publisher content is sufficiently long "
+              "to be audited as an example notice, without asserting any true "
+              "security claims or actual product impact. The recorded source "
+              "is only a fake fixture used for source-redirect safety checks."
+              "</p></main></body></html>").encode()
+        class Stub:
+            def get(self,url,limit=None):
+                if url==source["discovery_url"]:return listing
+                if url==unsafe:raise ValueError("Source redirected outside official HTTPS allowlist")
+                if url==safe:return page
+                raise AssertionError("Unexpected url "+url)
+        result=ingest_source(self.registry,source,self.db,2,Stub())
+        self.assertEqual(result["status"],"DEGRADED")
+        self.assertEqual(result["saved"],1)
+        self.assertEqual(result["quarantine_reason"],"UNTRUSTED_OFFSITE_REDIRECT_BLOCKED")
+        self.assertEqual(len(result["errors"]),1)
+        self.assertEqual(result["baseline"],1)
+
     def test_atlassian_navigation_cves_not_promoted_to_facts(self):
         source=self.sources["atlassian-security"]
         item={"id":"CVE-2026-21589","title":"CVE-2026-21589 bulletin",
