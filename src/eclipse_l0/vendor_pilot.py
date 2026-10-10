@@ -71,7 +71,7 @@ class OfficialFetch:
         self.min_spacing_seconds = 0.35
         self.last_request_at = None
 
-    def get(self, url: str, limit: int = MAX_FEED) -> bytes:
+    def get(self, url: str, limit: int = MAX_FEED, *, prefix_only: bool = False) -> bytes:
         if not _host_allowed(url, self.allowed):
             raise ValueError("Nonofficial HTTPS URL refused")
         # Only transient upstream/network errors are retried, once. 4xx except
@@ -95,9 +95,12 @@ class OfficialFetch:
                     if not _host_allowed(response.url, self.allowed):
                         raise ValueError("Final host outside official allowlist")
                     raw = response.read(limit + 1)
-                if len(raw) > limit:
+                if len(raw) > limit and not prefix_only:
                     raise ValueError("Official response exceeded bounded limit")
-                return raw
+                # Only explicitly requested RSS-prefix discovery can truncate.
+                # Such incomplete XML is never treated as a full feed or proof
+                # that all advisories have been observed.
+                return raw[:limit] if prefix_only else raw
             except HTTPError as exc:
                 if attempt == 0 and exc.code in (429, 500, 502, 503, 504):
                     time.sleep(1.2)
@@ -231,7 +234,8 @@ def discover(source, getter, max_items, known_ids=None):
     """
     sid = source["source_id"]
     url = source["discovery_url"]
-    raw = getter.get(url, 24 * 1024 * 1024 if sid=="netapp-psirt" else MAX_FEED)
+    raw = (getter.get(url, 4 * 1024 * 1024, prefix_only=True)
+           if sid=="netapp-psirt" else getter.get(url))
     entries = []
     if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
         from .vendor_wave3_sources import discover_wave3

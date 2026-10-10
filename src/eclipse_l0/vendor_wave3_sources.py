@@ -126,16 +126,25 @@ def discover_wave3(source:dict,raw:bytes)->list[dict]:
     from .vendor_pilot import _host_allowed,_page,_xml
     sid=source["source_id"];base=source["discovery_url"]
     if sid=="netapp-psirt":
-        root=_xml(raw)
+        from xml.etree import ElementTree as ET
+        # NetApp's public RSS may exceed 24MiB because it includes article
+        # content. Only consume a bounded publisher-host prefix of at most
+        # 4MiB, parse complete <item> elements and report coverage as PARTIAL.
+        if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
+            raise ValueError("Unsafe XML DTD/entity in publisher RSS")
+        if b"<rss" not in raw[:2048].lower():
+            raise ValueError("NetApp official index prefix is not an RSS document")
         entries=[]
-        for item in root.findall("./channel/item"):
+        for match in re.finditer(rb"<item(?:\s[^>]*)?>[\s\S]*?</item>",raw,re.I):
+            item=ET.fromstring(match.group(0))
             url=(item.findtext("link") or "").strip()
             ident=identity(sid,url)
             if ident and _host_allowed(url,source["allowed_hosts"]):
                 entries.append({"id":ident,"url":url,
                                 "title":(item.findtext("title") or ident)[:220]})
-        if not entries:raise ValueError("NetApp publisher RSS contains no verified official item links")
-        return entries[:750]
+            if len(entries)>=32:break
+        if not entries:raise ValueError("NetApp bounded RSS prefix has no complete official item records")
+        return entries
     if sid in SINGLETON:
         if not _host_allowed(base,source["allowed_hosts"]):raise ValueError("Bad singleton official origin")
         txt=" ".join(_publisher_body(raw,sid))
