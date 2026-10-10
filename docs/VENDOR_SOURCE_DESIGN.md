@@ -87,3 +87,33 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 PoCの実行結果は原則GitHub Actionsの短命なArtifactだが、**失効後も実績が失われないよう**正本JSONに証拠実行URLと検証事実を継続保存する。重要な判断に使った内容は必要に応じハッシュと許可された証拠を別アーカイブへ保管する。新規ベンダーの追加は「候補→実データ収集→登録簿で検証済み→本番ゲート」の順番。検証失敗のベンダーも削除せず原因と次の手順を残す。
 
 **未実装のものを「できた」と書かない。これは接続性と解析能力の設計検証であり、正式な連続監視のSLA達成報告ではない。**
+
+## 実収集→詳細保存の統合PoC（2026-10-10）
+
+**9ソースの公式一覧→詳細→正規化→ローカルSQLite保存→同一データ再取込をGitHub Actionsで実行し、9/9成功。** これは`read_parse_verified`からの発展だが、本番可否を保証するものではない。
+
+- 実行ログ・証拠：[GitHub Actions 38048877850](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850)
+- 動作コード：`src/eclipse_l0/vendor_pilot.py`
+- 実行方式：`.github/workflows/vendor-evidence-pilot.yml`（同名の検証ブランチ push と明示的手動実行のみ。定期監視ではない）
+- 選択対象：Fortinet、Microsoft、Palo Alto Networks、Red Hat、Siemens、ヤマハ、GitLab、Ubuntu、Atlassian。
+- 実測：9情報源から**代表アドバイザリ各1件**、合計9件を保存。DB `quick_check=ok`。9 baselineイベント、9不変の再取込を確認（イベントの重複は0件）。
+- Microsoftについては2026-Oct CVRFの240 CVE IDを抽出。ただし**240件の個別製品影響を確認した意味ではない**。
+- FortinetはFG-IR-26-175の影響/対策表4行、Palo AltoはCVE-2026-0300の影響表3行、SiemensはSSA-627195の9製品IDをそれぞれ未審査として保存。Red Hat CSAF、Ubuntu USNも個別公告を保存。
+- GitLab、ヤマハ、Atlassianは**HTMLのページ全体に含まれるCVEを確定した関連脆弱性とはみなさない**。見出し／URL由来とページ全体由来の候補を分ける。構造化された正確な影響バージョンの抽出は未完了。
+- レジストリは `one_shot_evidence_pipeline` に成功実績、Action URL、1件、baseline 1件、replay 1件、保管条件を記録。将来のPRでも検証実績が散逸しない。
+
+**運用上の強い制限：** DBはGitHub Actionsの実行環境で作られ、Artifact保持は7日。毎回実行時に前回の保存DBを自動復元することはしていない。元のベンダー本文は蓄積せず、SHA256と出典URL・出典フィールド、未審査の正規化情報だけを保管。したがって「継続的にデータが蓄積されている」「詳細がすべて正しく抽出されている」とは**言えない**。顧客向け自動配信、本番用持続ストレージ、情報源の網羅率、商用再配布権利、定期更新監視はいずれも未実装。
+
+### 再現用のコマンド
+
+```bash
+PYTHONPATH=src python -m eclipse_l0.vendor_registry
+PYTHONPATH=src python -m eclipse_l0.vendor_pilot \
+  --registry config/vendor_source_registry.json \
+  --db output/vendor-evidence.sqlite3 \
+  --out output/vendor-evidence-manifest.json \
+  --max-items 1
+PYTHONPATH=src python -m unittest discover -s tests -p 'test_vendor*.py' -v
+```
+
+次の合格ゲートは、(1) 許諾を確認した**非公開の永続保存先**を準備すること、(2) 異なる実行間でDBを復元して**本当の更新差分**を観測すること、(3) パーサー項目をソース横断で監査すること、(4) 承認済みのCORE/WATCH/CUSTOMへのリンクを構築すること、(5) ベンダーごとの権利と更新間隔を確定させること。
