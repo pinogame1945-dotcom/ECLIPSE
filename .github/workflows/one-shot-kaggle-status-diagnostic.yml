@@ -54,5 +54,29 @@ jobs:
                 "pending":("pending" in message),
                 "ready":("ready" in message),
                 "error_status":("error" in message)}
+
+          # Minimal verified readback, without requesting a 162-file provider archive.
+          import hashlib
+          from pathlib import Path
+          targets=["archive-index.json","000000-002499.cvepack"]
+          for name in targets:
+              output=Path(os.environ["RUNNER_TEMP"])/"kaggle-diag"/("probe-"+name.replace(".","-"))
+              output.mkdir(parents=True,exist_ok=True)
+              try:
+                  args=["kaggle","datasets","download",ref,"--file",name,"-p",str(output),"--unzip","--force","--quiet"]
+                  p=subprocess.run(args,capture_output=True,text=True,timeout=90)
+                  msg=(p.stdout+"\n"+p.stderr).lower()
+                  downloaded=output/name
+                  results["fetch_"+name]={
+                      "exit_code":p.returncode, "present":downloaded.exists(),
+                      "bytes":downloaded.stat().st_size if downloaded.exists() else 0,
+                      "sha256":hashlib.sha256(downloaded.read_bytes()).hexdigest() if downloaded.exists() else None,
+                      "code_403":("403" in msg), "code_404":("404" in msg),
+                      "code_429":("429" in msg), "code_500":("500" in msg),
+                      "code_502":("502" in msg), "code_503":("503" in msg),
+                      "timeout":False
+                  }
+              except subprocess.TimeoutExpired:
+                  results["fetch_"+name]={"timeout":True}
           print(json.dumps(results,sort_keys=True))
           PY
