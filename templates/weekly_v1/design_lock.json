@@ -1,0 +1,47 @@
+{
+  "schema": "eclipse.weekly.design-lock.v1",
+  "version": "1.0.1",
+  "approved_sample_sha256": "67b11361f2fa5e5187713be683c92b91069d54afe262fe972bbc76aedfceb77a",
+  "golden_name": "WEEKLY_GOLDEN_V1.0.pptx",
+  "golden_delivery": "ECLIPSE_WEEKLY_TEMPLATE_V1.0.1.zip — unchanged original PPTX, full validator supporting added approved pages; not in public repo",
+  "size_emu": [
+    12191695,
+    6858000
+  ],
+  "font": "Meiryo UI",
+  "sample_pages": 19,
+  "slide_style_signatures": [
+    "2c2524f12b05225642208c9d13778867bc9f2b83e034bbd9f91f2e6a055bb210",
+    "ececb638d37bfd32a6757b84477d5f9e5e277531bd5e252195efad4fec6eafb9",
+    "069248be63056e524dae54b6dbb3ac353b1e50979fea0786769b48839401b1d8",
+    "b5d17912f9a2a185aa29238b4dc861ce72a3fba2b0ead3a6dae71a46acb3c000",
+    "4bb812edf58bed571428bc17e3e893fbde9f52433bbc27a02482769c41cb909c",
+    "370195504bb39a9343b95f2da39f08d3b81fd8c5ad33b57f816d2aa3d48bba41",
+    "832ada3b0d4030d074a4d5595888143e2d29135187a9ae0b9b9939a7957302aa",
+    "9e73225412de1f0b63b3e6dba73212d8c245be304a0396d466bb3cc1d7c73679",
+    "0a591e1e469a4e9698baa8a7868e9483b5e0ec5b65a00e6b6633caa433f7e66e",
+    "c7af2e2b052cb6304fbd5f4d83ca5d21dd83af325d965b5b7a38587c26bea6b9",
+    "2ff66c601441ee17085f5c5348722bc0045d210ba0a155921ca733c5de4d3cfa",
+    "3c083eefb1905c112efa5bc6c9627e0dfdcc26484746375ec2373c6ecb073615",
+    "5a592e5fe19c9b602bef99bd80738acc260586814592c7f426a729db176dea9f",
+    "fbe80ea2270b8656813f059b8dfbd7dd072930eb10d4c8e6e907b8c797a97a80",
+    "1a1e2651375895eee42c62ad0e28a82356d099e4f004dd2ba1916108877fd171",
+    "ee30312877a64c3e70979388f912d9ead54eb21a3a8815c88f8299a1b62cea33",
+    "8aaf0348cd7ae7e9a7dee291fe5917eb2018f7573afe0ec6fb0d1a7174801b6b",
+    "8a2021b3b5ffa9bf015a9856e8593e31acf4202335c616579077b1f7abed12db",
+    "22202368c1f53b488d0664c218eb1c4e897829b2b1b6b46a154ad86747f6d1cd"
+  ],
+  "protected_base": {
+    "ppt/theme/theme1.xml": "f413256171fdb43bad02ce6508ee59f40fab58885efddae7a59048d2081ac9e1",
+    "ppt/slideMasters/slideMaster1.xml": "44cc65956f47c1cf689803dcc7a1d9225c93d3fd90754a9f85e2bdcea27565bc",
+    "ppt/slideLayouts/slideLayout7.xml": "e4d86b009a8ca6ca9ecfadc97c68b7123b60544df09a7ea42864a4f5f74ce09c"
+  },
+  "content_status": "UNVERIFIED_SAMPLE_NOT_FOR_CUSTOMERS",
+  "pagination": {
+    "allow_increase": true,
+    "minimum_reference_pages": 19,
+    "max_pages": 250,
+    "only_approved_page_design_signatures": true,
+    "reference_pages_preserved_in_order": true
+  }
+}
