@@ -30,7 +30,7 @@ def read(url, hosts):
         final = resp.url
         p = urlparse(final)
         if p.scheme != "https" or p.hostname not in hosts:
-            raise ValueError("Redirect outside source allowlist")
+            raise ValueError("Redirect outside source allowlist: "+final[:170])
         raw = resp.read(MAX_BYTES + 1)
         if len(raw) > MAX_BYTES:
             raise ValueError("Exceeded 5 MiB response cap")
@@ -171,7 +171,7 @@ def chrome():
 
 
 def atlassian():
-    hosts={"www.atlassian.com"}
+    hosts={"www.atlassian.com","confluence.atlassian.com"}
     links=[]
     def listing():
         raw,e=read("https://www.atlassian.com/trust/security/advisories",hosts)
@@ -179,7 +179,7 @@ def atlassian():
         t=" ".join(page.text)
         for title,link in page.links:
             url=urljoin(e["url"],link)
-            if (urlparse(url).hostname in hosts and ("bulletin" in url.lower() or "CVE-" in title
+            if (urlparse(url).hostname in hosts and ("/pages/" in url.lower() or "bulletin" in url.lower() or "CVE-" in title
                                                      or "security advisory" in title.lower())
                 and url!=e["url"]):
                 links.append((title,url))
