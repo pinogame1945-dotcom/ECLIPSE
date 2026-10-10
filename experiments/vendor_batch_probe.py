@@ -199,6 +199,7 @@ def probe_redhat():
                 "has_details": bool(obj.get("details") or obj.get("statement")),
                 "has_affected_releases": bool(obj.get("affected_release") or obj.get("package_state")),
                 "has_mitigation": bool(obj.get("mitigation"))}
+    recent_csaf = []
     def csaf_change_index():
         csaf_hosts = {"security.access.redhat.com"}
         metadata, mev = json_source("https://security.access.redhat.com/data/csaf/v2/provider-metadata.json",
@@ -214,23 +215,45 @@ def probe_redhat():
         for row in parser:
             if row:
                 rows.append(row)
+                if row[0].endswith(".json"):
+                    recent_csaf.append(row[0])
             if len(rows) >= 4:
                 break
-        if len(rows) < 2:
-            raise ValueError("No CSAF releases feed rows")
+        if not recent_csaf:
+            raise ValueError("No CSAF release JSON paths in official index")
         return {"provider_metadata": mev, "index_evidence": ev,
                 "publisher": metadata.get("publisher", {}).get("name"),
-                "header_fields": rows[0][:15], "sample_records": [row[:4] for row in rows[1:]]}
+                "index_sample_records": [row[:3] for row in rows]}
+
+    def csaf_document():
+        if not recent_csaf:
+            raise ValueError("No discovered CSAF path")
+        path = recent_csaf[0]
+        if not re.fullmatch(r"\d{4}/rhsa-\d{4}_\d+\.json", path):
+            raise ValueError("Unrecognized CSAF path in official index")
+        base = "https://security.access.redhat.com/data/csaf/v2/advisories/"
+        obj, ev = json_source(base + path, {"security.access.redhat.com"})
+        vulns = obj.get("vulnerabilities") if isinstance(obj, dict) else None
+        if not isinstance(vulns, list):
+            raise ValueError("Red Hat CSAF missing vulnerability list")
+        doc = obj.get("document") or {}
+        return {"evidence": ev, "relative_path": path,
+                "csaf_version": doc.get("csaf_version"),
+                "title": str(doc.get("title", ""))[:130],
+                "vulnerability_count": len(vulns),
+                "cve_samples": [x.get("cve") for x in vulns[:6] if isinstance(x, dict)],
+                "has_product_tree": isinstance(obj.get("product_tree"), dict)}
 
     a = call(r, "cve_list", listing)
     b = call(r, "cve_detail", detail)
     c = call(r, "csaf_change_index", csaf_change_index)
-    if b and c:
+    d = call(r, "csaf_document", csaf_document) if c else None
+    if c and d:
         r["verdict"] = "PASS"
-        if not a:
-            r["limitations"].append("Legacy CVE list API did not provide usable data in this run; CSAF release index is the viable discovery path.")
+        if not a or not b:
+            r["limitations"].append("Legacy CVE list/detail endpoints may return null, but official CSAF release feed + advisory detail are reachable.")
     else:
-        r["verdict"] = "PARTIAL" if a or b or c else "FAIL"
+        r["verdict"] = "PARTIAL" if a or b or c or d else "FAIL"
     return r
 
 
