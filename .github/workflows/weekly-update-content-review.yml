@@ -53,10 +53,10 @@ jobs:
              --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
           echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
           python -m eclipse_l0.weekly_evidence verify --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
-      - name: Optional trusted registry-validated vendor version history
-        if: inputs.vendor_artifact_run != ''
+      - name: Check pinned previous-run vendor version history (source content changes only)
+        if: inputs.vendor_artifact_run != '' || github.event_name == 'push'
         env:
-          VENDOR_ARTIFACT_RUN: ${{ inputs.vendor_artifact_run }}
+          VENDOR_ARTIFACT_RUN: ${{ inputs.vendor_artifact_run || '38056175584' }}
         run: |
           set -euo pipefail
           if ! [[ "$VENDOR_ARTIFACT_RUN" =~ ^[0-9]{5,15}$ ]]; then
@@ -69,6 +69,9 @@ jobs:
           mkdir -p output/vendor
           gh run download "$VENDOR_ARTIFACT_RUN" --repo "$GITHUB_REPOSITORY" \
              --name eclipse-vendor-to-sqlite-one-shot --dir output/vendor
+          if [ "$VENDOR_ARTIFACT_RUN" = "38056175584" ]; then
+            echo 'b3622920bc162e5c6eb15baf3b0f37c6d56d4d47c62d55f82927aaca92f3db50  output/vendor/vendor-evidence.sqlite3' | sha256sum -c -
+          fi
           python -m eclipse_l0.weekly_material build \
              --vendor-db output/vendor/vendor-evidence.sqlite3 \
              --registry config/vendor_source_registry.json \
