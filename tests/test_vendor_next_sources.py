@@ -88,4 +88,30 @@ class ExpandedOfficialTests(unittest.TestCase):
               "publisher body but is a valid release note.</main>").encode()
         self.assertEqual(normalize(x,item,body)["cve_ids"],[])
 
+    def test_real_publisher_markup_shapes_are_explicitly_supported(self):
+        variants=[
+            ("apple-security-releases",
+             "<div class='main section viewport-content'>",
+             "</div>"),
+            ("google-chrome-releases",
+             "<div class='post-content post-original'>",
+             "</div>"),
+            ("postgresql-security",
+             "<h1>CVE-2026-19385</h1><div>",
+             "</div>")
+        ]
+        for sid,start,end in variants:
+            with self.subTest(sid=sid):
+                identity,url,title,heading=samples[sid]
+                item={"id":identity,"url":url,"title":title}
+                content=("<nav>CVE-2026-77777</nav>"+start+
+                         "<h2>"+heading+"</h2><p>Official publisher evidence text "+
+                         "for a deliberately fictional CVE-2026-123456 and "+
+                         "a source-document parser exercise only.</p>"+end+
+                         "<footer>CVE-2026-88888</footer>").encode()
+                facts=normalize(sources[sid],item,content)
+                self.assertNotIn("CVE-2026-77777",facts["cve_ids"])
+                self.assertNotIn("CVE-2026-88888",facts["cve_ids"])
+                self.assertTrue(facts["evidence_fields"])
+
 if __name__=="__main__":unittest.main()

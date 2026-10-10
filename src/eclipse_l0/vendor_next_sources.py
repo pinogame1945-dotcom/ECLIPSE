@@ -23,16 +23,26 @@ MAX_CVE_REFERENCES = 500
 class ContentOnly(HTMLParser):
     """Only main/article or Chrome's post-body; ignore site chrome and scripts."""
     IGNORED={"script","style","nav","header","footer","aside","noscript","svg"}
-    def __init__(self, chrome=False):
+    def __init__(self, chrome=False, apple=False, postgres=False):
         super().__init__()
         self.chrome=chrome
+        self.apple=apple
+        self.postgres=postgres
+        self.pg_heading_started=False
         self.stack=[]
         self.focus=0
         self.ignored=0
         self.text=[]
     def handle_starttag(self,tag,attrs):
         attrs=dict(attrs)
-        active=(tag=="div" and "post-body" in attrs.get("class","").split()) if self.chrome else tag in ("main","article")
+        classes=set(attrs.get("class","").split())
+        active=(tag in ("main","article")
+            or (self.chrome and tag=="div" and bool(classes & {"post-body","post-content"}))
+            or (self.apple and tag=="div" and {"main","viewport-content"} <= classes))
+        if self.postgres and tag=="h1" and self.ignored==0:
+            self.pg_heading_started=True
+        if self.postgres and tag=="footer":
+            self.pg_heading_started=False
         self.stack.append((tag,active,tag in self.IGNORED))
         self.focus+=int(active)
         self.ignored+=int(tag in self.IGNORED)
@@ -45,7 +55,7 @@ class ContentOnly(HTMLParser):
         self.ignored-=sum(x[2] for x in closing)
         del self.stack[pos:]
     def handle_data(self,value):
-        if self.focus>0 and self.ignored==0:
+        if (self.focus>0 or (self.postgres and self.pg_heading_started)) and self.ignored==0:
             value=" ".join(value.split())
             if value:self.text.append(value)
 
@@ -100,7 +110,9 @@ def normalize_official(source:dict,item:dict,raw:bytes) -> dict:
     ident=_identity(sid,item.get("title",""),item["url"])
     if ident!=item["id"] or not _host_allowed(item["url"],source["allowed_hosts"]):
         raise ValueError("Publisher advisory URL, listing title or ID mismatch")
-    parser=ContentOnly(chrome=(sid=="google-chrome-releases"))
+    parser=ContentOnly(chrome=(sid=="google-chrome-releases"),
+                       apple=(sid=="apple-security-releases"),
+                       postgres=(sid=="postgresql-security"))
     parser.feed(raw.decode("utf-8","replace"))
     content=" ".join(parser.text)
     if len(content)<65:
