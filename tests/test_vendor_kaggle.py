@@ -43,6 +43,10 @@ class KaggleVendorSnapshotTest(unittest.TestCase):
                     fields["observed_utc"]="2026-10-10T13:00:00Z"
                     fields["facts"]["title"]=f"SYNTHETIC revision {i}"
                     observe(db,**fields)
+        # sqlite3.Connection context manager commits but DOES NOT close.
+        # Close to checkpoint WAL so the raw SQLite file is self-contained,
+        # exactly as a completed independent Actions process would be.
+        db.close()
         a=inspect_db(self.source,self.registry)
         self.assertEqual((a["advisories"],a["versions"],a["events"]),(125,202,202))
         self.digest=a["sqlite_sha256"]
