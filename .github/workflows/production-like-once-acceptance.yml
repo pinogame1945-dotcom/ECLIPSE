@@ -1,0 +1,256 @@
+name: ECLIPSE one-time production-like end-to-end acceptance (read-only)
+
+# Trigger automatically only when THIS acceptance workflow is first committed
+# to main; subsequent pushes to application source do not retrigger it.
+# Manual repeat is explicitly supported, but never scheduled.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-like-once-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-production-like-acceptance-readonly
+  cancel-in-progress: false
+
+jobs:
+  live-source-dryrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          path: observed
+          ref: eclipse-state
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect official state checkpoint without changing remote
+        working-directory: app
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('../observed/data/cve-delta-checkpoint.json').read_text())
+          print('EXISTING_STATE_WATERMARK',c['watermark_utc'])
+          print('HISTORIC_CVE_SOURCE_VERSIONS_EXIST',Path('../observed/data/cve-version-history/manifest.json').exists())
+          PY
+      - name: Download LIVE upstream official CVE deltaLog and KEV JSON
+        working-directory: app
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output
+          curl --fail --location --retry 3 --retry-all-errors --max-time 120 \
+            https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves/deltaLog.json \
+            --output downloads/deltaLog.json
+          test "$(wc -c < downloads/deltaLog.json)" -le 41943040
+          curl --fail --location --retry 3 --retry-all-errors --max-time 120 \
+            https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json \
+            --output downloads/kev.json
+          test "$(wc -c < downloads/kev.json)" -le 26214400
+          sha256sum downloads/deltaLog.json downloads/kev.json > output/live-source-sha256.txt
+      - name: DRY-RUN official delta cursor and actual full original CVE downloads
+        working-directory: app
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.cve_delta \
+            --log downloads/deltaLog.json --state-dir ../observed/data \
+            --out output/current-live-cve-delta.json --max-events 5000
+          python -m eclipse_l0.cve_version_history capture \
+            --delta-report output/current-live-cve-delta.json \
+            --state-dir ../observed/data \
+            --out output/live-cve-original-capture.json \
+            --workers 20
+          python -m eclipse_l0.cve_version_history audit \
+            --state-dir ../observed/data \
+            > output/live-source-readback-audit.json
+      - name: DRY-RUN official KEV against actual public state
+        working-directory: app
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.kev_monitor \
+            --feed downloads/kev.json --state-dir ../observed/data \
+            --out output/current-live-kev-delta.json
+      - name: Validate LIVE provenance, conservation and no remote writes
+        working-directory: app
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          c=json.loads(Path('output/current-live-cve-delta.json').read_text())
+          h=json.loads(Path('output/live-cve-original-capture.json').read_text())['summary']
+          a=json.loads(Path('output/live-source-readback-audit.json').read_text())
+          k=json.loads(Path('output/current-live-kev-delta.json').read_text())
+          assert c['event_count']==h['input_delta_event_count']
+          assert a['integrity']=='VERIFIED_ROLLING_ORIGINAL_RECORD_BYTES'
+          assert h['distinct_fetched_cves']==h['snapshots_archived']+sum(
+            x for key,x in h['change_classes'].items() if key=='UNCHANGED_RAW_SOURCE_ON_DELTA_EVENT')
+          assert not a['complete_cve_history'] and not h['long_term_durability_not_certified'] is False
+          assert k['catalog_count']>=1000
+          assert k['event_count']==k['added_count']+k['updated_count']+k['removed_count']
+          out={'kind':'PRODUCTION_LIKE_OFFICIAL_LIVE_SOURCE_DRY_RUN',
+               'live_cve_delta_count':c['event_count'],
+               'distinct_cve_raw_downloads':h['distinct_fetched_cves'],
+               'raw_source_snapshots_staged':h['snapshots_archived'],
+               'prior_version_pairs_compared':h['prior_versions_compared'],
+               'change_class_counts':h['change_classes'],
+               'unconsumed_delta_backlog':c['more_backlog'],
+               'first_run_history_baseline':h['prior_versions_compared']==0,
+               'state_after_local_only_sha256':hashlib.sha256(
+                  Path('../observed/data/cve-delta-checkpoint.json').read_bytes()).hexdigest(),
+               'kev_catalog_count':k['catalog_count'],
+               'kev_changes_observed':k['event_count'],
+               'kev_baseline':k['baseline'],
+               'official_source_sha256':Path('output/live-source-sha256.txt').read_text().strip().splitlines(),
+               'remote_eclipse_state_written':False,
+               'customer_weekly_report_generated_from_live_data':False,
+               'live_full_week_coverage_certified':False}
+          Path('output/live-production-like-proof.json').write_text(
+             json.dumps(out,indent=2,ensure_ascii=False,sort_keys=True)+'\n')
+          with open(__import__('os').environ['GITHUB_STEP_SUMMARY'],'a') as f:
+             f.write('### LIVE upstream one-cycle rehearsal (remote state read-only)\n')
+             for key in ('live_cve_delta_count','distinct_cve_raw_downloads',
+                         'raw_source_snapshots_staged','prior_version_pairs_compared',
+                         'unconsumed_delta_backlog','kev_catalog_count','kev_changes_observed'):
+                f.write(f'- {key}: **{out[key]}**\n')
+             f.write('NOT a certified same-week report. No state branch push.\n')
+          print('LIVE_PRODUCTION_LIKE_DRY_RUN_VERIFIED',json.dumps(out,ensure_ascii=False))
+          PY
+          # Nothing in this job may git commit or git push.
+          git -C ../observed status --short | head -n 20
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-production-like-LIVE-official-sources-dryrun
+          path: |
+            app/output/current-live-cve-delta.json
+            app/output/live-cve-original-capture.json
+            app/output/live-source-readback-audit.json
+            app/output/current-live-kev-delta.json
+            app/output/live-production-like-proof.json
+            app/output/live-source-sha256.txt
+          retention-days: 7
+          if-no-files-found: warn
+
+  weekly-handoff-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run full standalone weekly output and zero-overlap tests
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_weekly_section_handoff.py' -v
+          python -m unittest discover -s tests -p 'test_cve_version_history.py' -v
+      - name: Recover genuine pinned 2026-10-04..10 warehouse evidence
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify \
+            --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+      - name: Build new-KEV/new-CVE 50 and separate existing-CVE-update research queue
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --vendor-policy config/important_vendor_126.json --target 50 \
+            --out output/NEW_KEV_AND_CVE_RESEARCH_20261004_20261010.zip \
+            > output/important-new-receipt.json
+          python -m eclipse_l0.weekly_update_queue build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --watch-limit 50 \
+            --out output/EXISTING_CVE_UPDATE_REVIEW_20261004_20261010.zip \
+            > output/revised-cve-receipt.json
+          python -m eclipse_l0.weekly_section_handoff build \
+            --new output/NEW_KEV_AND_CVE_RESEARCH_20261004_20261010.zip \
+            --updates output/EXISTING_CVE_UPDATE_REVIEW_20261004_20261010.zip \
+            --out output/PRODUCTION_LIKE_WEEKLY_REPORT_RESEARCH_INPUT_20261004_20261010.zip \
+            > output/section-initial-proof.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-production-like-WEEKLY-evidence-HISTORICAL-fixed-week
+          path: |
+            output/PRODUCTION_LIKE_WEEKLY_REPORT_RESEARCH_INPUT_20261004_20261010.zip
+            output/important-new-receipt.json
+            output/revised-cve-receipt.json
+            output/section-initial-proof.json
+          retention-days: 7
+          if-no-files-found: error
+
+  independent-weekly-proof:
+    needs: weekly-handoff-rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-production-like-WEEKLY-evidence-HISTORICAL-fixed-week
+          path: output
+      - name: Independent recomputation of all frozen source evidence and two report sections
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_section_handoff verify \
+            --zip output/PRODUCTION_LIKE_WEEKLY_REPORT_RESEARCH_INPUT_20261004_20261010.zip \
+            > output/independent-weekly-proof.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/independent-weekly-proof.json').read_text())
+          assert p['result']=='INDEPENDENT_TWO_SEPARATE_WEEKLY_CVE_SECTIONS_VERIFIED'
+          assert p['original_l1_cves']==6355
+          assert p['new_kev']==6 and p['newly_published_non_kev']==44
+          assert p['new_candidates']==50
+          assert p['update_only_count']==3685
+          assert p['update_unverified_count']==3685
+          assert p['material_update_review_candidates']==0
+          assert not p['report_ready']
+          print('### Historical real-data weekly report-input rehearsal, INDEPENDENT')
+          print(f'- Full original CVE corpus: **{p["original_l1_cves"]}**')
+          print(f'- NEW section: **{p["new_candidates"]}** = KEV **{p["new_kev"]}** + CVEs **{p["newly_published_non_kev"]}**')
+          print(f'- UPDATE section: **{p["update_only_count"]}** dated update events, content verified **0**, unverified **{p["update_unverified_count"]}**')
+          print('- This is 2026-10-04..10 frozen genuine data, NOT todays dynamically observed weekly CVE set.')
+          PY
+
+  gate:
+    needs: [live-source-dryrun,independent-weekly-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Confirm BOTH rehearsal legs are successful
+        run: |
+          echo 'LIVE official delta/KEV ingestion + fixed-week genuine warehouse handoff both succeeded.'
+          echo 'NO git push to eclipse-state, NO customer report auto-published.'
