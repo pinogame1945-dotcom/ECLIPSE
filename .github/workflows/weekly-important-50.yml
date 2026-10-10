@@ -1,8 +1,14 @@
 name: ECLIPSE important ~50 (new KEV + approved 126 vendors + risk)
 
-# Manual, research-only until the actual approved 126-row list is present.
-# Does NOT claim production monitoring or generate a weekly report.
+# Research-only, source-pinned. Does NOT claim production monitoring or generate a report.
 on:
+  push:
+    branches: [feature/weekly-important-50-20261010]
+    paths:
+      - '.github/workflows/weekly-important-50.yml'
+      - 'config/important_vendor_126.json'
+      - 'src/eclipse_l0/weekly_important.py'
+      - 'tests/test_weekly_important.py'
   workflow_dispatch:
     inputs:
       target:
@@ -66,7 +72,7 @@ jobs:
           python -m eclipse_l0.weekly_important build \
             --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
             --vendor-policy config/important_vendor_126.json \
-            --target "${{ inputs.target }}" --min-score "${{ inputs.min_score }}" \
+            --target "${{ inputs.target || '50' }}" --min-score "${{ inputs.min_score || '55' }}" \
             --out output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
             | tee output/important-build-receipt.json
           python -m eclipse_l0.weekly_important verify \
