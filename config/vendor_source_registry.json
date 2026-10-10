@@ -1558,11 +1558,15 @@
         "www.mist.com",
         "mist.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:31:26Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063948711",
+      "verified_capabilities": [
+        "One official publisher RSS item listing -> canonical security category publication retrieved and parsed in Actions 38063948711",
+        "Publisher HTTPS title and article body validated, 0 CVE references on selected sample, no product applicability claims"
+      ],
       "pending_gates": [
+        "SQLite idempotent archival proof; follow-up multi-item sampling and official CVE/affected version field coverage",
         "Official RSS index-to-sample HTML details, source domain and ID",
         "Source-specific title, publication date, product and version exact publisher review",
         "Full feed, revisions, historical completeness and rights review before production"
@@ -1584,11 +1588,15 @@
         "www.ivanti.com",
         "ivanti.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T15:31:26Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063948711",
+      "verified_capabilities": [
+        "One official publisher RSS item listing -> canonical security category publication retrieved and parsed in Actions 38063948711",
+        "Publisher HTTPS title and article body validated, 0 CVE references on selected sample, no product applicability claims"
+      ],
       "pending_gates": [
+        "SQLite idempotent archival proof; follow-up multi-item sampling and official CVE/affected version field coverage",
         "Official RSS index-to-sample HTML details, source domain and ID",
         "Source-specific title, publication date, product and version exact publisher review",
         "Full feed, revisions, historical completeness and rights review before production"
@@ -1964,5 +1972,17 @@
         "verification_status": "read_parse_verified"
       }
     ]
+  },
+  "next_two_official_rss_20261011": {
+    "attempted": 2,
+    "read_parse_verified": 2,
+    "local_sqlite_verified": false,
+    "kaggle_v3_modified": false,
+    "source_ids": [
+      "juniper-mist-security-rss",
+      "ivanti-security-advisory-rss"
+    ],
+    "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063948711",
+    "narrow_scope_only": true
   }
 }

@@ -8,3 +8,6 @@ Following PRIVATE Kaggle V3 SUCCESS, two NEW independent RSS **candidate-only** 
 Both are initially `not_tested` and `enabled_for_production=false`. A dedicated separate GitHub Actions live probe must show official RSS → official HTTPS detail → bounded content → advisory ID + CVE links before any status changes. No source bodies or credentials are committed; no customer impact inferred.
 
 Existing immutable PRIVATE V1/V2/V3 datasets and CVE/KEV/EPSS are untouched. Success in the dedicated RSS probe is not proof of full vendor coverage, version applicability or legal redistribution rights.
+
+## Real HTTPS publisher probe evidence
+Both sources passed official RSS listing, canonical detail and article-scoped extraction in [GitHub Actions 38063948711](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063948711). The two selected publisher articles had **0 CVE tokens in bounded bodies**; this is not an assertion of zero vulnerability or non-affected inventory. State upgraded to `read_parse_verified`, **not production**. SQLite proof is a separate isolated job and no Kaggle V3 snapshot is overwritten.

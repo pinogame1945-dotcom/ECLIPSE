@@ -15,7 +15,7 @@ class OfficialRSSNextTest(unittest.TestCase):
   for sid,_,_ in cases:
    self.assertIn(sid,SUPPORTED)
    self.assertFalse(src[sid]["enabled_for_production"])
-   self.assertEqual(src[sid]["verification_status"],"not_tested")
+   self.assertEqual(src[sid]["verification_status"],"read_parse_verified")
   self.assertIn("NOT entire Juniper",src["juniper-mist-security-rss"]["product_scope"])
  def test_official_rss_selects_exact_item_and_scopes_detail(self):
   for sid,url,title in cases:

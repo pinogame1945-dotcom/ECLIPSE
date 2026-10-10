@@ -1,0 +1,65 @@
+name: ECLIPSE Juniper Mist and Ivanti official RSS SQLite replay
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-next-rss-sqlite.yml'
+      - 'src/eclipse_l0/vendor_next_rss.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'config/vendor_source_registry.json'
+      - 'tests/test_vendor_next_rss.py'
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-2-official-rss-sqlite
+  cancel-in-progress: false
+jobs:
+  verify-official-articles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Strict offline identity and HTML CVE contamination tests
+        run: |
+          python -m eclipse_l0.vendor_registry
+          python -m unittest discover -s tests -p test_vendor_next_rss.py -v
+      - name: Two publisher security RSS sources to SQLite with zero duplicate events
+        shell: bash
+        run: |
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db output/next2-rss.sqlite3 \
+            --out output/next2-rss-receipt.json \
+            --sources juniper-mist-security-rss,ivanti-security-advisory-rss \
+            --max-items 1
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from eclipse_l0.vendor_registry import load_registry
+          from eclipse_l0.vendor_replay import inspect_db
+          r=json.loads(Path("output/next2-rss-receipt.json").read_text())
+          db=inspect_db(Path("output/next2-rss.sqlite3"),
+             load_registry(Path("config/vendor_source_registry.json")))
+          if (r["sources_pass"]!=2 or r["sources_failed"] or r["sources_partial"]
+              or db["advisories"]!=2 or db["versions"]!=2 or db["events"]!=2
+              or db["integrity"]!="ok"):
+              raise SystemExit("Source sample SQLite replay / integrity proof failed")
+          print("NEXT2_OFFICIAL_RSS_SQLITE=2/2",r["db_counts"])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-juniper-mist-ivanti-sqlite-evidence
+          path: |
+            output/next2-rss.sqlite3
+            output/next2-rss-receipt.json
+          retention-days: 7
+          if-no-files-found: warn
