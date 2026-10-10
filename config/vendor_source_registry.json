@@ -1329,8 +1329,8 @@
       "source_id": "netapp-psirt",
       "vendor": "NetApp",
       "product_scope": "NetApp PSIRT vendor advisories",
-      "collector_kind": "html",
-      "discovery_url": "https://security.netapp.com/",
+      "collector_kind": "rss_html",
+      "discovery_url": "https://security.netapp.com/advisory/index.xml",
       "detail_sample_url": "https://security.netapp.com/advisory/ntap-20260130-0010",
       "allowed_hosts": [
         "security.netapp.com"
@@ -1340,6 +1340,7 @@
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Publisher RSS URL discovered via third-party index; must prove HTTPS publisher content, item identity and official details on a real Actions runner.",
         "Live official HTTPS index -> validated detail and scoped CVE evidence",
         "Exact product, affected/fixed version and publisher update date review",
         "Publisher coverage/pagination, permitted use and version-preserving durable storage"

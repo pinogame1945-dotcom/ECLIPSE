@@ -86,14 +86,60 @@ def _strict_html(raw):
     p=ScopedText();p.feed(raw.decode("utf-8","replace"))
     return p
 
+class _OfficialNginxBody(HTMLParser):
+    """Collect nginx's standalone aggregate only after its security heading.
+
+    This is a publisher-specific exception to main/article-only extraction:
+    the official one-purpose security document has no semantic <main>.
+    """
+    IGNORED={"script","style","nav","header","footer","aside","noscript","svg"}
+    def __init__(self):
+        super().__init__();self.stack=[];self.ignore=0;self.in_heading=0
+        self.found=False;self.values=[]
+    def handle_starttag(self,tag,attrs):
+        self.stack.append(tag)
+        if tag in self.IGNORED:self.ignore+=1
+        if tag in ("h1","h2"):self.in_heading+=1
+    def handle_endtag(self,tag):
+        if tag not in self.stack:return
+        idx=len(self.stack)-1-self.stack[::-1].index(tag)
+        for x in self.stack[idx:]:
+            if x in self.IGNORED:self.ignore=max(0,self.ignore-1)
+            if x in ("h1","h2"):self.in_heading=max(0,self.in_heading-1)
+        del self.stack[idx:]
+    def handle_data(self,s):
+        if self.ignore:return
+        value=" ".join(s.split())
+        if not value:return
+        if self.in_heading and "nginx security advisories" in value.lower():
+            self.found=True
+        if self.found:
+            self.values.append(value)
+
+def _publisher_body(raw:bytes,sid:str)->list[str]:
+    if sid=="nginx-security":
+        v=_OfficialNginxBody();v.feed(raw.decode("utf-8","replace"))
+        return v.values if v.found else []
+    return _strict_html(raw).text
+
 def discover_wave3(source:dict,raw:bytes)->list[dict]:
-    from .vendor_pilot import _host_allowed,_page
+    from .vendor_pilot import _host_allowed,_page,_xml
     sid=source["source_id"];base=source["discovery_url"]
+    if sid=="netapp-psirt":
+        root=_xml(raw)
+        entries=[]
+        for item in root.findall("./channel/item"):
+            url=(item.findtext("link") or "").strip()
+            ident=identity(sid,url)
+            if ident and _host_allowed(url,source["allowed_hosts"]):
+                entries.append({"id":ident,"url":url,
+                                "title":(item.findtext("title") or ident)[:220]})
+        if not entries:raise ValueError("NetApp publisher RSS contains no verified official item links")
+        return entries[:750]
     if sid in SINGLETON:
         if not _host_allowed(base,source["allowed_hosts"]):raise ValueError("Bad singleton official origin")
-        txt=" ".join(_strict_html(raw).text)
-        # No all-page CVE scan: page body must identify its publisher product and
-        # be long enough that an access challenge page cannot become a baseline.
+        txt=" ".join(_publisher_body(raw,sid))
+        # nginx/OpenSSL standalone official aggregate documents are not one bulletin per CVE.
         label="nginx security advisories" if sid=="nginx-security" else "vulnerabilities"
         if label not in txt.lower() or len(txt)<150:raise ValueError("Unusable official aggregate page body")
         return [{"id":identity(sid,base),"url":base,"title":label.title()}]
@@ -105,6 +151,17 @@ def discover_wave3(source:dict,raw:bytes)->list[dict]:
         if not ident:continue
         out.append({"id":ident,"url":url,"title":title[:220] or ident})
         if len(out)>=800:break
+    if sid=="grafana-security" and not out:
+        # Grafana sometimes server-renders table text but not ordinary anchors.
+        # Only a scoped official Security Advisories table can provide candidates.
+        article=" ".join(_strict_html(raw).text)
+        if "Security Advisories" in article:
+            for v in sorted(set(x.upper() for x in CVE.findall(article)),reverse=True)[:80]:
+                url="https://grafana.com/security/security-advisories/"+v.lower()+"/"
+                if _host_allowed(url,source["allowed_hosts"]):
+                    out.append({"id":v,"url":url,"title":v})
+        # The following official detail GET + identity matching MUST succeed;
+        # this derived URL is an unverified candidate until that moment.
     if not out:raise ValueError("No verifiable publisher index detail URLs; dynamic index or auth may be unsupported")
     return out
 
@@ -113,8 +170,7 @@ def normalize_wave3(source:dict,item:dict,raw:bytes)->dict:
     sid=source["source_id"];url=item["url"]
     if not _host_allowed(url,source["allowed_hosts"]) or identity(sid,url,item["title"])!=item["id"]:
         raise ValueError("Publisher identity and official HTTPS URL mismatch")
-    parsed=_strict_html(raw)
-    body=" ".join(parsed.text)
+    body=" ".join(_publisher_body(raw,sid))
     if len(body)<100:raise ValueError("No bounded publication body; refusing pagewide fallback")
     needles={
       "jenkins-security":"Jenkins Security Advisory",

@@ -46,4 +46,30 @@ class ThirdWaveTests(unittest.TestCase):
   for sid in ("nginx-security","openssl-security"):
    with self.assertRaisesRegex(ValueError,"Unusable"):
     discover_wave3(S[sid],b"<html><script>CVE-2026-12345</script></html>")
+ def test_netapp_official_rss_item_identity_not_third_party(self):
+  s=S["netapp-psirt"]
+  good="https://security.netapp.com/advisory/ntap-20260130-0010"
+  xml=("<rss><channel><item><title>CVE-2026-21441 official NetApp</title>"+
+       "<link>"+good+"</link></item><item><title>malicious</title>"+
+       "<link>https://evil.invalid/advisory/ntap-20260130-0001</link></item></channel></rss>").encode()
+  got=discover_wave3(s,xml)
+  self.assertEqual(len(got),1)
+  self.assertEqual(got[0]["id"],"NTAP-20260130-0010")
+ def test_nginx_solo_page_after_verified_heading(self):
+  s=S["nginx-security"]
+  body=("<header>CVE-2026-777777</header><h1>nginx security advisories</h1>"+
+        "<p>Official nginx product security catalog contains CVE-2026-123456 and "+
+        "shows the relevant product impact statements and severity list as text.</p>"+
+        "<footer>CVE-2026-888888</footer>").encode()
+  item=discover_wave3(s,body)[0]
+  facts=normalize_wave3(s,item,body)
+  self.assertEqual(facts["cve_ids"],["CVE-2026-123456"])
+ def test_grafana_index_requires_official_bounded_context(self):
+  src=S["grafana-security"]
+  good=("<main><h1>Security Advisories</h1><table><tr><td>CVE-2026-17033</td>"+
+       "<td>Grafana Vulnerability</td></tr></table></main>").encode()
+  discovered=discover_wave3(src,good)
+  self.assertEqual(discovered[0]["id"],"CVE-2026-17033")
+  with self.assertRaisesRegex(ValueError,"No verifiable"):
+   discover_wave3(src,b"<header>Security Advisories CVE-2026-17033</header>")
 if __name__=="__main__":unittest.main()
