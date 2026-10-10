@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T13:10:00Z",
+  "updated_utc": "2026-10-10T13:21:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -1026,5 +1026,30 @@
     "production_product_matching_approved": false,
     "interpretation": "Structural diffs refer to one CVE across three product rows; not three confirmed vulnerabilities or proven contradictory affected versions",
     "report_doc": "docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md"
+  },
+  "private_customer_product_vendor_csaf_pilot": {
+    "scope": "READ_ONLY_REDHAT_SIEMENS_EXACT_PUBLISHER_PRODUCT_IDENTITIES",
+    "sources": [
+      "redhat-csaf",
+      "siemens-csaf"
+    ],
+    "private_vendor_generation_2_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053761033",
+    "source_snapshot_advisories": 160,
+    "source_snapshot_versions": 241,
+    "vendor_snapshot_sqlite_sha256": "891526069dd43fa6e8114ff48e68389bc308b2bc3ab47c47082529669e363edc",
+    "live_official_data_synthetic_inventory_verification_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38055358705",
+    "synthetic_products": 2,
+    "candidate_cve_product_status_rows": 436,
+    "unique_synthetic_product_cve_candidate_pairs": 436,
+    "all_customer_installed_version_impacts": "NOT_ASSESSED",
+    "true_customer_product_data_ever_uploaded": false,
+    "real_client_reports_ever_distributed": false,
+    "public_artifact_only_safe_aggregate": true,
+    "affected_version_ranges_verified": false,
+    "vendor_remediation_texts_reviewed": false,
+    "no_customer_notifications": true,
+    "read_only_sources": true,
+    "github_docs": "docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md",
+    "report_integration_into_main_customer_pptx": "NOT_IMPLEMENTED_NEEDS_REVIEW"
   }
 }
