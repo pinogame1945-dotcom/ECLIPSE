@@ -1,0 +1,31 @@
+name: ECLIPSE Fortinet official PSIRT one-shot read-only validation
+on:
+  push:
+    branches:
+      - verify/fortinet-psirt-live-20261010
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Live official Fortinet PSIRT RSS and HTML read-only probe
+        run: |
+          set -euo pipefail
+          python experiments/fortinet_psirt_probe.py --out output/fortinet-psirt-validation.json
+      - name: Upload source evidence summary (no full copies or credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fortinet-psirt-validation
+          path: output/fortinet-psirt-validation.json
+          if-no-files-found: warn
+          retention-days: 7
