@@ -5,6 +5,8 @@ on:
     branches: [feature/vendor-source-registry-20261010]
     paths:
       - '.github/workflows/vendor-new-sources-probe.yml'
+      - 'src/eclipse_l0/vendor_additional_sources.py'
+      - 'tests/test_vendor_additional_sources.py'
   workflow_dispatch:
 
 permissions:
