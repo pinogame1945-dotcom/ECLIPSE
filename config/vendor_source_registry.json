@@ -828,6 +828,60 @@
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
       "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "mozilla-mfsa",
+      "vendor": "Mozilla",
+      "product_scope": "Firefox / Firefox ESR / Thunderbird — Mozilla Foundation Security Advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://www.mozilla.org/en-US/security/advisories/",
+      "detail_sample_url": "https://www.mozilla.org/en-US/security/advisories/mfsa2026-104/",
+      "allowed_hosts": [
+        "www.mozilla.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Independent live official HTML discover/detail fetch",
+        "Source-scoped CVE extraction and version accuracy review",
+        "Historical announcements and changed source format",
+        "Commercial data reuse rights"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "debian-dsa",
+      "vendor": "Debian",
+      "product_scope": "Debian Security Advisories (DSA) package notices and per-release fix announcements",
+      "collector_kind": "html",
+      "discovery_url": "https://www.debian.org/security/",
+      "detail_sample_url": "https://lists.debian.org/debian-security-announce/2026/msg00304.html",
+      "allowed_hosts": [
+        "www.debian.org",
+        "lists.debian.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Independent live official DSA index/detail read",
+        "CVE ID mail-header extraction reliability",
+        "Exact Debian release and fixed package version parsing",
+        "Listing to mail mapping and long-term archival coverage",
+        "Commercial data reuse rights"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
     }
   ],
   "cross_run_proof": {
@@ -1051,5 +1105,16 @@
     "read_only_sources": true,
     "github_docs": "docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md",
     "report_integration_into_main_customer_pptx": "NOT_IMPLEMENTED_NEEDS_REVIEW"
+  },
+  "expansion_20261010": {
+    "status": "OFFLINE_ADAPTERS_STAGED_REAL_SOURCE_PROBE_PENDING",
+    "new_candidate_source_ids": [
+      "mozilla-mfsa",
+      "debian-dsa"
+    ],
+    "new_sources_not_yet_verified": 2,
+    "existing_verified_sources_untouched": 9,
+    "production_enabled": false,
+    "existing_kaggle_generations_untouched": true
   }
 }
