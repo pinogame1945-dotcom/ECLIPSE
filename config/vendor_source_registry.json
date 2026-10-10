@@ -949,14 +949,17 @@
       "allowed_hosts": [
         "support.apple.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:44:12Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684",
+      "verified_capabilities": [
+        "Official index HTTPS fetched, source-specific link identity matched",
+        "One official detail body parsed with source-scoped CVE references; evidence in Actions 38060777684",
+        "Not product-version verified, not complete coverage; the overall 5-source experiment had a Chrome failure"
+      ],
       "pending_gates": [
-        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
-        "Audit main/article extraction and product/version semantics with exact publisher fields",
-        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+        "One-shot SQLite ingestion and independent local replay on the branch",
+        "Audit multiple advisory versions, publication timestamps, actual source corrections, rights, completeness and long-term private storage"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
@@ -975,15 +978,17 @@
         "helpx.adobe.com",
         "www.adobe.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:44:12Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684",
+      "verified_capabilities": [
+        "Official index HTTPS fetched, source-specific link identity matched",
+        "One official detail body parsed with source-scoped CVE references; evidence in Actions 38060777684",
+        "Not product-version verified, not complete coverage; the overall 5-source experiment had a Chrome failure"
+      ],
       "pending_gates": [
-        "Ensure migrated Adobe Trust Center redirects stay on exact Adobe-operated hosts; page ID matching required",
-        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
-        "Audit main/article extraction and product/version semantics with exact publisher fields",
-        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+        "One-shot SQLite ingestion and independent local replay on the branch",
+        "Audit multiple advisory versions, publication timestamps, actual source corrections, rights, completeness and long-term private storage"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
@@ -1001,11 +1006,12 @@
       "allowed_hosts": [
         "chromereleases.googleblog.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Live publisher article redirects outside strict official-host allowlist; quarantine until redirect host and official authorization verified",
         "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
         "Audit main/article extraction and product/version semantics with exact publisher fields",
         "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
@@ -1014,7 +1020,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "failed_probe_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684"
     },
     {
       "source_id": "android-security-bulletins",
@@ -1026,14 +1033,17 @@
       "allowed_hosts": [
         "source.android.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:44:12Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684",
+      "verified_capabilities": [
+        "Official index HTTPS fetched, source-specific link identity matched",
+        "One official detail body parsed with source-scoped CVE references; evidence in Actions 38060777684",
+        "Not product-version verified, not complete coverage; the overall 5-source experiment had a Chrome failure"
+      ],
       "pending_gates": [
-        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
-        "Audit main/article extraction and product/version semantics with exact publisher fields",
-        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+        "One-shot SQLite ingestion and independent local replay on the branch",
+        "Audit multiple advisory versions, publication timestamps, actual source corrections, rights, completeness and long-term private storage"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
@@ -1051,14 +1061,17 @@
       "allowed_hosts": [
         "www.postgresql.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:44:12Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684",
+      "verified_capabilities": [
+        "Official index HTTPS fetched, source-specific link identity matched",
+        "One official detail body parsed with source-scoped CVE references; evidence in Actions 38060777684",
+        "Not product-version verified, not complete coverage; the overall 5-source experiment had a Chrome failure"
+      ],
       "pending_gates": [
-        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
-        "Audit main/article extraction and product/version semantics with exact publisher fields",
-        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+        "One-shot SQLite ingestion and independent local replay on the branch",
+        "Audit multiple advisory versions, publication timestamps, actual source corrections, rights, completeness and long-term private storage"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
@@ -1309,5 +1322,22 @@
     "exact_fixed_package_versions_verified": false,
     "sources_production_enabled": false,
     "rights_reuse_reviewed": false
+  },
+  "phase3_five_publisher_attempt_20261010": {
+    "attempted_sources": 5,
+    "official_read_parse_verified": 4,
+    "publisher_redirect_quarantined": 1,
+    "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38060777684",
+    "overall_workflow_pass": false,
+    "individual_verified_sources": [
+      "apple-security-releases",
+      "adobe-security-bulletins",
+      "android-security-bulletins",
+      "postgresql-security"
+    ],
+    "unverified_sources": [
+      "google-chrome-releases"
+    ],
+    "production_enabled": false
   }
 }
