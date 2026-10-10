@@ -114,6 +114,45 @@ class SourcePilotOfflineTest(unittest.TestCase):
         self.assertEqual(result["unreviewed_article_cve_candidates"],["CVE-2026-99903"])
         self.assertIn("CVE-2026-99902",result["unreviewed_page_cve_candidates"])
 
+    def test_palo_alto_cna_remediation_text_keeps_source_paths(self):
+        source=self.sources["paloalto-advisories"]
+        item={"id":"CVE-2026-55555","title":"SYNTHETIC vendor CNA",
+              "url":"https://security.paloaltonetworks.com/json/CVE-2026-55555"}
+        raw=json.dumps({
+            "cveMetadata":{"cveId":"CVE-2026-55555"},
+            "containers":{"cna":{
+                "descriptions":[{"lang":"en","value":"SYNTHETIC vulnerability"}],
+                "affected":[{"vendor":"ExampleCo","product":"Example OS",
+                             "versions":[{"version":"1.0","status":"affected"}]}],
+                "solutions":[{"lang":"en","value":"Upgrade only when tested by operator"}],
+                "workarounds":[{"lang":"en","value":"Disable feature temporarily"}]
+            }}
+        }).encode()
+        facts=normalize(source,item,raw)
+        self.assertEqual(facts["cve_ids"],["CVE-2026-55555"])
+        self.assertEqual(len(facts["affected"]),1)
+        self.assertEqual(len(facts["remediations_unreviewed"]),2)
+        self.assertEqual(facts["remediations_unreviewed"][0]["evidence_path"],"containers.cna.solutions[0].value")
+        self.assertEqual(facts["remediations_unreviewed"][1]["status"],"unreviewed")
+        self.assertNotIn("verified_fixed_version",facts)
+
+    def test_ubuntu_release_packages_evidence_does_not_claim_fixed_packages(self):
+        source=self.sources["ubuntu-security-api"]
+        item={"id":"USN-9999-1","title":"SYNTHETIC Ubuntu patch",
+              "url":"https://ubuntu.com/security/notices/USN-9999-1.json"}
+        raw=json.dumps({
+            "id":"USN-9999-1","title":"SYNTHETIC release notice",
+            "cves_ids":["CVE-2026-55555"],
+            "release_packages":{"jammy":{"pkg-a":{"version":"1.0"}},"noble":[{"name":"pkg-b"}]},
+            "instructions":"Update packages as permitted"
+        }).encode()
+        facts=normalize(source,item,raw)
+        self.assertEqual(facts["releases_unreviewed"],["jammy","noble"])
+        self.assertEqual(facts["release_package_evidence_unreviewed"][0]["package_container_type"],"dict")
+        self.assertEqual(facts["release_package_evidence_unreviewed"][1]["package_container_type"],"list")
+        self.assertEqual(facts["affected"],[])
+        self.assertNotIn("fixed_version",facts)
+
     def test_atlassian_navigation_cves_not_promoted_to_facts(self):
         source=self.sources["atlassian-security"]
         item={"id":"CVE-2026-21589","title":"CVE-2026-21589 bulletin",
