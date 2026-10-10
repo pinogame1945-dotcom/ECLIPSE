@@ -127,23 +127,34 @@ def discover_wave3(source:dict,raw:bytes)->list[dict]:
     sid=source["source_id"];base=source["discovery_url"]
     if sid=="netapp-psirt":
         from xml.etree import ElementTree as ET
-        # NetApp's public RSS may exceed 24MiB because it includes article
-        # content. Only consume a bounded publisher-host prefix of at most
-        # 4MiB, parse complete <item> elements and report coverage as PARTIAL.
+        # Official RSS includes very large article bodies; a complete item
+        # may be larger than the 4MiB bounded discovery prefix. Use pull
+        # parsing only until source-backed item title+link metadata is seen.
+        # Do not claim the unobserved tail of the RSS has been collected.
         if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
             raise ValueError("Unsafe XML DTD/entity in publisher RSS")
         if b"<rss" not in raw[:2048].lower():
             raise ValueError("NetApp official index prefix is not an RSS document")
-        entries=[]
-        for match in re.finditer(rb"<item(?:\s[^>]*)?>[\s\S]*?</item>",raw,re.I):
-            item=ET.fromstring(match.group(0))
-            url=(item.findtext("link") or "").strip()
-            ident=identity(sid,url)
-            if ident and _host_allowed(url,source["allowed_hosts"]):
-                entries.append({"id":ident,"url":url,
-                                "title":(item.findtext("title") or ident)[:220]})
-            if len(entries)>=32:break
-        if not entries:raise ValueError("NetApp bounded RSS prefix has no complete official item records")
+        reader=ET.XMLPullParser(events=("start","end"))
+        reader.feed(raw)  # Intentionally do not call close() on bounded prefix.
+        entries=[]; item=None
+        for event,element in reader.read_events():
+            tag=element.tag.rsplit("}",1)[-1].lower()
+            if event=="start" and tag=="item":
+                item={"title":None,"url":None}
+            elif item is not None and event=="end":
+                if tag=="title" and item["title"] is None:
+                    item["title"]=(element.text or "").strip()[:220]
+                elif tag=="link" and item["url"] is None:
+                    item["url"]=(element.text or "").strip()
+                if item["title"] is not None and item["url"] is not None:
+                    url=item["url"];ident=identity(sid,url)
+                    if ident and _host_allowed(url,source["allowed_hosts"]):
+                        entries.append({"id":ident,"url":url,
+                                        "title":item["title"] or ident})
+                    item=None
+                    if len(entries)>=32:break
+        if not entries:raise ValueError("NetApp bounded RSS prefix has no official item identity/link pairs")
         return entries
     if sid in SINGLETON:
         if not _host_allowed(base,source["allowed_hosts"]):raise ValueError("Bad singleton official origin")
