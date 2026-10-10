@@ -1,0 +1,188 @@
+name: ECLIPSE important ~50 (new KEV + approved 126 vendors + risk)
+
+# Research-only, source-pinned. Does NOT claim production monitoring or generate a report.
+on:
+  push:
+    branches: [feature/weekly-important-50-20261010]
+    paths:
+      - '.github/workflows/weekly-important-50.yml'
+      - 'config/important_vendor_126.json'
+      - 'src/eclipse_l0/weekly_important.py'
+      - 'tests/test_weekly_important.py'
+      - 'src/eclipse_l0/weekly_material.py'
+      - 'src/eclipse_l0/weekly_cve_material.py'
+      - 'src/eclipse_l0/weekly_update_queue.py'
+      - 'tests/test_weekly_material.py'
+      - 'tests/test_weekly_cve_material.py'
+      - 'tests/test_weekly_update_queue.py'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target review count (mandatory matches can exceed it)"
+        default: "50"
+        type: string
+      min_score:
+        description: "Minimum discretionary heuristic score"
+        default: "55"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-important-50-historical
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline no-loss and mandatory-override tests
+        run: python -m unittest discover -s tests -p test_weekly_important.py -v
+      - name: Require actual user-approved 126-row vendor policy
+        run: |
+          set -euo pipefail
+          if [ ! -f config/important_vendor_126.json ]; then
+            echo "::error::Approved 126-row Excel has not been converted to config/important_vendor_126.json. Do not invent the missing vendors."
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from eclipse_l0.weekly_important import validate_policy
+          p=Path('config/important_vendor_126.json')
+          vendor_aliases,unique=validate_policy(json.loads(p.read_text()))
+          print(f'Approved vendor candidate rows=126, unique canonical vendors={unique}, aliases={len(vendor_aliases)}')
+          PY
+      - name: Restore fixed independently verified L1 weekly evidence
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+      - name: Create auditable important candidates with all L1 data
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --vendor-policy config/important_vendor_126.json \
+            --target "${{ inputs.target || '50' }}" --min-score "${{ inputs.min_score || '55' }}" \
+            --out output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            | tee output/important-build-receipt.json
+          python -m eclipse_l0.weekly_important verify \
+            --zip output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            > output/important-verify-receipt.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/important-verify-receipt.json').read_text())
+          assert p['l1_total']==6355
+          assert p['top50_new_publications'] + p['mandatory_kev'] == p['top50']
+          assert p['top50_existing_kev_without_new_registration'] == 0
+          assert not p['weekly_coverage_certified']
+          print('### Fixed historical snapshot — NOT certified live weekly coverage')
+          print(f"- All L1 CVEs retained: **{p['l1_total']}**")
+          print(f"- L2 mandatory vendor/KEV review pool: **{p['selected']}** (not final top50)")
+          print(f"- L3 risk-ranked report-research shortlist: **{p['top50']}** (target {p['target']})")
+          print(f"- L3 vendor matches excluding KEV: **{p['top50_vendor']}**")
+          print(f"- L3 other high-risk non-KEV: **{p['top50_other']}**")
+          print(f"- L3 new CVE disclosures (non-KEV): **{p['top50_new_publications']}**")
+          print(f"- Historical KEV repeats lacking new registration: **{p['top50_existing_kev_without_new_registration']}**")
+          print(f"- Metadata-only updated CVEs (NOT verified important changes): **{p['updated_only_unverified']}**")
+          print(f"- New KEV: **{p['mandatory_kev']}**")
+          print(f"- Approved 126-vendor matches excluding overlapping KEV: **{p['mandatory_vendor_only']}**")
+          print(f"- Other risk-selected: **{p['risk_selected']}**")
+          print(f"- Mandatory count overflow: **{p['mandatory_overflow']}**")
+          PY
+      - name: Attach conservative weekly important-update review queue (NOT confirmed alerts)
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_update_queue build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --out output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-receipt.json
+          python -m eclipse_l0.weekly_update_queue verify \
+            --zip output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-verified.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/update-queue-verified.json').read_text())
+          assert p['original_cves']==6355
+          assert p['updated_only']==p['material_review_candidates']+p['unverified_updated']
+          assert not p['update_weekly_coverage_certified']
+          print(f"- Metadata-updated historical CVEs: **{p['updated_only']}**")
+          print(f"- Verified-by-before-after source content review queue: **{p['material_review_candidates']}**")
+          print(f"- Unverified updates retained for source-history review: **{p['unverified_updated']}**")
+          print("**This packet does not verify any publisher update from a single CVE snapshot.**")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-important-50-historical-week-20261004-20261010
+          path: |
+            output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip
+            output/important-build-receipt.json
+            output/important-verify-receipt.json
+            output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip
+            output/update-queue-verified.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independent-reader:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-important-50-historical-week-20261004-20261010
+          path: output
+      - name: Independently rederive decisions from original L1 and embedded 126-vendor policy
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important verify \
+            --zip output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            > output/important-independent-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/important-independent-proof.json').read_text())
+          assert p['result']=='INDEPENDENT_126_VENDOR_AND_KEV_IMPORTANT_CANDIDATE_CONTRACT_VERIFIED'
+          assert p['l1_total']==6355
+          assert not p['weekly_coverage_certified']
+          assert p['top50'] == p['mandatory_kev'] + p['top50_new_publications']
+          assert p['top50_existing_kev_without_new_registration'] == 0
+          print('INDEPENDENT_PRIORITY_REVIEW_VERIFIED',p)
+          from eclipse_l0.weekly_update_queue import verify as verify_updates
+          update=verify_updates(Path('output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip'))
+          assert update['original_cves']==p['l1_total']
+          assert update['updated_only']==update['material_review_candidates']+update['unverified_updated']
+          assert update['update_weekly_coverage_certified'] is False
+          print('INDEPENDENT_UPDATE_QUEUE_HANDBACK_VERIFIED',update)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-important-50-independent-recheck
+          path: output/important-independent-proof.json
+          if-no-files-found: error
+          retention-days: 7
