@@ -148,6 +148,7 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
     aliases, unique_count = validate_policy(policy)
     rows, base_index, source_quality = _source_verified(source)
     ledger = []
+    source_by_id = {}
     seen = set()
     for row in rows:
         p = classify(row)
@@ -155,6 +156,7 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
         if cid in seen:
             raise ValueError("Duplicate CVE in source")
         seen.add(cid)
+        source_by_id[cid] = row
         # CNA affected.vendor only. Vendor-document pagewide CVE hits are
         # unreviewed and MUST NOT confer mandatory 126-vendor status.
         matched = set()
@@ -222,6 +224,12 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
                        shortlist_basis=("NEW_KEV_MANDATORY" if item["new_kev_added_in_window"]
                                         else "NEW_CVE_PUBLICATION_RISK_REVIEW"))
                   for i, item in enumerate(top50)]
+    for row in top50_rows:
+        # Hand the report-writing AI actual, unaltered CNA facts/affected/version
+        # predicates, NOT generated attack conditions or verified patch claims.
+        row["original_l1_cve_source_facts"] = source_by_id[row["cve_id"]]
+        row["source_facts_assertion_status"] = "SOURCE_REPORTED_UNREVIEWED"
+        row["official_vendor_links_from_snapshot_unreviewed"] = True
     ledger.sort(key=lambda x: x["cve_id"])
     selected = [dict(item, review_rank=i + 1,
                      selection_basis=("UNCONDITIONAL" if item["lane"].startswith("MANDATORY")
