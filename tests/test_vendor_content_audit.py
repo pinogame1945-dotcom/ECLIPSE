@@ -91,7 +91,7 @@ class ContentAuditTests(unittest.TestCase):
         self.assertEqual(counts["PRODUCT_NAME_EXACT_MATCH_CSAF_STATUS_UNMAPPED"],1)
         self.assertEqual(counts["HTML_PAGEWIDE_CVE_LINK_UNVERIFIED"],1)
         self.assertEqual(counts["CLAIM_CVE_NOT_PUBLISHED_IN_SNAPSHOT"],1)
-        self.assertEqual(counts["NO_EXACT_CNA_PRODUCT_NAME_MATCH"],1)
+        self.assertEqual(counts["NO_EXACT_CNA_PRODUCT_NAME_MATCH"],2)  # a mismatched CNA product and an ADP-only entry
         self.assertTrue(result["policy"]["no_vendor_product_exposure_certification"])
         self.assertFalse(result["policy"]["customer_delivery_allowed"])
         disputed=result["evidence_samples"]["EXACT_VERSION_STATUS_DISAGREEMENT_REVIEW_ONLY"][0]
