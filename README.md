@@ -312,6 +312,7 @@ Evidence: [successful Kaggle upload/readback run](https://github.com/pinogame194
 
 - Canonical review ledger: [config/vendor_source_registry.json](config/vendor_source_registry.json)
 - Architecture, limits and production acceptance: [docs/VENDOR_SOURCE_DESIGN.md](docs/VENDOR_SOURCE_DESIGN.md)
+- Real-world structured extraction coverage and remaining correctness gates: [docs/VENDOR_FIELD_AUDIT_20261010.md](docs/VENDOR_FIELD_AUDIT_20261010.md)
 - Verified one-shot source read/parse only: Fortinet, Microsoft, Palo Alto Networks,
   Red Hat CSAF, Siemens, Yamaha, GitLab, Canonical Ubuntu and Atlassian.
 - Not verified: Google Chrome release Atom (insecure FeedBurner redirect) and Cisco (OAuth required).
