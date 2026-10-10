@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:22:30Z",
+  "updated_utc": "2026-10-10T12:40:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -93,7 +93,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "microsoft-msrc",
@@ -176,7 +178,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "paloalto-advisories",
@@ -259,7 +263,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "redhat-csaf",
@@ -342,7 +348,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "siemens-csaf",
@@ -425,7 +433,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "yamaha-network",
@@ -509,7 +519,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "gitlab-security-releases",
@@ -592,7 +604,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "ubuntu-security-api",
@@ -675,7 +689,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "google-chrome-release",
@@ -784,7 +800,9 @@
         "persistent_beyond_seven_days": false,
         "accurate_affected_version_claims_certified": false,
         "production_enabled": false
-      }
+      },
+      "kaggle_seed_verified_utc": "2026-10-10T12:40:00Z",
+      "kaggle_seed_reference": "PRIVATE_SEPARATE_VENDOR_DATASET_ONE_TIME_ONLY"
     },
     {
       "source_id": "cisco-openvuln",
@@ -885,5 +903,26 @@
       "Only 7-day GitHub Actions artifacts preserve vendor database; not durable",
       "All extracted product/fix facts unreviewed; no customer alerts"
     ]
+  },
+  "vendor_private_kaggle_snapshot": {
+    "status": "PRIVATE_KAGGLE_IMMUTABLE_SEED_INDEPENDENTLY_RESTORED",
+    "dataset_slug": "eclipse-vendor-evidence-20261010-v1",
+    "source_pinned_github_run_id": 38051672457,
+    "private_kaggle_create_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38052640331",
+    "independent_kaggle_restore_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38052737015",
+    "sqlite_sha256": "cfe17acc36b4be9e449c6dd6c800b709433052da51e1c8a0edb0430cc892d00c",
+    "snapshot_counts": {
+      "advisories": 125,
+      "versions": 202,
+      "events": 202
+    },
+    "source_information": "UNREVIEWED_NORMALIZED_VENDOR_FACTS_ONLY",
+    "raw_publisher_documents_saved": false,
+    "customer_data_saved": false,
+    "cve_kaggle_warehouse_modified": false,
+    "storage_scope": "PRIVATE_INDEPENDENT_ONE_TIME_SEED",
+    "subsequent_versioned_ingestion_enabled": false,
+    "production_monitoring_enabled": false,
+    "commercial_reuse_approved": false
   }
 }
