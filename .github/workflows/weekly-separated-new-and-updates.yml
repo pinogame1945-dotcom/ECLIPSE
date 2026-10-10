@@ -1,0 +1,131 @@
+name: ECLIPSE 週報の新規情報50件と既存CVE更新を別集計
+
+on:
+  push:
+    branches: [feature/weekly-new-vs-updates-20261011]
+    paths:
+      - '.github/workflows/weekly-separated-new-and-updates.yml'
+      - 'src/eclipse_l0/weekly_section_handoff.py'
+      - 'tests/test_weekly_section_handoff.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-two-section-fixed-week-audit
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline QA (two section evidence remains independent)
+        run: python -m unittest discover -s tests -p 'test_weekly_section_handoff.py' -v
+      - name: Retrieve pinned immutable L1 original (historical fixed week only)
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+             --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify \
+             --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+      - name: Build original NEW-only 50 without subtracting UPDATE count
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --vendor-policy config/important_vendor_126.json \
+            --target 50 \
+            --out output/NEW_KEV_AND_CVE_RESEARCH_20261004_20261010.zip
+      - name: Build independent EXISTING-CVE-UPDATE count and full review ledger
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_update_queue build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --watch-limit 50 \
+            --out output/EXISTING_CVE_UPDATE_REVIEW_20261004_20261010.zip
+      - name: Join two independent sections with zero overlap and full-source audit
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_section_handoff build \
+            --new output/NEW_KEV_AND_CVE_RESEARCH_20261004_20261010.zip \
+            --updates output/EXISTING_CVE_UPDATE_REVIEW_20261004_20261010.zip \
+            --out output/WEEKLY_SEPARATED_NEW_AND_UPDATES_20261004_20261010.zip \
+            > output/two-section-initial-verification.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          s=json.loads(Path("output/two-section-initial-verification.json").read_text())
+          assert s["original_l1_cves"]==6355
+          assert s["new_candidates"]==50
+          assert s["new_kev"]==6
+          assert s["newly_published_non_kev"]==44
+          assert s["update_only_count"]==3685
+          assert s["update_only_count"]==s["material_update_review_candidates"]+s["update_unverified_count"]
+          assert not s["report_ready"]
+          print("### 週報用：新規と更新を別集計（新規50件は維持）")
+          print(f"- 新規調査枠：**{s['new_candidates']}**件")
+          print(f"  - 新規KEV：**{s['new_kev']}**件")
+          print(f"  - 新規公開CVE：**{s['newly_published_non_kev']}**件")
+          print(f"- 既存CVEの更新日時のみが週内：**{s['update_only_count']}**件（新規50に混ぜない）")
+          print(f"  - 内容差分に基づく追加調査候補：**{s['material_update_review_candidates']}**件")
+          print(f"  - 更新内容未確認：**{s['update_unverified_count']}**件")
+          print(f"  - 危険度順の未確認調査サンプル：**{s['unverified_update_high_risk_watch_sample']}**件")
+          print("改訂日と重要変更は未確定。週報本文へ自動掲載せず、別枠で審査。")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-weekly-new-and-updates-separate-handoff
+          path: |
+            output/WEEKLY_SEPARATED_NEW_AND_UPDATES_20261004_20261010.zip
+            output/two-section-initial-verification.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independent-reader:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-weekly-new-and-updates-separate-handoff
+          path: output
+      - name: Independent recomputation of all 3 nested manifests and new/update disjointness
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_section_handoff verify \
+            --zip output/WEEKLY_SEPARATED_NEW_AND_UPDATES_20261004_20261010.zip \
+            > output/independent-two-section-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("output/independent-two-section-proof.json").read_text())
+          assert p["result"]=="INDEPENDENT_TWO_SEPARATE_WEEKLY_CVE_SECTIONS_VERIFIED"
+          assert p["original_l1_cves"]==6355
+          assert p["new_candidates"]==50 and p["update_only_count"]==3685
+          assert p["new_slots_never_consumed_by_unverified_updates"]
+          assert not p["report_ready"]
+          print("TWO_DISTINCT_WEEKLY_REPORT_SECTIONS_INDEPENDENTLY_VERIFIED",p)
+          PY
