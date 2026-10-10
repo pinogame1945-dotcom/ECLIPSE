@@ -64,26 +64,26 @@ jobs:
                                  "human_reviewed":False,"production_enabled":False})
               except Exception as ex:
                   result["errors"].append(type(ex).__name__+": "+str(ex)[:250])
-            # Structural diagnostics contain only tag/class counts, never vendor body.
-            from html.parser import HTMLParser
-            class DOMShape(HTMLParser):
-                def __init__(self):
-                    super().__init__(); self.tags={}; self.classes={}
-                def handle_starttag(self,tag,attrs):
-                    self.tags[tag]=self.tags.get(tag,0)+1
-                    for key,value in attrs:
-                        if key=="class" and value and any(word in value.lower()
-                              for word in ("article","post","content","main","entry","body","sidebar")):
-                            self.classes[value[:100]]=self.classes.get(value[:100],0)+1
-            try:
-                raw_d=OfficialFetch(src).get(src["detail_sample_url"])
-                shp=DOMShape(); shp.feed(raw_d.decode("utf-8","replace"))
-                result["dom_diagnostic"]={"bytes":len(raw_d),
-                   "core_tags":{k:shp.tags.get(k,0) for k in ("main","article","h1","h2","h3","div")},
-                   "likely_body_classes":sorted(shp.classes,key=shp.classes.get,reverse=True)[:25]}
-            except Exception as diag_exc:
-                result["dom_diagnostic_error"]=type(diag_exc).__name__+":"+str(diag_exc)[:180]
-                results.append(result)
+              # Structural diagnostics contain only tag/class counts, never vendor body.
+              from html.parser import HTMLParser
+              class DOMShape(HTMLParser):
+                  def __init__(self):
+                      super().__init__(); self.tags={}; self.classes={}
+                  def handle_starttag(self,tag,attrs):
+                      self.tags[tag]=self.tags.get(tag,0)+1
+                      for key,value in attrs:
+                          if key=="class" and value and any(word in value.lower()
+                                for word in ("article","post","content","main","entry","body","sidebar")):
+                              self.classes[value[:100]]=self.classes.get(value[:100],0)+1
+              try:
+                  raw_d=OfficialFetch(src).get(src["detail_sample_url"])
+                  shp=DOMShape(); shp.feed(raw_d.decode("utf-8","replace"))
+                  result["dom_diagnostic"]={"bytes":len(raw_d),
+                     "core_tags":{k:shp.tags.get(k,0) for k in ("main","article","h1","h2","h3","div")},
+                     "likely_body_classes":sorted(shp.classes,key=shp.classes.get,reverse=True)[:25]}
+              except Exception as diag_exc:
+                  result["dom_diagnostic_error"]=type(diag_exc).__name__+":"+str(diag_exc)[:180]
+              results.append(result)
           out={"research_only":True,"main_modified":False,"kaggle_modified":False,
                "production_enabled":False,"official_sources_attempted":len(results),
                "sources_passed":sum(x["state"]=="LIVE_SAMPLE_PARSE_PASS" for x in results),
