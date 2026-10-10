@@ -9,6 +9,12 @@ on:
       - 'config/important_vendor_126.json'
       - 'src/eclipse_l0/weekly_important.py'
       - 'tests/test_weekly_important.py'
+      - 'src/eclipse_l0/weekly_material.py'
+      - 'src/eclipse_l0/weekly_cve_material.py'
+      - 'src/eclipse_l0/weekly_update_queue.py'
+      - 'tests/test_weekly_material.py'
+      - 'tests/test_weekly_cve_material.py'
+      - 'tests/test_weekly_update_queue.py'
   workflow_dispatch:
     inputs:
       target:
@@ -100,6 +106,28 @@ jobs:
           print(f"- Other risk-selected: **{p['risk_selected']}**")
           print(f"- Mandatory count overflow: **{p['mandatory_overflow']}**")
           PY
+      - name: Attach conservative weekly important-update review queue (NOT confirmed alerts)
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_update_queue build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --out output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-receipt.json
+          python -m eclipse_l0.weekly_update_queue verify \
+            --zip output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-verified.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/update-queue-verified.json').read_text())
+          assert p['original_cves']==6355
+          assert p['updated_only']==p['material_review_candidates']+p['unverified_updated']
+          assert not p['update_weekly_coverage_certified']
+          print(f"- Metadata-updated historical CVEs: **{p['updated_only']}**")
+          print(f"- Verified-by-before-after source content review queue: **{p['material_review_candidates']}**")
+          print(f"- Unverified updates retained for source-history review: **{p['unverified_updated']}**")
+          print("**This packet does not verify any publisher update from a single CVE snapshot.**")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: eclipse-important-50-historical-week-20261004-20261010
@@ -107,6 +135,8 @@ jobs:
             output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip
             output/important-build-receipt.json
             output/important-verify-receipt.json
+            output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip
+            output/update-queue-verified.json
           if-no-files-found: error
           retention-days: 7
 
@@ -143,6 +173,12 @@ jobs:
           assert p['top50'] == p['mandatory_kev'] + p['top50_new_publications']
           assert p['top50_existing_kev_without_new_registration'] == 0
           print('INDEPENDENT_PRIORITY_REVIEW_VERIFIED',p)
+          from eclipse_l0.weekly_update_queue import verify as verify_updates
+          update=verify_updates(Path('output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip'))
+          assert update['original_cves']==p['l1_total']
+          assert update['updated_only']==update['material_review_candidates']+update['unverified_updated']
+          assert update['update_weekly_coverage_certified'] is False
+          print('INDEPENDENT_UPDATE_QUEUE_HANDBACK_VERIFIED',update)
           PY
       - uses: actions/upload-artifact@v4
         with:
