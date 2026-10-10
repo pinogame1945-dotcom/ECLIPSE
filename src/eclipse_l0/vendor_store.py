@@ -187,7 +187,23 @@ def observe(db: sqlite3.Connection, *, registry: dict, source_id: str,
         # not the publisher. Never label this a new vendor security update.
         # A source byte change without changed claims is likewise not a
         # vulnerability update. All extracted claims are unreviewed.
+        # Explicit parser version is required to disambiguate a changed
+        # extractor (potentially alongside dynamic HTML bytes) from a
+        # publisher-authored change in security assertions.
+        previous_parser = None
+        if old is not None:
+            previous = db.execute("""SELECT facts_json FROM vendor_document_versions
+                                     WHERE source_id=? AND advisory_id=?
+                                     ORDER BY version DESC LIMIT 1""",
+                                  (source_id,advisory_id)).fetchone()
+            if previous is not None:
+                previous_parser = json.loads(previous["facts_json"]).get(
+                    "_extractor_revision","legacy_v1")
+        current_parser = facts.get("_extractor_revision","legacy_v1")
+        if not isinstance(current_parser,str) or len(current_parser)>100:
+            raise ValueError("Invalid extraction revision marker")
         kind = ("baseline" if old is None else
+                "extraction_revised" if previous_parser != current_parser else
                 "extraction_revised" if old["current_source_sha"] == source_sha256 else
                 "source_changed_only" if old["current_facts_sha"] == facts_hash else
                 "facts_updated")
