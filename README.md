@@ -288,3 +288,22 @@ snapshots, use a capacity/version/retention plan and a separate independent
 full-snapshot ingestion + restoration audit; no endless Git history or Kaggle
 uploads on schedule. The zip source records are lossless; Parquet may be added
 only as a derived searchable view.
+
+## 2026-10-10 v0.9 VERIFIED: private Kaggle storage and independent restore
+
+**Actual GitHub Actions + Kaggle results**, not a synthetic upload:
+
+| Acceptance gate | Measured result |
+| --- | --- |
+| Original source | 100 KEV-selected official CVE v5 raw record bodies, previously frozen on eclipse-state |
+| Kaggle | Created a dataset using existing KAGGLE_API_TOKEN, with PRIVATE default; stable account-local slug `eclipse-cve-seed-100-v1` |
+| Readback | Downloaded the actual Kaggle dataset and verified SHA-256 of every record/shard and source cohort/manifest |
+| Transport detail | Kaggle AUTO-EXTRACTED the nested ZIP. ECLIPSE re-packed the original member bytes deterministically and proved the ZIP SHA-256 matched |
+| SQLite recovery | 100 CVEs rebuilt from downloaded originals; `PRAGMA quick_check=ok` |
+| Idempotency | Subsequent acceptance run detected an existing dataset and verified it without overwriting |
+| Separate CPU runner | Independently downloaded the private Kaggle dataset; all checks and SQLite reconstruction passed |
+| Offline GitHub CI | 85 unit/integration tests passed |
+
+Evidence: [successful Kaggle upload/readback run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045830690) and [independent restore run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045881683). JSON audit receipts are short-lived GitHub Actions artifacts; the PRIVATE Kaggle dataset is retained. The account handle/API token is not in this public repository's commit or artifact receipts.
+
+**Scope:** This is still only 100 KEV-linked CVEs. Complete CVE baseline from the official release, capacity bounds, throughput benchmarks, crash recovery, source licensing and independent count reconciliation must be established before turning on mass BACKFILL. No paid runners, GPU, public Kaggle data publication, or customer data were used.
