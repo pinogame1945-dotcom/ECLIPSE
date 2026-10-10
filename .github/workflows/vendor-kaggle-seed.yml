@@ -8,6 +8,8 @@ on:
       - feature/vendor-source-registry-20261010
     paths:
       - '.github/workflows/vendor-kaggle-seed.yml'
+      - 'src/eclipse_l0/vendor_kaggle.py'
+      - 'tests/test_vendor_kaggle.py'
   workflow_dispatch:
 
 permissions:
