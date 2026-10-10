@@ -1,0 +1,98 @@
+name: ECLIPSE daily multifeed briefing (public demo profiles)
+
+on:
+  schedule:
+    # Best-effort, not a guaranteed arrival time or public exploit detection SLA.
+    - cron: '11 2 * * *'
+  workflow_dispatch:
+    inputs:
+      hours:
+        type: choice
+        description: 'Observation window (hours)'
+        required: true
+        default: '24'
+        options: ['24','48','168']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-daily-report
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          path: observed
+          ref: eclipse-state
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: app/requirements.txt
+      - name: Validate official KEV baseline is present
+        run: |
+          set -euo pipefail
+          if [ ! -s observed/data/kev-current.json ]; then
+            echo '::error::KEV baseline missing; cannot make a truthful daily report. Run KEV monitor first.'
+            exit 1
+          fi
+      - name: Build multi-source observed timeline
+        working-directory: app
+        env:
+          PYTHONPATH: src
+          HOURS: ${{ inputs.hours || '24' }}
+        run: |
+          set -euo pipefail
+          mkdir -p output downloads/cve-records
+          python -m eclipse_l1.timeline --state-dir ../observed/data \
+            --out output/observed-timeline.json --hours "$HOURS"
+      - name: Fetch limited official CVE source bodies (best effort, no third-party scraping)
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m eclipse_l1.fetch_records --timeline output/observed-timeline.json \
+            --out-dir downloads/cve-records --max-records 12
+      - name: Install PPTX dependency and build reports
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m pip install -r requirements.txt
+          EXTRA=""
+          if [ -s ../observed/data/epss-selected.json ]; then
+            EXTRA='--epss-json ../observed/data/epss-selected.json'
+          fi
+          for PROFILE in all network; do
+            python -m eclipse_l1.briefing \
+              --timeline output/observed-timeline.json \
+              --kev-state ../observed/data/kev-current.json \
+              --profile "config/customer-${PROFILE}-example.json" \
+              --cve-dir downloads/cve-records \
+              $EXTRA --out "output/briefing-${PROFILE}.json"
+            python -m eclipse_reports.intelligence \
+              --briefing-json "output/briefing-${PROFILE}.json" \
+              --out "output/eclipse-daily-${PROFILE}.pptx" --max-details 6
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-daily-public-demo
+          path: |
+            app/output/*.pptx
+            app/output/*.json
+            app/downloads/cve-records/fetch-manifest.json
+          if-no-files-found: error
+          retention-days: 7
+# Read-only workflow. No real customer profiles or inventories; no external delivery.
+# Manufacturer advisory event files are supported by the CLI but NOT auto-fetched.

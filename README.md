@@ -165,3 +165,75 @@ PYTHONPATH=src python -m eclipse_l1.evidence \
 The KEV change-briefing PowerPoint now **optionally** enriches detail slides with EPSS evidence if a verified `data/epss-selected.json` is already present; it falls back to `EPSS: 未取得` when not. Historical score date and SHA-256 appear in the report manifest. No autonomous technical deep-dive or client delivery is claimed.
 
 Official feeds: [CVE Project](https://github.com/CVEProject/cvelistV5), [FIRST EPSS](https://www.first.org/epss/data.html), [CISA KEV](https://github.com/cisagov/kev-data). Enabling commercial redistribution or a specific vendor feed requires a separate rights assessment.
+
+## v0.6 — Multi-source L1 event fusion & editable daily PPTX (public data)
+
+**Implemented:** L1 joins durable CISA KEV observed events and CVE delta-index events
+by **exact CVE ID**; when explicitly provided, it also joins observed RSS/Atom
+publisher-advisory events by explicit CVE ID. An advisory without a CVE is
+preserved as a **separate advisory event** instead of getting a guessed identifier.
+An entry shared across three sources produces one topic with a source-by-source
+timeline, not three unrelated news cards.
+
+**Evidence preservation:** Event observation time, CVE index fetch time and KEV
+`dateAdded` are distinct. Current CVE record bodies (when fetched) and the CVE
+Program Container references supplement the KEV/EPSS evidence ledger. Each
+technical/observational claim in the JSON has a reference to evidence entries.
+Missing manufacturer feed, EPSS data, product identity or CVE body is explicitly
+flagged instead of interpreted as clean/low risk. Profile matching is exact by
+normalized manufacturer/product label (OR inside each group, AND across groups),
+not an unrestricted fuzzy or substring match; unknown names are counted separately.
+
+**Report:** Read-only GitHub Actions workflow `ECLIPSE daily multifeed briefing`
+can run automatically once per day or manually with a 24/48/168-hour observation
+window. Two **fictional public demonstration profiles** receive editable PPTX,
+JSON analysis and a provenance manifest as a 7-day GitHub Actions artifact.
+A limited number (12 maximum) of current CVE JSON files may be fetched from
+CVEProject's official raw host; malformed URLs and redirects are rejected.
+Unretrieved records remain labelled as unverified, never replaced by guesses.
+
+**Honest boundaries:** This is **deterministic, source-bounded explanation**, not
+yet LLM-powered expert technical interpretation. It does not claim exploitation
+of a specific customer, exact patch versions, confirmed affected asset versions,
+or coverage beyond the connected feeds. The upstream manufacturer RSS/Atom
+adapter is available for permitted, independently configured sources, but **no
+manufacturer feed is auto-enabled** in the public daily workflow. There is no
+email or customer delivery and no real customer configuration in this PUBLIC repo.
+The daily workflow depends on prior successful KEV/CVE observer runs; first
+baseline state itself is not a newly detected event. GitHub scheduled jobs can
+run late, fail or be skipped, so this is *best-effort*, not a 24-hour alert SLA.
+
+**Concurrency correction:** KEV/CVE/EPSS public state writes all share the
+`eclipse-public-state-writer` concurrency group to avoid cross-workflow races;
+non-fast-forward pushes still fail rather than silently overwriting evidence.
+
+Run v0.6 locally after the KEV and CVE monitors have produced saved public
+observations (no network required for the first command):
+
+```bash
+PYTHONPATH=src python -m eclipse_l1.timeline \
+  --state-dir /path/to/eclipse-state/data \
+  --out output/observed-timeline.json --hours 24
+PYTHONPATH=src python -m eclipse_l1.fetch_records \
+  --timeline output/observed-timeline.json \
+  --out-dir downloads/cve-records --max-records 12
+PYTHONPATH=src python -m eclipse_l1.briefing \
+  --timeline output/observed-timeline.json \
+  --kev-state /path/to/eclipse-state/data/kev-current.json \
+  --epss-json /path/to/eclipse-state/data/epss-selected.json \
+  --cve-dir downloads/cve-records \
+  --profile config/customer-all-example.json \
+  --out output/briefing.json
+PYTHONPATH=src python -m eclipse_reports.intelligence \
+  --briefing-json output/briefing.json --out output/daily.pptx
+```
+
+The EPSS parameter is optional if the official selected-scores snapshot is
+unavailable. Use `--advisory-events` on the timeline command to supply a file
+produced from a manually authorized/verified publisher RSS/Atom feed; no feed
+is discovered or crawled automatically.
+
+Current limitations: EPSS selection is KEV-targeted only; many CVE-only event
+records will lack EPSS scores. The report enriches a bounded subset of the
+current official CVE records and is **not** a retrospective snapshot of every
+record exactly as it existed when the source change was first observed.

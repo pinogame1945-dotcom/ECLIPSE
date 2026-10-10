@@ -45,6 +45,15 @@ def dossier(cve_doc: dict, *, kev: dict | None = None, epss: dict | None = None,
     for link in container.get('references', []) or []:
         if isinstance(link, dict) and isinstance(link.get('url'), str) and link['url'].startswith('https://'):
             refs.append(link['url'])
+    # Since the 2024 CVE Program Container migration, references may reside
+    # in the official CVE Program ADP container rather than solely in CNA.
+    program_refs = []
+    for adp in (cve_doc.get('containers') or {}).get('adp', []) or []:
+        if not isinstance(adp, dict) or (adp.get('providerMetadata') or {}).get('shortName') != 'CVE':
+            continue
+        for ref in adp.get('references', []) or []:
+            if isinstance(ref, dict) and isinstance(ref.get('url'), str) and ref['url'].startswith('https://'):
+                program_refs.append(ref['url'])
     entries = []
 
     def add_claim(text: str, evidence: str):
@@ -84,6 +93,7 @@ def dossier(cve_doc: dict, *, kev: dict | None = None, epss: dict | None = None,
         'published_utc': meta.get('datePublished'), 'updated_utc': meta.get('dateUpdated'),
         'descriptions_en': descriptions[:3], 'affected_unverified': affected[:50],
         'references_cna': list(dict.fromkeys(refs))[:30],
+        'references_cve_program': list(dict.fromkeys(program_refs))[:30],
         'kev_listed_in_supplied_feed': bool(kev),
         'kev_date_added': kev.get('dateAdded') if kev else None,
         'epss_score': score.get('epss') if score else None,

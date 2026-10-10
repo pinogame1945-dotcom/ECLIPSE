@@ -29,6 +29,13 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(all(x['evidence'] for x in result['claims']))
         self.assertIn('not an asset-specific',result['interpretation_caveat'])
 
+    def test_program_container_references_are_not_lost(self):
+        doc=dict(self.record)
+        doc['containers']=dict(doc['containers'],adp=[{'providerMetadata':{'shortName':'CVE'},
+            'references':[{'url':'https://public.example/reference'}]}])
+        result=dossier(doc)
+        self.assertEqual(result['references_cve_program'],['https://public.example/reference'])
+
     def test_mismatched_kev_does_not_associate(self):
         with self.assertRaisesRegex(ValueError,'does not match'):
             dossier(self.record,kev=dict(self.kev,cveID='CVE-2026-888888'))
