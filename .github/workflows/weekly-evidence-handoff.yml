@@ -1,0 +1,197 @@
+name: ECLIPSE Phase 2 weekly evidence ZIP independent Kaggle replay
+
+# Read-only frozen snapshot research handoff. NOT guaranteed week-wide observation.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/weekly-evidence-handoff.yml'
+      - 'src/eclipse_l0/weekly_evidence.py'
+      - 'tests/test_weekly_evidence.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-weekly-evidence-20261004-20261010-offline
+  cancel-in-progress: false
+
+jobs:
+  independent-join:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      PYTHONPATH: src
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify deterministic ZIP, tamper detection, missing-source disclosure, and date semantics
+        run: python -m unittest discover -s tests -p test_weekly_evidence.py -v
+      - run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Import PINNED read-only CVE warehouse RESTORE module from prior verified main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/contents/src/eclipse_l0/warehouse.py?ref=8a842a6083f65bc316208ba0d244577024b2ac4a" \
+            --jq '.content' | base64 -d > src/eclipse_l0/warehouse.py
+          actual="$(git hash-object src/eclipse_l0/warehouse.py)"
+          test "$actual" = "8e016991217ea95e23257863ac8e233aed96a0fa" || {
+            echo "::error::CVE warehouse restore module differs from pinned verified commit"; exit 9;
+          }
+          echo 'PINNED_CVE_RESTORE_CODE_HASH_VERIFIED=YES'
+      - name: Load independently pinned original CVE and vendor trusted metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || exit 2
+          available="$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')"
+          test "$available" -ge 6291456 || { echo "::error::Insufficient 6 GiB free disk"; exit 3; }
+          mkdir -p "$RUNNER_TEMP/link/warehouse-index" "$RUNNER_TEMP/link/vendor-index" \
+                   "$RUNNER_TEMP/link/cve-parts" "$RUNNER_TEMP/link/vendor-returned" \
+                   "$RUNNER_TEMP/link/identity" "$RUNNER_TEMP/link/results"
+          gh run download 38050051810 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-warehouse-trusted-receipts --dir "$RUNNER_TEMP/link/warehouse-index"
+          test -s "$RUNNER_TEMP/link/warehouse-index/upload/warehouse-index.json"
+          echo '2b86adb90258a5b2cc196dfcb0598977d802324c0c98642d133ca63efad39aa9  '"$RUNNER_TEMP/link/warehouse-index/upload/warehouse-index.json" | sha256sum -c -
+          gh run download 38052640331 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-kaggle-trusted-source-index --dir "$RUNNER_TEMP/link/vendor-index"
+          mapfile -t found < <(find "$RUNNER_TEMP/link/vendor-index" -type f -name vendor-evidence-index.json)
+          test "${#found[@]}" -eq 1 || { echo "::error::Original vendor metadata missing"; exit 4; }
+          cp "${found[0]}" "$RUNNER_TEMP/link/vendor-evidence-index.json"
+          gh run download 38053669895 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-v2-trusted-preupload-index --dir "$RUNNER_TEMP/link/vendor-index"
+          mapfile -t next < <(find "$RUNNER_TEMP/link/vendor-index" -type f -name vendor-evidence-v2-index.json)
+          test "${#next[@]}" -eq 1 || { echo "::error::Second generation trusted source index absent"; exit 6; }
+          cp "${next[0]}" "$RUNNER_TEMP/link/vendor-evidence-v2-index.json"
+          python - "$RUNNER_TEMP/link/vendor-evidence-index.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          from eclipse_l0.vendor_kaggle import validate_index
+          from eclipse_l0.vendor_kaggle_successor import validate
+          validate_index(json.loads(Path(sys.argv[1]).read_text()))
+          ref=Path(sys.argv[1])
+          validate(json.loads((ref.parent/'vendor-evidence-v2-index.json').read_text()),ref)
+          print('BOTH_INDEPENDENT_SOURCE_INDICES_AND_V2_CHAIN_VERIFIED=YES')
+          PY
+      - name: Restore 403696 CVEs KEV EPSS from EXISTING immutable PRIVATE Kaggle
+        shell: bash
+        run: |
+          set -euo pipefail
+          kaggle datasets init -p "$RUNNER_TEMP/link/identity" >/dev/null
+          template="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'link/identity/dataset-metadata.json'
+          template=json.loads(p.read_text()).get('id','')
+          if not template.endswith('/INSERT_SLUG_HERE'):raise SystemExit('Invalid account ref')
+          print(template)
+          PY
+          )"
+          cve_ref="${template/INSERT_SLUG_HERE/eclipse-cve-warehouse-20261010-v1}"
+          echo "::add-mask::$cve_ref"
+          python -m eclipse_l0.warehouse restore \
+            --trusted-index "$RUNNER_TEMP/link/warehouse-index/upload/warehouse-index.json" \
+            --dataset-ref "$cve_ref" \
+            --parts-dir "$RUNNER_TEMP/link/cve-parts" \
+            --out "$RUNNER_TEMP/link/cve-warehouse.sqlite3" \
+            > "$RUNNER_TEMP/link/results/cve-recovery.txt"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'link/results/cve-recovery.txt'
+          proof=json.loads([x for x in p.read_text().splitlines() if x][-1])
+          if (proof.get('result')!='INDEPENDENT_SQLITE_RESTORE_VERIFIED' or
+              proof.get('table_counts',{}).get('cve')!=403696 or
+              proof.get('integrity_check')!='ok'):
+              raise SystemExit('CVE master snapshot failed exact verified restoration')
+          print('CVE_403696_INDEPENDENT_RECOVERY=VERIFIED')
+          PY
+      - name: Restore vendor V2 from separate PRIVATE Kaggle, without editing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          template="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          print(json.loads((Path(os.environ['RUNNER_TEMP'])/'link/identity/dataset-metadata.json').read_text())['id'])
+          PY
+          )"
+          ref="${template/INSERT_SLUG_HERE/eclipse-vendor-evidence-20261010-v2}"
+          echo "::add-mask::$ref"
+          for file in vendor-evidence-v2-index.json part-0000.dbpart; do
+            ok=0
+            for attempt in 1 2 3; do
+              if kaggle datasets download "$ref" --file "$file" \
+                  --path "$RUNNER_TEMP/link/vendor-returned" --unzip --force --quiet >/dev/null 2>&1 \
+                  && test -s "$RUNNER_TEMP/link/vendor-returned/$file"; then
+                ok=1; break
+              fi
+              sleep 4
+            done
+            test "$ok" -eq 1 || { echo "::error::Vendor data missing"; exit 5; }
+          done
+          python -m eclipse_l0.vendor_kaggle_successor restore \
+            --trusted-index "$RUNNER_TEMP/link/vendor-evidence-v2-index.json" \
+            --parent-index "$RUNNER_TEMP/link/vendor-evidence-index.json" \
+            --downloaded "$RUNNER_TEMP/link/vendor-returned" \
+            --dest "$RUNNER_TEMP/link/vendor.sqlite3" \
+            --registry config/vendor_source_registry.json \
+            > "$RUNNER_TEMP/link/results/vendor-recovery.json"
+      - name: Build frozen 2026-10-04 to 2026-10-10 research evidence ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_evidence build \
+            --cve-db "$RUNNER_TEMP/link/cve-warehouse.sqlite3" \
+            --vendor-db "$RUNNER_TEMP/link/vendor.sqlite3" \
+            --registry config/vendor_source_registry.json \
+            --start 2026-10-04 --end 2026-10-10 \
+            --require-full-cve \
+            --out "$RUNNER_TEMP/link/results/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip" \
+            > "$RUNNER_TEMP/link/results/weekly-build-receipt.json"
+          python -m eclipse_l0.weekly_evidence verify \
+            --zip "$RUNNER_TEMP/link/results/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip" \
+            > "$RUNNER_TEMP/link/results/weekly-independent-verify.json"
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile,json,os,hashlib
+          root=Path(os.environ["RUNNER_TEMP"])/"link/results"
+          a=json.loads((root/"weekly-build-receipt.json").read_text())
+          b=json.loads((root/"weekly-independent-verify.json").read_text())
+          assert a["result"]=="SOURCE_SNAPSHOT_RESEARCH_EVIDENCE_PACKAGE_VERIFIED"
+          assert b["result"]=="INDEPENDENT_WEEKLY_HANDOFF_CONTRACT_VERIFIED"
+          assert b["weekly_coverage_certified"] is False
+          assert a["zip_sha256"]==b["sha256"]
+          with zipfile.ZipFile(root/"ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip") as z:
+              m=json.loads(z.read("manifest.json"))
+              q=json.loads(z.read("quality_report.json"))
+              assert m["input_provenance"]["cve_record_count"]==403696
+              assert m["input_provenance"]["vendor_document_count"]==160
+              assert m["completeness"]=="UNVERIFIED_WEEK_NOT_A_PRODUCTION_WEEKLY_REPORT"
+              assert q["collection_failures_for_week"]=="UNKNOWN_NOT_OBSERVED"
+              assert q["missing_publisher_data_in_vendor_snapshot"]
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+              out.write("## ECLIPSE research weekly evidence ZIP (snapshot only)\\n")
+              out.write(f"- Candidate CVEs: **{a['cve_candidates']:,}**\\n")
+              out.write(f"- Included relevant publisher docs: **{a['vendor_evidence_documents']:,}**\\n")
+              out.write(f"- ZIP SHA256: \`{a['zip_sha256']}\`\\n")
+              out.write("- **Weekly completeness NOT verified: pinned historical sources, not live continuous monitoring.**\\n")
+              out.write("- No content written to CVE, vendor, KEV, EPSS or Kaggle.\\n")
+          print("ECLIPSE_WEEKLY_HANDOFF_RESEARCH_ZIP_VERIFIED")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-weekly-evidence-snapshot-20261004-20261010
+          path: |
+            ${{ runner.temp }}/link/results/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+            ${{ runner.temp }}/link/results/weekly-build-receipt.json
+            ${{ runner.temp }}/link/results/weekly-independent-verify.json
+          if-no-files-found: error
+          retention-days: 7
