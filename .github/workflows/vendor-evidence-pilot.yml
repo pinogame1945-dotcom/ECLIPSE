@@ -15,6 +15,7 @@ on:
       - 'tests/test_vendor_quality.py'
       - 'tests/test_vendor_schema_migration.py'
       - 'tests/test_vendor_replay.py'
+      - 'tests/test_vendor_expansion.py'
   workflow_dispatch:
 
 permissions:
@@ -28,7 +29,7 @@ concurrency:
 jobs:
   bounded-one-shot:
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -79,7 +80,7 @@ jobs:
               --dest output/vendor-evidence.sqlite3 \
               --bootstrap --report output/vendor-replay-provenance.json
           fi
-      - name: Refresh two bounded official advisories per source with past state
+      - name: Expand unseen publisher advisories (up to 6 per source) with historical refresh
         env:
           PYTHONPATH: src
         run: |
@@ -88,7 +89,7 @@ jobs:
             --registry config/vendor_source_registry.json \
             --db output/vendor-evidence.sqlite3 \
             --out output/vendor-evidence-manifest.json \
-            --max-items 2
+            --max-items 6
       - name: Validate saved state after collection (fail closed)
         env:
           PYTHONPATH: src
