@@ -231,7 +231,7 @@ def discover(source, getter, max_items, known_ids=None):
     """
     sid = source["source_id"]
     url = source["discovery_url"]
-    raw = getter.get(url)
+    raw = getter.get(url, 24 * 1024 * 1024 if sid=="netapp-psirt" else MAX_FEED)
     entries = []
     if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
         from .vendor_wave3_sources import discover_wave3
