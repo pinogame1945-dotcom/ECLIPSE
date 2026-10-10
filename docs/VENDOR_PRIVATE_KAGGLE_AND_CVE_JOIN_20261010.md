@@ -62,3 +62,29 @@ PYTHONPATH=src python -m eclipse_l0.vendor_cve_link \
 5. 監視対象126候補との対応付け、および実際の情報源全件の網羅性監査。
 
 最優先：**本番CVEの固定スナップショットを変更することなく、次世代ベンダーDBのKaggle独立版管理と実データREAD ONLY結合を検証する。**
+
+## 【実測追記】CVE 403,696件との本物のスナップショット突合（2026-10-10）
+
+**従来「未実行」だったCVE本体との実データ照合を、別のGitHub Actionsランナーで成功させた。**
+
+証拠：[Full 403,696-CVE × vendor read-only join — SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053519543)
+
+- CVE正本：**403,696件**。既存PRIVATE Kaggle上の23分割SQLite原本を独立復元。事前に固定した `warehouse-index.json` と SHA-256を検査。CVE本体の取込・再生成・更新・Kaggleへのアップロードは行っていない。
+- ベンダー正本：**125文書、202保存版**。独立PRIVATE Kaggle v1から復元し、事前に固定したSHA-256とSQLiteを検査。
+- **照合関係（CVE候補／文書の延べ件数）**：
+
+| 分類 | 件数 | 意味 |
+|---|---:|---|
+| MATCHED_PUBLISHED | **11,066** | CVE ID候補と公開状態のCVEの一致 |
+| MATCHED_REJECTED | **13** | REJECTEDと判別 |
+| UNMATCHED_SNAPSHOT | **3** | ベンダー候補はあるが固定CVEスナップショットに存在せず |
+| UNASSIGNED | **23文書** | 解析済みCVEがない文書 |
+  
+**注：11,066は異なるCVE IDが11,066件という意味ではない。** MSRC月次CVRFなど複数公告で同じCVEが繰り返し含まれ得る、文書×CVEの関係の**延べ件数**。メーカー本文から抽出した候補であり**製品への影響・修正版・脆弱性の重要度・顧客適用性を保証しない**。
+
+- 基準CVEスナップショットの `source_index_sha256`: `1b19b50fedb034390463a68222948b365f6b6dc39dcd1904218dd880abe504d2`。照合結果JSONには原本ソースハッシュも含まれる。
+- CVE・ベンダー双方のDBはSQLite読み取り専用、書込0。CVE照合データは正本に混ぜず、独立した監査JSONとして7日間のGitHub Actions Artifactへ保存する。
+- **REJECTEDはPUBLISHEDに昇格させず、未一致・未採番は捨てない。** CVEの事実の衝突検知と同一製品・バージョンへの影響整合は、後続の精度監査ゲートとして残る。
+- CVE復元プログラムは、mainの過去検証済みcommit `8a842a6083f65bc316208ba0d244577024b2ac4a` のファイルをGit blob `8e016991217ea95e23257863ac8e233aed96a0fa` に固定して一時ランナーにのみ読み込み、main自体を変更していない。
+
+現在の正式判断：**CVE本体とのID照合エンジンの実データ実証は成功。ただしCVE×ベンダー製品の完全な影響判断や自動顧客速報は、依然NO-GO。**
