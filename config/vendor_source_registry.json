@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:09:00Z",
+  "updated_utc": "2026-10-10T12:22:30Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -21,7 +21,7 @@
         "fortiguard.fortinet.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:07:01Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047330191",
       "verified_capabilities": [
         "official RSS: 50 entries",
@@ -80,6 +80,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 21,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -93,7 +106,7 @@
         "api.msrc.microsoft.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:14:18Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "updates: 193 document references",
@@ -150,6 +163,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 5,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -163,7 +189,7 @@
         "security.paloaltonetworks.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:14:14Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "filtered critical listing: 9 entries",
@@ -220,6 +246,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 9,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -233,7 +272,7 @@
         "security.access.redhat.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:14:15Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "official CSAF metadata and releases.csv available",
@@ -290,6 +329,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 21,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -303,7 +355,7 @@
         "cert-portal.siemens.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:14:14Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "841 advisory index entries",
@@ -360,6 +412,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 21,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -374,7 +439,7 @@
         "www.rtpro.yamaha.co.jp"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:14:15Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "notice listing and official detail fetched",
@@ -431,6 +496,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 1,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -444,7 +522,7 @@
         "docs.gitlab.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:22:19Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
       "verified_capabilities": [
         "Atom release feed with 107 items",
@@ -501,6 +579,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 21,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -514,7 +605,7 @@
         "ubuntu.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:22:45Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
       "verified_capabilities": [
         "5 USN list items received",
@@ -571,6 +662,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 5,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -610,7 +714,7 @@
         "confluence.atlassian.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:22:19Z",
+      "last_verified_utc": "2026-10-10T12:22:30Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048161575",
       "verified_capabilities": [
         "Atlassian main advisory listing retrieved with 97 candidate links",
@@ -667,6 +771,19 @@
         "verified_source_ingest": true,
         "accuracy_reviewed": false,
         "approval_state": "not_ready_for_customer_auto_claims"
+      },
+      "latest_bounded_scale_validation": {
+        "status": "verified_one_shot_read_parse_and_sqlite",
+        "observed_utc": "2026-10-10T12:22:30Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457",
+        "unique_source_advisory_documents": 21,
+        "review_state": "parsed_unreviewed",
+        "processing_pattern": "up_to_8_unseen_first_plus_bounded_rechecks",
+        "coverage_scope": "unrepresentative_small_sample_per_official_source",
+        "full_vendor_coverage_certified": false,
+        "persistent_beyond_seven_days": false,
+        "accurate_affected_version_claims_certified": false,
+        "production_enabled": false
       }
     },
     {
@@ -721,5 +838,52 @@
     "sqlite_events_at_that_run": 27,
     "integrity": "ok",
     "safety": "all parsed claims unreviewed; no confirmed vendor security content changes or exposure assessment"
+  },
+  "bounded_scale_run_evidence": {
+    "status": "THREE_SUCCESSFUL_PROGRESSIVE_BATCHES",
+    "run_urls": [
+      "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051263448",
+      "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051545862",
+      "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38051672457"
+    ],
+    "unique_source_advisories_progression": [
+      51,
+      89,
+      125
+    ],
+    "sqlite_version_progression": [
+      120,
+      162,
+      202
+    ],
+    "sqlite_integrity": "ok",
+    "verified_sources": 9,
+    "per_source_unique_documents": {
+      "fortinet-psirt": 21,
+      "paloalto-advisories": 9,
+      "siemens-csaf": 21,
+      "redhat-csaf": 21,
+      "ubuntu-security-api": 5,
+      "gitlab-security-releases": 21,
+      "yamaha-network": 1,
+      "atlassian-security": 21,
+      "microsoft-msrc": 5
+    },
+    "true_security_updates_human_verified": 0,
+    "source_html_only_changes_not_exploitation_proof": true,
+    "parser_implementation_revisions_not_publisher_updates": true,
+    "production_polling": false,
+    "durable_storage_not_implemented": true,
+    "cve_kaggle_warehouse_not_touched": true,
+    "known_limitations": [
+      "Fortinet older PSIRT notice lacking automatically parseable impact table is stored with unknown impact, not falsely not-affected",
+      "Palo Alto PAN-SA IDs are NOT CVE IDs",
+      "Atlassian transient URL reset handled via bounded retry; article CVEs still provisional",
+      "Palo Alto discovery remains CRITICAL-filtered; production completeness not demonstrated",
+      "Yamaha and Ubuntu discovery currently expose fewer candidates without pagination expansion",
+      "Microsoft MSRC monthly CVRF is not expanded into precise per-CVE product exposure",
+      "Only 7-day GitHub Actions artifacts preserve vendor database; not durable",
+      "All extracted product/fix facts unreviewed; no customer alerts"
+    ]
   }
 }
