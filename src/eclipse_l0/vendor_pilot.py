@@ -340,8 +340,20 @@ def normalize(source, item, raw):
         meta = doc.get("cveMetadata") or {}
         cna = (doc.get("containers") or {}).get("cna") or {}
         ident = meta.get("cveId")
-        if ident and ident != item["id"]:
+        # Palo Alto publishes PAN-SA advisory IDs as well as CVE IDs via the
+        # same JSON endpoint. A PAN-SA identifier must never enter cve_ids.
+        if ident is not None and not isinstance(ident, str):
+            raise ValueError("Nonstring Palo Alto advisory identifier")
+        is_cve = bool(isinstance(ident,str) and CVE.fullmatch(ident))
+        indexed_cve = bool(CVE.fullmatch(item["id"]))
+        if is_cve and indexed_cve and ident.upper() != item["id"].upper():
             raise ValueError("CVE identifier does not match publisher index")
+        if ident and not is_cve and ident != item["id"]:
+            raise ValueError("Unexpected Palo Alto advisory identity")
+        if indexed_cve and ident and not is_cve:
+            raise ValueError("CVE-indexed record instead returned non-CVE identity")
+        confirmed_id = (ident.upper() if is_cve else
+                        item["id"].upper() if indexed_cve else None)
         if not cna and not doc.get("title"):
             raise ValueError("Palo Alto detail has no recognized advisory body")
         versions = cna.get("affected", []) if cna else []
@@ -368,12 +380,15 @@ def normalize(source, item, raw):
                     "status":"unreviewed"
                 })
         return {"title": (desc or doc.get("title") or item["title"])[:500],
-                "cve_ids": [ident] if ident else ([] if not CVE.fullmatch(item["id"]) else [item["id"]]),
+                "cve_ids": [confirmed_id] if confirmed_id else [],
+                "unreviewed_article_cve_candidates":
+                    _ids(" ".join(str(x.get("value","")) for x in descs
+                                  if isinstance(x,dict)))[:50] if not confirmed_id else [],
                 "affected":[{"vendor":v.get("vendor"),"product":v.get("product"),
                              "versions_raw":v.get("versions",[]),"status":"unreviewed"}
                             for v in versions if isinstance(v,dict)],
                 "remediations_unreviewed":remediations,
-                "evidence_fields":["cveMetadata.cveId" if ident else "advisory.title",
+                "evidence_fields":["cveMetadata.cveId" if confirmed_id else "advisory.title",
                                    "containers.cna.affected" if cna else "advisory",
                                    "containers.cna.solutions","containers.cna.workarounds"],
                 "extraction_notes":["Affected/version and remediation statements copied from CNA with paths.",
