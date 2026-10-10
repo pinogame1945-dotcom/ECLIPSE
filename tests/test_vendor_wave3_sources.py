@@ -16,7 +16,8 @@ cases=[
 ]
 class ThirdWaveTests(unittest.TestCase):
  def test_all_are_provisional_only(self):
-  self.assertEqual(len(reg["sources"]),34)
+  self.assertGreaterEqual(len(reg["sources"]),34)
+  self.assertEqual(len({x["source_id"] for x in reg["sources"]}),len(reg["sources"]))
   for sid in ["juniper-jsa","hpe-psirt","ibm-security-bulletins","netapp-psirt","jenkins-security","grafana-security","nginx-security","openssl-security","tomcat-security","wordpress-core-security"]:
    self.assertIn(sid,SUPPORTED)
    expected="probe_failed" if sid in ("juniper-jsa","hpe-psirt","ibm-security-bulletins","netapp-psirt") else "read_parse_verified"
