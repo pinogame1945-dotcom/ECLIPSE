@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "customer_name": "SYNTHETIC EXAMPLE ORGANIZATION — NOT A REAL CUSTOMER",
+  "products": [
+    {
+      "id": "sample-firewall",
+      "vendor": "Fortinet",
+      "product": "FortiOS",
+      "installed_version": "EXAMPLE-ONLY-UNKNOWN"
+    },
+    {
+      "id": "sample-switch",
+      "vendor": "Cisco",
+      "product": "IOS XE",
+      "installed_version": "EXAMPLE-ONLY-UNKNOWN",
+      "aliases": [
+        {"vendor": "Cisco", "product": "Cisco IOS XE Software"}
+      ]
+    },
+    {
+      "id": "sample-endpoint",
+      "vendor": "Microsoft",
+      "product": "Windows 11",
+      "installed_version": "EXAMPLE-ONLY-UNKNOWN"
+    }
+  ]
+}
