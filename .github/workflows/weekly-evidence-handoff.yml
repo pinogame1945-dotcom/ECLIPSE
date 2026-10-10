@@ -195,3 +195,64 @@ jobs:
             ${{ runner.temp }}/link/results/weekly-independent-verify.json
           if-no-files-found: error
           retention-days: 7
+
+  independently-read-zip:
+    needs: independent-join
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-weekly-evidence-snapshot-20261004-20261010
+          path: evidence
+      - name: Independent handoff consumer on a fresh runner, no Kaggle or source DB access
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_evidence verify \
+            --zip evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            > evidence/fresh-reader-proof.json
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          z=Path("evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip")
+          proof=json.loads(Path("evidence/fresh-reader-proof.json").read_text())
+          created=json.loads(Path("evidence/weekly-build-receipt.json").read_text())
+          previous=json.loads(Path("evidence/weekly-independent-verify.json").read_text())
+          assert proof["sha256"]==created["zip_sha256"]==previous["sha256"]
+          assert proof["result"]=="INDEPENDENT_WEEKLY_HANDOFF_CONTRACT_VERIFIED"
+          with zipfile.ZipFile(z) as bundle:
+              manifest=json.loads(bundle.read("manifest.json"))
+              quality=json.loads(bundle.read("quality_report.json"))
+              index=json.loads(bundle.read("weekly_index.json"))
+          assert manifest["input_provenance"]["cve_source_index_sha256"]=="1b19b50fedb034390463a68222948b365f6b6dc39dcd1904218dd880abe504d2"
+          assert manifest["input_provenance"]["vendor_sqlite_sha256"]=="891526069dd43fa6e8114ff48e68389bc308b2bc3ab47c47082529669e363edc"
+          assert index["window_start_utc"]=="2026-10-04"
+          assert index["window_end_utc"]=="2026-10-10"
+          assert quality["weekly_coverage_certified"] is False
+          assert manifest["completeness"]=="UNVERIFIED_WEEK_NOT_A_PRODUCTION_WEEKLY_REPORT"
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"],"a") as out:
+              out.write("## Phase 2-C: independent consumer verified\\n")
+              out.write(f"- CVE candidate entries: {proof['candidate_total']:,}\\n")
+              out.write(f"- Related vendor advisories: {proof['vendor_documents']:,}\\n")
+              out.write(f"- ZIP SHA256: {proof['sha256']}\\n")
+              out.write("- **Snapshot-only: NOT A COMPLETE WEEKLY REPORT.**\\n")
+          print("FRESH_RUNNER_CHATGPT_HANDOFF_CONTRACT=VERIFIED")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-weekly-evidence-fresh-reader-acceptance
+          path: evidence/fresh-reader-proof.json
+          retention-days: 7
+          if-no-files-found: error
