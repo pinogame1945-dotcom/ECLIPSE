@@ -179,7 +179,7 @@ def main():
 
             chosen = [r["url"] for r in rows if official(r["url"]) and "/psirt/" in urlparse(r["url"]).path]
             chosen.append("https://fortiguard.fortinet.com/psirt/FG-IR-26-124")
-            for detail_url in list(dict.fromkeys(chosen))[:3]:
+            for detail_url in list(dict.fromkeys(chosen))[:4]:
                 try:
                     raw, final, ct = get(detail_url)
                     parsed = Tables()
