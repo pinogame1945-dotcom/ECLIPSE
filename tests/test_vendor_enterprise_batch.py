@@ -17,7 +17,8 @@ class EnterpriseBatch(unittest.TestCase):
  def test_six_unverified_and_no_production(self):
   for x in ("cisco-public-advisories",)+tuple(y[0] for y in examples):
    self.assertIn(x,SUPPORTED)
-   self.assertEqual(source[x]["verification_status"],"not_tested")
+   expected="probe_failed" if x in ("oracle-security-patches","vmware-broadcom-vmsa") else "read_parse_verified"
+   self.assertEqual(source[x]["verification_status"],expected)
    self.assertFalse(source[x]["enabled_for_production"])
  def test_publication_identity_and_navigation_false_positive(self):
   for sid,ident,url,title in examples:

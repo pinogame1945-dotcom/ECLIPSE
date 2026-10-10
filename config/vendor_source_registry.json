@@ -1089,11 +1089,15 @@
       "allowed_hosts": [
         "sec.cloudapps.cisco.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:56:09Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185",
+      "verified_capabilities": [
+        "Official public listing to valid advisory URL discovery; one sample read/parsed in Actions 38061570185",
+        "CVE references retained as advisory-level unreviewed citations, not product applicability"
+      ],
       "pending_gates": [
+        "Real SQLite archival and idempotence proof for the independently verified 4-source cohort",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1114,11 +1118,12 @@
       "allowed_hosts": [
         "www.oracle.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Official HTML body DOM extraction failed; source-specific article scope correction needed, do not extract page-wide CVEs",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1127,7 +1132,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "last_failed_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185"
     },
     {
       "source_id": "sap-security-patch-days",
@@ -1139,11 +1145,15 @@
       "allowed_hosts": [
         "support.sap.com"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:56:09Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185",
+      "verified_capabilities": [
+        "Official public listing to valid advisory URL discovery; one sample read/parsed in Actions 38061570185",
+        "CVE references retained as advisory-level unreviewed citations, not product applicability"
+      ],
       "pending_gates": [
+        "Real SQLite archival and idempotence proof for the independently verified 4-source cohort",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1165,11 +1175,12 @@
         "www.broadcom.com",
         "support.broadcom.com"
       ],
-      "verification_status": "not_tested",
+      "verification_status": "probe_failed",
       "last_verified_utc": null,
       "evidence_run_url": null,
       "verified_capabilities": [],
       "pending_gates": [
+        "Official index lacked document links in static HTML; use validated publisher JSON feed/authorized API or other official index; do not fabricate coverage",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1178,7 +1189,8 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "last_failed_probe_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185"
     },
     {
       "source_id": "drupal-core-security",
@@ -1190,11 +1202,15 @@
       "allowed_hosts": [
         "www.drupal.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:56:09Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185",
+      "verified_capabilities": [
+        "Official public listing to valid advisory URL discovery; one sample read/parsed in Actions 38061570185",
+        "CVE references retained as advisory-level unreviewed citations, not product applicability"
+      ],
       "pending_gates": [
+        "Real SQLite archival and idempotence proof for the independently verified 4-source cohort",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1215,11 +1231,15 @@
       "allowed_hosts": [
         "httpd.apache.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T14:56:09Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185",
+      "verified_capabilities": [
+        "Official public listing to valid advisory URL discovery; one sample read/parsed in Actions 38061570185",
+        "CVE references retained as advisory-level unreviewed citations, not product applicability"
+      ],
       "pending_gates": [
+        "Real SQLite archival and idempotence proof for the independently verified 4-source cohort",
         "Official live index to detail pilot",
         "Affected/fixed version and publisher date exact-source audit",
         "Licensing, private persistent snapshots, update coverage and errors"
@@ -1492,15 +1512,38 @@
     "production_enabled": false
   },
   "enterprise_batch2": {
+    "attempted": 6,
+    "read_parse_verified": 4,
+    "quarantined": 2,
+    "live_evidence": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38061570185",
     "source_ids": [
-      "cisco-public-advisories",
-      "oracle-security-patches",
-      "sap-security-patch-days",
-      "vmware-broadcom-vmsa",
-      "drupal-core-security",
-      "apache-httpd-security"
+      {
+        "id": "cisco-public-advisories",
+        "status": "read_parse_verified"
+      },
+      {
+        "id": "oracle-security-patches",
+        "status": "probe_failed"
+      },
+      {
+        "id": "sap-security-patch-days",
+        "status": "read_parse_verified"
+      },
+      {
+        "id": "vmware-broadcom-vmsa",
+        "status": "probe_failed"
+      },
+      {
+        "id": "drupal-core-security",
+        "status": "read_parse_verified"
+      },
+      {
+        "id": "apache-httpd-security",
+        "status": "read_parse_verified"
+      }
     ],
-    "state": "candidate_only_before_actions_live_verification",
-    "changed_main": false
+    "production": false,
+    "complete_publisher_coverage": false,
+    "changes_to_main": false
   }
 }
