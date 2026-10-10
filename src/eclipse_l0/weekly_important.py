@@ -19,6 +19,7 @@ import zipfile
 
 from .weekly_evidence import canonical, sha, verify as verify_source
 from .weekly_triage import classify, _read_jsonl, _jsonlines, MAX_BASE_ZIP_BYTES
+from .weekly_temporal import temporal_fields, select_top50, DIVERSITY_PENALTY
 
 SCHEMA = 1
 TARGET = 50
@@ -167,6 +168,7 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
         new_kev = ("CISA_KEV_DATE_ADDED_IN_WINDOW" in p["week_reasons"]
                    and p["kev_present"])
         points, evidence_tags = risk_signals(p)
+        time_info = temporal_fields(row, matched_vendor=bool(matched), new_kev=new_kev)
         mandatory = active and (new_kev or bool(matched))
         if not active:
             lane = "INACTIVE"
@@ -181,6 +183,7 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
         ledger.append({
             "cve_id": cid, "record_state": p["record_state"],
             "lane": lane, "new_kev_added_in_window": bool(new_kev and active),
+            **time_info,
             "approved_vendor_matched_by_cna": sorted(matched),
             "risk_signal_score": points, "risk_signal_tags": evidence_tags,
             "cvss_base": p["cvss_base"],
@@ -209,24 +212,15 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
     by_id = {x["cve_id"]: x for x in ledger}
     for candidate in chosen:
         by_id[candidate["cve_id"]]["selected_for_priority_review"] = True
-    # Vendor inclusion is mandatory for the L2 review pool, NOT a reason to
-    # claim that 3,000+ vendor CVEs all deserve a front-page weekly report.
-    # L3 is a separate compact risk shortlist, with every NEW KEV preserved.
-    # Other candidates need at least two meaningful signals; a vendor logo
-    # alone (or CVSS alone) cannot consume a top-50 slot.
-    shortlist_pool = [x for x in vendors if x["risk_signal_score"] >= min_score] + other
-    shortlist_pool.sort(key=lambda x: (
-        -(x["risk_signal_score"] + (15 if x["approved_vendor_matched_by_cna"] else 0)),
-        -(x["epss_snapshot_probability"] or 0.0),
-        -(x["cvss_base"] or 0.0), x["cve_id"]))
-    top50 = kev + shortlist_pool[:max(0, target - len(kev))]
-    if len(top50) != len({x["cve_id"] for x in top50}):
-        raise ValueError("Duplicate top50 research CVE")
+    # L2 keeps all important-vendor CVEs, even historic ones. L3 is a
+    # *different* time-aware selection: NEW KEV or new CVE publication.
+    # Historical KEV membership never makes a metadata-only update new.
+    top50, eligible_fresh_count = select_top50(ledger, target)
     for candidate in top50:
         by_id[candidate["cve_id"]]["selected_for_top50_research"] = True
     top50_rows = [dict(item, top50_rank=i + 1,
                        shortlist_basis=("NEW_KEV_MANDATORY" if item["new_kev_added_in_window"]
-                                        else "MULTI_SIGNAL_RISK_WITH_126_VENDOR_BONUS"))
+                                        else "NEW_CVE_PUBLICATION_RISK_REVIEW"))
                   for i, item in enumerate(top50)]
     ledger.sort(key=lambda x: x["cve_id"])
     selected = [dict(item, review_rank=i + 1,
@@ -253,6 +247,15 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
         "mandatory_overflow": max(0, len(obligatory) - target),
         "risk_eligible_not_selected": len(other) - len(optional),
         "top50_research_count": len(top50),
+        "top50_newly_published_non_kev": sum(not x["new_kev_added_in_window"] and x["new_cve_publication_in_window"] for x in top50),
+        "top50_existing_kev_without_new_registration": sum(not x["new_kev_added_in_window"] and "CISA_KEV_PREVIOUSLY_LISTED" in x["risk_signal_tags"] for x in top50),
+        "updated_only_unverified_material_changes": sum(x["updated_without_confirmed_material_change"] for x in ledger),
+        "new_published_high_signal_eligible": eligible_fresh_count,
+        "new_published_high_signal_not_in_top50": eligible_fresh_count - (len(top50) - len(kev)),
+        "target_not_filled_if_insufficient_fresh_risk_candidates": max(0, target - len(top50)),
+        "product_diversity_penalty_ranking_only": DIVERSITY_PENALTY,
+        "time_policy": "NEW_KEV_OR_NEW_PUBLISHED_CVE_WITH_STRUCTURED_RISK_SIGNALS_ONLY",
+        "metadata_updates_without_confirmed_change_excluded_from_top50": True,
         "top50_new_kev": len(kev),
         "top50_126_vendor_non_kev": sum(bool(x["approved_vendor_matched_by_cna"]) and not x["new_kev_added_in_window"] for x in top50),
         "top50_other_non_kev": sum(not x["approved_vendor_matched_by_cna"] and not x["new_kev_added_in_window"] for x in top50),
@@ -281,6 +284,10 @@ def compute(source, policy_bytes, target=TARGET, min_score=MIN_DISCRETIONARY_SCO
         "mandatory_items_never_hidden_by_target": True,
         "top50_is_provisional_multi_signal_research_shortlist": True,
         "vendor_logo_alone_cannot_enter_top50": True,
+        "old_kev_membership_alone_cannot_enter_top50": True,
+        "cve_updated_date_not_evidence_of_security_change": True,
+        "vendor_observed_revisions_are_not_confirmed_publisher_updates": True,
+        "product_diversity_only_changes_ranking_no_cve_merging": True,
         "no_final_editorial_or_client_exposure_verdict": True,
         "source_original_notes": source_quality["critical_notes"],
     }
@@ -372,6 +379,9 @@ def verify(path):
         "l1_total": index["l1_original_cve_count"],
         "selected": index["important_review_candidate_count"],
         "top50": index["top50_research_count"],
+        "top50_new_publications": index["top50_newly_published_non_kev"],
+        "top50_existing_kev_without_new_registration": index["top50_existing_kev_without_new_registration"],
+        "updated_only_unverified": index["updated_only_unverified_material_changes"],
         "top50_vendor": index["top50_126_vendor_non_kev"],
         "top50_other": index["top50_other_non_kev"],
         "mandatory_kev": index["mandatory_new_kev_count"],
