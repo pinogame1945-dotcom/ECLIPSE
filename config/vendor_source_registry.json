@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:53:00Z",
+  "updated_utc": "2026-10-10T12:57:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -940,5 +940,35 @@
     "vendor_cve_links_human_reviewed": false,
     "customer_exposure_verified": false,
     "cve_and_vendor_data_modified": false
+  },
+  "vendor_private_kaggle_generations": {
+    "status": "TWO_IMMUTABLE_PRIVATE_SNAPSHOTS_INDEPENDENTLY_RESTORED",
+    "generation_1": {
+      "slug": "eclipse-vendor-evidence-20261010-v1",
+      "advisories": 125,
+      "versions": 202,
+      "events": 202,
+      "independent_restore_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38052737015"
+    },
+    "generation_2": {
+      "slug": "eclipse-vendor-evidence-20261010-v2",
+      "advisories": 160,
+      "versions": 241,
+      "events": 241,
+      "new_advisories": 35,
+      "new_versions": 39,
+      "parent_generation": 1,
+      "create_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053669895",
+      "independent_restore_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053761033",
+      "prior_version_and_event_rows_preserved": true
+    },
+    "production_scheduled_updates_enabled": false,
+    "automatic_next_generation_creation_enabled": false,
+    "full_vendor_coverage_verified": false,
+    "raw_vendor_documents_included": false,
+    "customer_assets_included": false,
+    "vendor_content_human_reviewed": false,
+    "original_cve_kaggle_untouched": true,
+    "operational_constraint": "Further generations need pinned source index, strict transactional continuity and fresh-runner independent readback; do not use the 7-day Actions artifact as permanent state."
   }
 }
