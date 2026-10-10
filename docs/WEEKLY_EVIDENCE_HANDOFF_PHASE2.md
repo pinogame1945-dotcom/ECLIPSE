@@ -86,3 +86,22 @@ ChatGPTレポート作成側はまず `manifest.json` と `quality_report.json` 
 出力Artifact名：`eclipse-weekly-evidence-snapshot-20261004-20261010`（GitHub Actionsの標準保存は**7日間のみ**）。パッケージ自体とbuild-receipt / verify-receiptを収録。現段階で長期保存済みではないので、そのまま週報の商用・恒常供給ができると誤認しないこと。
 
 **品質上の判定は研究用限定である。** 週次の網羅性は `weekly_coverage_certified=false`、新規Mozilla/Debianの4公告は未反映。重要事項・攻撃条件・修正バージョンなどが未確認なら「未確認」のまま渡す。別の週報制作スレッドにおいて読解・執筆実績が出るまで、実運用での週報生成完成とはしない。
+
+### 生成ZIPの中身を実際に独立集計した結果
+
+[GitHub Actions：実際のZIPをダウンロードして別ランナーで全ファイル再検証・集計 SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38058225812)
+
+| 対象期間（UTC） | 2026-10-04〜2026-10-10 |
+|---|---:|
+| 抽出CVE候補（重複除去） | **6,355件** |
+| CVE原本の新規公開日が期間内 | **2,650件** |
+| CVE原本の更新日が期間内 | **3,705件** |
+| CISA KEVの登録日が期間内 | **6件** |
+| 同梱ベンダー公式公告 | **40文書** |
+| 期間に関連する変更・観測イベント | **6,442件** |
+| 出典根拠レコード | **12,537件** |
+| ZIP圧縮後容量 | **2,203,867 bytes（約2.2 MB）** |
+
+区分ごとの件数は複数の理由が同一CVEに付く場合があるため、単純合算と総CVE件数が一致しないことがある。ベンダー40文書の出典別内訳：Atlassian 5／Fortinet 5／GitLab 2／Microsoft 6／Palo Alto 2／Red Hat 14／Siemens 3／Ubuntu 2／ヤマハ 1。Mozilla・DebianはPRIVATE Kaggle V2に未保存のため不足として記録された。
+
+生成ZIP SHA-256：`74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af`。これは**2026-10-10固定データをこの日付窓で抽出した再現可能な候補集**であり、**2026-10-04〜10に実際に世界で公表された脆弱性の網羅性、現在最新性やすべてのベンダーの取得完了を証明しない**。レポート本文は未生成。情報パッケージのChatGPTへの実投入は別スレッドで試験する。
