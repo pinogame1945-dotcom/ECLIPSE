@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T12:59:00Z",
+  "updated_utc": "2026-10-10T13:10:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -987,5 +987,44 @@
     "affected_product_version_consistency_verified": false,
     "customer_exposure_verified": false,
     "cve_and_vendor_sources_modified": false
+  },
+  "vendor_product_content_snapshot_audit": {
+    "status": "INDEPENDENT_REAL_403696_CVE_PRODUCT_EVIDENCE_AUDIT_SUCCESS_REVIEW_ONLY",
+    "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38054491168",
+    "evidence_review_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38054657019",
+    "cve_records": 403696,
+    "vendor_documents": 160,
+    "structured_claims_scanned": 14147,
+    "strict_product_name_matches": 127,
+    "matched_csaf_siemens_unmapped_product_status_claims": 121,
+    "pano_structural_cna_same_rows": 3,
+    "pano_structural_cna_different_rows": 3,
+    "structural_difference_cve_ids": [
+      "CVE-2024-0012"
+    ],
+    "structural_difference_products": [
+      "Cloud NGFW",
+      "PAN-OS",
+      "Prisma Access"
+    ],
+    "published_source_assertion_disagreements_confirmed": 0,
+    "literal_affected_unaffected_conflicts_detected": 0,
+    "missing_strict_product_match_claims": 13991,
+    "source_unmatch_counts": {
+      "redhat-csaf": 10487,
+      "siemens-csaf": 3477,
+      "paloalto-advisories": 27
+    },
+    "unpublished_cve_claims": 29,
+    "fortinet_unscoped_html_documents": 28,
+    "other_unparsed_documents": 67,
+    "direct_cve_scope_missing_pano_documents": 2,
+    "no_unmatched_entry_is_proof_of_unaffected": true,
+    "all_findings_require_source_review": true,
+    "no_customer_asset_data": true,
+    "read_only_source_db": true,
+    "production_product_matching_approved": false,
+    "interpretation": "Structural diffs refer to one CVE across three product rows; not three confirmed vulnerabilities or proven contradictory affected versions",
+    "report_doc": "docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md"
   }
 }
