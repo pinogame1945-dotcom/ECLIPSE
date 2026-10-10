@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T13:21:00Z",
+  "updated_utc": "2026-10-10T13:37:22Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -846,7 +846,8 @@
         "Official HTTPS listing fetched without third-party redirects",
         "Two independent official advisory details fetched and validated against exact publisher IDs",
         "Source-linked normalized CVE candidates and SHA256 in one-shot READ_ONLY real run",
-        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)"
+        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)",
+        "Two current official advisory records written to SQLite and replayed without duplicates; verified run 38056416467"
       ],
       "pending_gates": [
         "Source-scoped CVE extraction and version accuracy review",
@@ -867,6 +868,19 @@
         "observed_utc": "2026-10-10T13:35:43Z",
         "accuracy_reviewed": false,
         "production_enabled": false
+      },
+      "publisher_expansion_sqlite_proof": {
+        "status": "OFFICIAL_DISCOVERY_DETAIL_SQLITE_BASELINE_REPLAY_PASS",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056416467",
+        "local_sqlite_documents_sampled": 2,
+        "local_sqlite_first_baseline_events": 2,
+        "idempotent_replays_unchanged": 2,
+        "extract_status": "parsed_unreviewed",
+        "source_sha256_provenance": true,
+        "sqlite_integrity": "ok",
+        "long_term_independent_kaggle_dataset_ingestion": false,
+        "vendor_fixed_and_affected_version_claims_verified": 0,
+        "production_approved": false
       }
     },
     {
@@ -887,7 +901,8 @@
         "Official HTTPS listing fetched without third-party redirects",
         "Two independent official advisory details fetched and validated against exact publisher IDs",
         "Source-linked normalized CVE candidates and SHA256 in one-shot READ_ONLY real run",
-        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)"
+        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)",
+        "Two current official advisory records written to SQLite and replayed without duplicates; verified run 38056416467"
       ],
       "pending_gates": [
         "CVE ID mail-header extraction reliability",
@@ -909,6 +924,19 @@
         "observed_utc": "2026-10-10T13:35:43Z",
         "accuracy_reviewed": false,
         "production_enabled": false
+      },
+      "publisher_expansion_sqlite_proof": {
+        "status": "OFFICIAL_DISCOVERY_DETAIL_SQLITE_BASELINE_REPLAY_PASS",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056416467",
+        "local_sqlite_documents_sampled": 2,
+        "local_sqlite_first_baseline_events": 2,
+        "idempotent_replays_unchanged": 2,
+        "extract_status": "parsed_unreviewed",
+        "source_sha256_provenance": true,
+        "sqlite_integrity": "ok",
+        "long_term_independent_kaggle_dataset_ingestion": false,
+        "vendor_fixed_and_affected_version_claims_verified": 0,
+        "production_approved": false
       }
     }
   ],
@@ -1135,17 +1163,24 @@
     "report_integration_into_main_customer_pptx": "NOT_IMPLEMENTED_NEEDS_REVIEW"
   },
   "expansion_20261010": {
-    "status": "TWO_PUBLISHERS_LIVE_READ_PARSE_2_OF_2_VERIFIED_SQLITE_PENDING",
-    "verified_vendor_sources_before": 9,
-    "verified_vendor_sources_after": 11,
-    "real_probe_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
-    "new_verified_sources": [
+    "status": "ELEVEN_READ_PARSE_VERIFIED_OFFICIAL_SOURCES_TWO_NEW_SOURCES_SAVED_LOCALLY",
+    "verified_sources_before": 9,
+    "verified_sources_now": 11,
+    "verified_new_sources": [
       "mozilla-mfsa",
       "debian-dsa"
     ],
-    "unreviewed_product_and_version_claims": true,
-    "no_production_polling": true,
-    "existing_kaggle_unchanged": true,
-    "archive_long_term_for_new_sources": false
+    "read_parse_live_probe": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+    "sqlite_idempotent_probe": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056416467",
+    "new_source_local_sqlite_documents": 4,
+    "new_source_local_versions": 4,
+    "new_source_local_events": 4,
+    "new_source_local_sqlite_sha256": "fc4943e59add60d979ad7ea9e0c790ff91d8a9922be73c463f0bdb054466ca3c",
+    "all_existing_private_kaggle_v1_v2_data_untouched": true,
+    "long_term_kaggle_storage_of_four_new_docs_not_yet_implemented": true,
+    "source_wide_coverage_certified": false,
+    "exact_fixed_package_versions_verified": false,
+    "sources_production_enabled": false,
+    "rights_reuse_reviewed": false
   }
 }
