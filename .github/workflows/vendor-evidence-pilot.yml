@@ -8,7 +8,12 @@ on:
       - 'src/eclipse_l0/vendor_pilot.py'
       - 'src/eclipse_l0/vendor_replay.py'
       - 'src/eclipse_l0/vendor_store.py'
+      - 'src/eclipse_l0/vendor_csaf.py'
+      - 'src/eclipse_l0/vendor_quality.py'
       - 'tests/test_vendor_pilot.py'
+      - 'tests/test_vendor_csaf.py'
+      - 'tests/test_vendor_quality.py'
+      - 'tests/test_vendor_schema_migration.py'
       - 'tests/test_vendor_replay.py'
   workflow_dispatch:
 
@@ -74,7 +79,7 @@ jobs:
               --dest output/vendor-evidence.sqlite3 \
               --bootstrap --report output/vendor-replay-provenance.json
           fi
-      - name: Refresh one bounded official advisory per source with past state
+      - name: Refresh two bounded official advisories per source with past state
         env:
           PYTHONPATH: src
         run: |
@@ -83,7 +88,7 @@ jobs:
             --registry config/vendor_source_registry.json \
             --db output/vendor-evidence.sqlite3 \
             --out output/vendor-evidence-manifest.json \
-            --max-items 1
+            --max-items 2
       - name: Validate saved state after collection (fail closed)
         env:
           PYTHONPATH: src
