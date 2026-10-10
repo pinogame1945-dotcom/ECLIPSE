@@ -1,0 +1,153 @@
+name: ECLIPSE weekly material update review (no made-up security updates)
+on:
+  push:
+    branches: [feature/weekly-important-50-20261010]
+    paths:
+      - '.github/workflows/weekly-update-content-review.yml'
+      - 'src/eclipse_l0/weekly_material.py'
+      - 'src/eclipse_l0/weekly_cve_material.py'
+      - 'src/eclipse_l0/weekly_update_queue.py'
+      - 'tests/test_weekly_material.py'
+      - 'tests/test_weekly_cve_material.py'
+      - 'tests/test_weekly_update_queue.py'
+  workflow_dispatch:
+    inputs:
+      vendor_artifact_run:
+        description: 'Optional successful versioned vendor-pilot run ID; omitted means NO change proof'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-weekly-material-review-fixed-week
+  cancel-in-progress: false
+
+jobs:
+  audit-updates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline version-diff and no-invented-update tests
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_weekly_material.py' -v
+          python -m unittest discover -s tests -p 'test_weekly_cve_material.py' -v
+          python -m unittest discover -s tests -p 'test_weekly_update_queue.py' -v
+      - name: Recover pinned full weekly L1 evidence (read only)
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+             --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+      - name: Optional trusted registry-validated vendor version history
+        if: inputs.vendor_artifact_run != ''
+        env:
+          VENDOR_ARTIFACT_RUN: ${{ inputs.vendor_artifact_run }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$VENDOR_ARTIFACT_RUN" =~ ^[0-9]{5,15}$ ]]; then
+            echo "::error::Expected an explicit numeric successful vendor workflow run"
+            exit 1
+          fi
+          # No fallback to a new baseline: missing/expired evidence must fail.
+          gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$VENDOR_ARTIFACT_RUN" \
+            --jq '.conclusion' | grep -qx success
+          mkdir -p output/vendor
+          gh run download "$VENDOR_ARTIFACT_RUN" --repo "$GITHUB_REPOSITORY" \
+             --name eclipse-vendor-to-sqlite-one-shot --dir output/vendor
+          python -m eclipse_l0.weekly_material build \
+             --vendor-db output/vendor/vendor-evidence.sqlite3 \
+             --registry config/vendor_source_registry.json \
+             --start 2026-10-04 --end 2026-10-10 \
+             --out output/vendor-material.json
+          python -m eclipse_l0.weekly_material verify \
+             --vendor-db output/vendor/vendor-evidence.sqlite3 \
+             --registry config/vendor_source_registry.json \
+             --report output/vendor-material.json
+      - name: Build auditable updated-CVE backlog and bounded urgent-review sample
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -f output/vendor-material.json ]; then
+            args+=(--vendor-material output/vendor-material.json)
+          fi
+          python -m eclipse_l0.weekly_update_queue build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            "${args[@]}" \
+            --out output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-build.json
+          python -m eclipse_l0.weekly_update_queue verify \
+            --zip output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/update-queue-verified.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          j=json.loads(Path("output/update-queue-verified.json").read_text())
+          assert j["original_cves"]==6355
+          assert j["updated_only"]==j["material_review_candidates"]+j["unverified_updated"]
+          assert not j["update_weekly_coverage_certified"]
+          print("### Actual 2026-10-04..10 updated-CVE review queue")
+          print(f"- L1 preserved: **{j['original_cves']}** CVEs")
+          print(f"- Old CVEs updated in week (not necessarily security): **{j['updated_only']}**")
+          print(f"- Source content change review candidates: **{j['material_review_candidates']}**")
+          print(f"- Insufficient version history or no material proof: **{j['unverified_updated']}**")
+          print(f"- High-risk candidates needing manual before/after acquisition: **{j['watchlist_high_risk_unverified']}**")
+          print("No source version pair means NO conclusion; dateUpdated is NOT proof.")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-weekly-updated-cve-review-audit
+          path: |
+            output/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip
+            output/update-queue-build.json
+            output/update-queue-verified.json
+            output/vendor-material.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independent-reader:
+    needs: audit-updates
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-weekly-updated-cve-review-audit
+          path: output/recheck
+      - name: Recompute L1 and updated CVE decisions on independent runner
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_update_queue verify \
+            --zip output/recheck/ECLIPSE_WEEKLY_UPDATED_CVE_REVIEW_20261004_20261010.zip \
+            > output/recheck/independent-verified.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('output/recheck/independent-verified.json').read_text())
+          assert j["result"]=="INDEPENDENT_WEEKLY_UPDATE_REVIEW_QUEUE_REPRODUCED"
+          assert j["original_cves"]==6355
+          assert not j["update_weekly_coverage_certified"]
+          print("INDEPENDENT_UPDATE_REVIEW_HANDBACK_VERIFIED",j)
+          PY
