@@ -432,6 +432,9 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 size = MAX_DOCUMENT if sid == "microsoft-msrc" else MAX_FEED
                 raw = get.get(item["url"],size)
                 facts = normalize(source,item,raw)
+                # Metadata about interpretation, not a vendor-published claim.
+                # The ledger will classify schema upgrades as extraction_revised.
+                facts["_extractor_revision"] = "vendor_semantics_20261010_v2"
                 quality = inspect_facts(facts,sid)
                 key = hashlib.sha256(raw).hexdigest()
                 stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
