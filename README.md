@@ -262,3 +262,28 @@ The pilot does not generate or send customer reports, does not download EPSS, an
 | P4: historical archive | Decide an independent durable database location and acceptable storage quotas first | Only then consider full CVE ZIP BACKFILL locally (never as default Actions step) |
 
 **CVE vs KEV**: Full KEV catalog validation is safe as a small baseline; do **not** confuse that with downloading every CVE in history. Source observations are not proof of exploitation at a customer. Do not put customer profiles or private work data in public GitHub Actions artifacts.
+
+
+## 2026-10-10 verified live-data preflight
+
+**Real official GitHub Actions execution, NOT a synthetic fixture.**
+
+| Check | Observed result | Evidence |
+| --- | --- | --- |
+| Complete CISA KEV feed | 1,739 rows parsed; SQLite integrity ok | [10-record pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043491174) |
+| Latest-KEV-linked CVE records, 10 | 10 / 10 imported | [10-record pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043491174) |
+| Same selection logic, 25 | 25 / 25 imported | [staged 25/50 pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043566592) |
+| Same selection logic, 50 | 50 / 50 imported; 50 network fetches total via cache | [staged 25/50 pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043566592) |
+| Durable KEV baseline | 1,739 rows; initial observation emitted **zero** fresh alerts | [bootstrap run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043619104), [state commit](https://github.com/pinogame1945-dotcom/ECLIPSE/commit/44a1fbd1625b43c1e7cc7b82d927d5a697f9578a) |
+
+**Important limitations:** These are 50 *KEV-selected* CVE documents, not a random or
+representative CVE sample. The disposable pilot SQLite DB is not a durable/full
+CVE master database. The durable `eclipse-state` branch presently stores the
+public KEV baseline only. Daily EPSS/CVE change-index scheduling and complete
+historic CVE BACKFILL require separate verified executions and persistence
+capacity planning. No real customer assets or confidential data were accessed.
+
+**Next gate:** Verify a repeated KEV no-change poll, initialize durable CVE
+change-index checkpoint and selected EPSS state, then test the actual daily
+source-grounded report; only afterward design a quota-bounded complete CVE
+snapshot import with resumability and checksum audit.
