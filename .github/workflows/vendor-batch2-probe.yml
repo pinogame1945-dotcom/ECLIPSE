@@ -1,0 +1,29 @@
+name: ECLIPSE source verification round 3 (read-only)
+on:
+  push:
+    branches:
+      - feature/vendor-source-registry-20261010
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m py_compile experiments/vendor_batch2_probe.py
+      - name: Probe official GitLab Ubuntu Chrome Atlassian sources
+        run: python experiments/vendor_batch2_probe.py --out output/vendor-batch2.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-vendor-batch2-readonly
+          path: output/vendor-batch2.json
+          retention-days: 7
+          if-no-files-found: warn
