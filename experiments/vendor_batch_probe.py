@@ -59,8 +59,8 @@ def fetch(url, hosts, max_bytes=MAX_BYTES):
         }
 
 
-def json_source(url, hosts):
-    raw, evidence = fetch(url, hosts)
+def json_source(url, hosts, max_bytes=MAX_BYTES):
+    raw, evidence = fetch(url, hosts, max_bytes=max_bytes)
     obj = json.loads(raw)
     if not isinstance(obj, (dict, list)):
         raise ValueError("Unexpected nonobject JSON")
@@ -127,7 +127,7 @@ def probe_microsoft():
                 "sample": [str(x.get("ID", x.get("Id", x.get("id", ""))))[:80]
                            for x in records[:4] if isinstance(x, dict)]}
     def detail():
-        obj, ev = json_source("https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Sep", hosts)
+        obj, ev = json_source("https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Sep", hosts, max_bytes=64 * 1024 * 1024)
         if not isinstance(obj, dict):
             raise ValueError("CVRF detail is not object")
         issues = obj.get("Vulnerability", obj.get("vulnerabilities", []))
@@ -149,10 +149,22 @@ def probe_redhat():
     r = result_for("Red Hat", "Security Data API")
     list_docs = []
     def listing():
-        url = "https://access.redhat.com/hydra/rest/securitydata/cve.json?per_page=5"
-        obj, ev = json_source(url, hosts)
-        if not isinstance(obj, list) or len(obj) == 0:
-            raise ValueError("Red Hat CVE list missing/empty")
+        urls = [
+            "https://access.redhat.com/hydra/rest/securitydata/cve.json?after=2026-09-20&per_page=5",
+            "https://access.redhat.com/labs/securitydataapi/cve.json?per_page=5",
+            "https://access.redhat.com/hydra/rest/securitydata/cve.json?per_page=5",
+        ]
+        errors = []
+        for url in urls:
+            try:
+                obj, ev = json_source(url, hosts)
+                if isinstance(obj, list) and obj:
+                    break
+                errors.append(url + " returned " + type(obj).__name__)
+            except Exception as exc:
+                errors.append(url + " " + type(exc).__name__ + ": " + str(exc)[:80])
+        else:
+            raise ValueError("; ".join(errors)[:250])
         for item in obj:
             if isinstance(item, dict) and CVE.fullmatch(str(item.get("CVE", ""))):
                 list_docs.append(item["CVE"])
@@ -185,7 +197,7 @@ def probe_paloalto():
             raise ValueError(f"Unknown or empty JSON advisory listing; keys={list(obj)[:12] if isinstance(obj, dict) else 'list'}")
         return {"evidence": ev, "records_count": len(records),
                 "sample_fields": list(records[0])[:16] if isinstance(records[0], dict) else [],
-                "sample_ids": [str(x.get("id", x.get("cve", x.get("CVE", ""))))[:80]
+                "sample_ids": [str(x.get("ID", x.get("id", x.get("cve", x.get("CVE", "")))))[:80]
                                for x in records[:4] if isinstance(x, dict)]}
     def detail():
         obj, ev = json_source("https://security.paloaltonetworks.com/json/CVE-2024-3400", hosts)
@@ -219,26 +231,32 @@ def probe_siemens():
                 "product_tree": isinstance(obj.get("product_tree"), dict),
                 "has_remediations": any(bool(v.get("remediations")) for v in vulns if isinstance(v, dict))}
     def discovery():
-        obj, ev = json_source("https://cert-portal.siemens.com/.well-known/csaf/provider-metadata.json", hosts)
-        if not isinstance(obj, dict) or not isinstance(obj.get("publisher"), dict):
-            raise ValueError("No CSAF provider metadata")
-        return {"evidence": ev, "publisher": obj["publisher"].get("name"),
-                "distribution_count": len(obj.get("distributions", []))}
+        obj, ev = json_source("https://cert-portal.siemens.com/productcert/csaf/ssa-feed-tlp-white.json", hosts)
+        feed = obj.get("feed") if isinstance(obj, dict) else None
+        entries = feed.get("entry", []) if isinstance(feed, dict) else []
+        if not entries or not isinstance(entries, list):
+            raise ValueError("No ROLIE CSAF entries in Siemens feed")
+        sample = entries[:4]
+        return {"evidence": ev, "feed_id": feed.get("id"), "feed_updated": feed.get("updated"),
+                "entry_count": len(entries),
+                "sample_ids": [x.get("id") for x in sample if isinstance(x, dict)],
+                "entry_links": [[v.get("href") for v in x.get("link", []) if v.get("rel") == "self"]
+                                for x in sample if isinstance(x, dict)]}
     a = call(r, "csaf_detail", csaf_detail)
-    call(r, "csaf_provider_discovery", discovery)
-    r["verdict"] = "PASS" if a and r["tests"]["csaf_provider_discovery"]["status"] == "PASS" else "PARTIAL" if a else "FAIL"
+    call(r, "csaf_feed_discovery", discovery)
+    r["verdict"] = "PASS" if a and r["tests"]["csaf_feed_discovery"]["status"] == "PASS" else "PARTIAL" if a else "FAIL"
     return r
 
 
 def probe_yamaha():
-    hosts = {"network.yamaha.com"}
+    hosts = {"network.yamaha.com", "www.rtpro.yamaha.co.jp"}
     r = result_for("Yamaha", "Japanese notice HTML")
     discovered = []
     def listing():
         obj, ev = html_source("https://network.yamaha.com/support/notice", hosts)
         for title, link in obj.links:
             full = urljoin(ev["url"], link)
-            if is_allowed(full, hosts) and any(x in title for x in ("脆弱性", "UTX200", "セキュリティ")):
+            if is_allowed(full, hosts) and ("脆弱性" in title or ("RTpro" in title and "セキュリティ" in title)):
                 discovered.append((title, full))
         page = " ".join(obj.text)
         if "重要なお知らせ" not in page and "脆弱性" not in page:
