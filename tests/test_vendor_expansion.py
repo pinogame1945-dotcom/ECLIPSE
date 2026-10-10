@@ -66,7 +66,7 @@ class ExpansionTest(unittest.TestCase):
         second=ingest_source(REGISTRY,SOURCE,self.db,4,OfflineFetch(self.content))
         self.assertEqual(second["status"],"PASS")
         self.assertEqual(second["baseline"],3)
-        self.assertEqual(second["replay_unchanged"],4)
+        self.assertEqual(second["replay_unchanged"],5)  # 4 selected + one historical recheck
         with connect(self.db) as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM vendor_documents").fetchone()[0],5)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM vendor_document_events").fetchone()[0],5)
