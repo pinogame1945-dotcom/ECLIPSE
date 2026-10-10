@@ -10,6 +10,8 @@ import unittest
 import zipfile
 
 from eclipse_l0.cve_version_history import collect, audit, _validate_record
+from eclipse_l0.cve_history_export import build_pairs
+from eclipse_l0.weekly_cve_material import analyze_pair_jsonl
 from eclipse_l0.weekly_material import canonical
 
 ID="CVE-2026-987654"
@@ -114,6 +116,23 @@ class CveHistoryTest(unittest.TestCase):
             self.capture(delta(),result=record())
         with self.assertRaisesRegex(ValueError,"regressed"):
             self.capture(delta(stamp="2026-10-10T20:00:00Z"),result=record())
+
+    def test_weekly_pair_export_reconstructs_sha_checked_records(self):
+        self.capture(delta(stamp="2026-10-11T00:00:00Z"), result=record())
+        self.capture(delta(stamp="2026-10-11T04:00:00Z"),
+                     result=record(version="2.0",stamp="2026-10-11T04:00:00Z"))
+        pairs, summary=build_pairs(self.state, "2026-10-11", "2026-10-11")
+        self.assertEqual(summary["published_v5_pairs_exported"],1)
+        review=analyze_pair_jsonl(pairs,"2026-10-11","2026-10-11")
+        self.assertEqual(review["counts_by_class"]["MATERIAL_CNA_SECURITY_CONTENT_CHANGE_REVIEW"],1)
+        latest=audit(self.state/"cve-version-history")
+        self.assertEqual(latest["transition_logs"],2)
+        self.assertFalse(summary["publisher_revision_date_not_proven"] is False)
+
+    def test_missing_previous_snapshot_fails_closed_for_export(self):
+        self.capture(delta(),result=record())
+        with self.assertRaisesRegex(ValueError,"No recorded"):
+            build_pairs(self.state,"2026-10-10","2026-10-10")
 
     def test_initial_rollup_baseline_does_not_download_current_full_cve_archive(self):
         d={"baseline":True,"event_count":0,"watermark_utc":"2026-10-11T00:00:00Z",
