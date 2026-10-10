@@ -1,0 +1,83 @@
+name: ECLIPSE Phase 3 five official vendor source discovery probes
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - 'src/eclipse_l0/vendor_next_sources.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'config/vendor_source_registry.json'
+      - 'tests/test_vendor_next_sources.py'
+      - '.github/workflows/vendor-phase3-five-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-phase3-official-probe
+  cancel-in-progress: false
+jobs:
+  sample-official-index-and-detail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Strict offline parser identity and navigation guards
+        run: python -m unittest discover -s tests -p 'test_vendor_next_sources.py' -v
+      - name: One official listing and one detail per publisher, no writes to Kaggle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          from eclipse_l0.vendor_registry import load_registry
+          from eclipse_l0.vendor_pilot import OfficialFetch,discover,normalize
+          reg=load_registry(Path("config/vendor_source_registry.json"))
+          sources={x["source_id"]:x for x in reg["sources"]}
+          chosen=["apple-security-releases","adobe-security-bulletins",
+                  "google-chrome-releases","android-security-bulletins","postgresql-security"]
+          results=[]
+          for sid in chosen:
+              src=sources[sid]
+              result={"source_id":sid,"state":"FAIL","candidate_count":0,
+                      "sample_id":None,"cve_refs":0,"errors":[]}
+              try:
+                  getter=OfficialFetch(src)
+                  candidates=discover(src,getter,1)
+                  result["candidate_count"]=len(candidates)
+                  item=candidates[0]
+                  raw=getter.get(item["url"])
+                  facts=normalize(src,item,raw)
+                  if facts["affected"] or not facts["evidence_fields"]:
+                      raise ValueError("Unsupported product-impact assertion")
+                  result.update({"state":"LIVE_SAMPLE_PARSE_PASS","sample_id":item["id"],
+                                 "sample_source":item["url"],
+                                 "source_sha256":hashlib.sha256(raw).hexdigest(),
+                                 "cve_refs":len(facts["cve_ids"]),
+                                 "human_reviewed":False,"production_enabled":False})
+              except Exception as ex:
+                  result["errors"].append(type(ex).__name__+": "+str(ex)[:250])
+              results.append(result)
+          out={"research_only":True,"main_modified":False,"kaggle_modified":False,
+               "production_enabled":False,"official_sources_attempted":len(results),
+               "sources_passed":sum(x["state"]=="LIVE_SAMPLE_PARSE_PASS" for x in results),
+               "results":results}
+          Path("output/vendor-phase3-five-probe.json").write_text(json.dumps(out,indent=2)+"\n")
+          print(json.dumps(out,indent=2))
+          if out["sources_passed"] != len(results):
+              raise SystemExit("Some new publisher sources require adapter correction; do not promote registry status")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-phase3-five-official-source-probe
+          path: output/vendor-phase3-five-probe.json
+          retention-days: 7
+          if-no-files-found: warn

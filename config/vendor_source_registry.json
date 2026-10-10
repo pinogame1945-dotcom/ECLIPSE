@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T13:37:22Z",
+  "updated_utc": "2026-10-10T14:30:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -938,6 +938,131 @@
         "vendor_fixed_and_affected_version_claims_verified": 0,
         "production_approved": false
       }
+    },
+    {
+      "source_id": "apple-security-releases",
+      "vendor": "Apple",
+      "product_scope": "macOS, iOS, iPadOS, Safari, watchOS, tvOS and Xcode",
+      "collector_kind": "html",
+      "discovery_url": "https://support.apple.com/en-us/100100",
+      "detail_sample_url": "https://support.apple.com/en-us/149226",
+      "allowed_hosts": [
+        "support.apple.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
+        "Audit main/article extraction and product/version semantics with exact publisher fields",
+        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "adobe-security-bulletins",
+      "vendor": "Adobe",
+      "product_scope": "Adobe Acrobat/Reader, Creative Cloud and server product security bulletins",
+      "collector_kind": "html",
+      "discovery_url": "https://helpx.adobe.com/security.html",
+      "detail_sample_url": "https://helpx.adobe.com/security/products/acrobat/apsb26-141.html",
+      "allowed_hosts": [
+        "helpx.adobe.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
+        "Audit main/article extraction and product/version semantics with exact publisher fields",
+        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "google-chrome-releases",
+      "vendor": "Google Chrome",
+      "product_scope": "Google Chrome Stable desktop and Chrome security release notices",
+      "collector_kind": "html",
+      "discovery_url": "https://chromereleases.googleblog.com/",
+      "detail_sample_url": "https://chromereleases.googleblog.com/2026/10/stable-channel-update-for-desktop.html",
+      "allowed_hosts": [
+        "chromereleases.googleblog.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
+        "Audit main/article extraction and product/version semantics with exact publisher fields",
+        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "android-security-bulletins",
+      "vendor": "Google Android",
+      "product_scope": "Android Open Source Project monthly Android security bulletins",
+      "collector_kind": "html",
+      "discovery_url": "https://source.android.com/docs/security/bulletin/asb-overview",
+      "detail_sample_url": "https://source.android.com/docs/security/bulletin/2026/2026-10-01",
+      "allowed_hosts": [
+        "source.android.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
+        "Audit main/article extraction and product/version semantics with exact publisher fields",
+        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "postgresql-security",
+      "vendor": "PostgreSQL",
+      "product_scope": "PostgreSQL Global Development Group security CVE detail pages",
+      "collector_kind": "html",
+      "discovery_url": "https://www.postgresql.org/support/security/",
+      "detail_sample_url": "https://www.postgresql.org/support/security/CVE-2026-19385/",
+      "allowed_hosts": [
+        "www.postgresql.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Run official live index/detail samples in branch-only GitHub Actions; record per-source failures rather than claiming success",
+        "Audit main/article extraction and product/version semantics with exact publisher fields",
+        "Prove no-loss persistence, incremental changes, license constraints, historical completeness and periodic source health"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
     }
   ],
   "cross_run_proof": {

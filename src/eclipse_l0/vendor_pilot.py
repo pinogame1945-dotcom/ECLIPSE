@@ -35,6 +35,8 @@ SUPPORTED = {
     "fortinet-psirt", "paloalto-advisories", "siemens-csaf", "redhat-csaf",
     "ubuntu-security-api", "gitlab-security-releases", "yamaha-network",
     "atlassian-security", "microsoft-msrc", "mozilla-mfsa", "debian-dsa",
+    "apple-security-releases", "adobe-security-bulletins", "google-chrome-releases",
+    "android-security-bulletins", "postgresql-security",
 }
 
 
@@ -229,7 +231,12 @@ def discover(source, getter, max_items, known_ids=None):
     url = source["discovery_url"]
     raw = getter.get(url)
     entries = []
-    if sid in ("mozilla-mfsa","debian-dsa"):
+    if sid in ("apple-security-releases", "adobe-security-bulletins",
+               "google-chrome-releases", "android-security-bulletins",
+               "postgresql-security"):
+        from .vendor_next_sources import discover_official
+        entries=discover_official(source, raw)
+    elif sid in ("mozilla-mfsa","debian-dsa"):
         from .vendor_additional_sources import discover_html
         entries=discover_html(source,raw)
     elif sid == "fortinet-psirt":
@@ -351,6 +358,11 @@ def _csaf_facts(doc, title):
 
 def normalize(source, item, raw):
     sid = source["source_id"]
+    if sid in ("apple-security-releases", "adobe-security-bulletins",
+               "google-chrome-releases", "android-security-bulletins",
+               "postgresql-security"):
+        from .vendor_next_sources import normalize_official
+        return normalize_official(source, item, raw)
     if sid in ("mozilla-mfsa","debian-dsa"):
         from .vendor_additional_sources import normalize_html
         return normalize_html(source,item,raw)
