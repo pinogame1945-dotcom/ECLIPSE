@@ -62,6 +62,12 @@ class ImportantReviewTests(unittest.TestCase):
                          ["CVE-2026-50002", "CVE-2026-50001"])
         self.assertEqual(len(ledger), 4)
         self.assertEqual(len(top50), 2)
+        self.assertTrue(all(x["original_l1_cve_source_facts"]["cve_id"] == x["cve_id"]
+                            for x in top50))
+        self.assertTrue(all(x["source_facts_assertion_status"] == "SOURCE_REPORTED_UNREVIEWED"
+                            for x in top50))
+        self.assertTrue(all(x["temporal_event_basis"] in
+                            ("NEW_CISA_KEV_REGISTRATION","NEW_CVE_PUBLICATION") for x in top50))
         self.assertEqual([x["cve_id"] for x in top50],
                          ["CVE-2026-50002","CVE-2026-50001"])
         self.assertIn("WATCH", {x["lane"] for x in ledger})
