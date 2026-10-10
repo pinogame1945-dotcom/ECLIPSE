@@ -172,16 +172,26 @@ def discover_wave3(source:dict,raw:bytes)->list[dict]:
         out.append({"id":ident,"url":url,"title":title[:220] or ident})
         if len(out)>=800:break
     if sid=="grafana-security" and not out:
-        # Grafana sometimes server-renders table text but not ordinary anchors.
-        # Only a scoped official Security Advisories table can provide candidates.
-        article=" ".join(_strict_html(raw).text)
-        if "Security Advisories" in article:
-            for v in sorted(set(x.upper() for x in CVE.findall(article)),reverse=True)[:80]:
+        # Publisher sometimes serves the same listing with a different DOM.
+        # CVE tokens can be used ONLY to discover canonical candidate URLs.
+        # On the selected detail page the exact publisher CVE-ID is rechecked;
+        # page/global CVEs are never promoted into "affected" assertions.
+        raw_html=raw.decode("utf-8","replace")
+        official_heading=bool(re.search(
+            r"<h1\b[^>]*>[\s\S]{0,200}?Security Advisories",raw_html,re.I))
+        semantic="Security Advisories" in " ".join(_strict_html(raw).text)
+        if official_heading or semantic:
+            seen=set()
+            for candidate in CVE.findall(raw_html):
+                v=candidate.upper()
+                if v in seen:continue
+                seen.add(v)
                 url="https://grafana.com/security/security-advisories/"+v.lower()+"/"
                 if _host_allowed(url,source["allowed_hosts"]):
                     out.append({"id":v,"url":url,"title":v})
-        # The following official detail GET + identity matching MUST succeed;
-        # this derived URL is an unverified candidate until that moment.
+                if len(out)>=80:break
+        # No CVE-to-product assertion is derived from this listing; the
+        # publisher's exact CVE page MUST be fetched and normalized.
     if not out:raise ValueError("No verifiable publisher index detail URLs; dynamic index or auth may be unsupported")
     return out
 
