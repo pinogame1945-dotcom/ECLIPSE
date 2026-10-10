@@ -38,6 +38,7 @@ SUPPORTED = {
     "apple-security-releases", "adobe-security-bulletins", "google-chrome-releases",
     "android-security-bulletins", "postgresql-security",
     "cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security",
+    "juniper-mist-security-rss", "ivanti-security-advisory-rss",
     "juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security",
 }
 
@@ -237,7 +238,10 @@ def discover(source, getter, max_items, known_ids=None):
     raw = (getter.get(url, 4 * 1024 * 1024, prefix_only=True)
            if sid=="netapp-psirt" else getter.get(url))
     entries = []
-    if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
+    if sid in ("juniper-mist-security-rss", "ivanti-security-advisory-rss"):
+        from .vendor_next_rss import discover_security_rss
+        entries=discover_security_rss(source,raw)
+    elif sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
         from .vendor_wave3_sources import discover_wave3
         entries = discover_wave3(source, raw)
     elif sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
@@ -370,6 +374,9 @@ def _csaf_facts(doc, title):
 
 def normalize(source, item, raw):
     sid = source["source_id"]
+    if sid in ("juniper-mist-security-rss", "ivanti-security-advisory-rss"):
+        from .vendor_next_rss import normalize_security_rss
+        return normalize_security_rss(source,item,raw)
     if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
         from .vendor_wave3_sources import normalize_wave3
         return normalize_wave3(source, item, raw)

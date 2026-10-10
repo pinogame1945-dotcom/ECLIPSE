@@ -1546,6 +1546,58 @@
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
       "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "juniper-mist-security-rss",
+      "vendor": "Juniper Mist",
+      "product_scope": "Juniper Mist Security Alerts category (NOT entire Juniper JSA coverage)",
+      "collector_kind": "rss_html",
+      "discovery_url": "https://www.mist.com/documentation/category/security-alerts/feed/",
+      "detail_sample_url": "https://www.mist.com/documentation/category/security-alerts/",
+      "allowed_hosts": [
+        "www.mist.com",
+        "mist.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official RSS index-to-sample HTML details, source domain and ID",
+        "Source-specific title, publication date, product and version exact publisher review",
+        "Full feed, revisions, historical completeness and rights review before production"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "ivanti-security-advisory-rss",
+      "vendor": "Ivanti",
+      "product_scope": "Ivanti security advisory topic RSS (blog publications, not all Ivanti KB advisories)",
+      "collector_kind": "rss_html",
+      "discovery_url": "https://www.ivanti.com/blog/topics/security-advisory/rss",
+      "detail_sample_url": "https://www.ivanti.com/blog/april-2026-security-update",
+      "allowed_hosts": [
+        "www.ivanti.com",
+        "ivanti.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official RSS index-to-sample HTML details, source domain and ID",
+        "Source-specific title, publication date, product and version exact publisher review",
+        "Full feed, revisions, historical completeness and rights review before production"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
     }
   ],
   "cross_run_proof": {
