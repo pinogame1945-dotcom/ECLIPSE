@@ -86,21 +86,22 @@ def _cves(value):
     return sorted(value)
 
 
-def _scoped(before,after,categories):
+def _scoped(before,after,categories,source_id):
     """Strict CVE association; never infer per-CVE scope from HTML page links."""
     old=_cves(before.get("cve_ids",[]));new=_cves(after.get("cve_ids",[]))
     if old!=new:
         return [],"CVE_MEMBERSHIP_CHANGED_REVIEW_UNSCOPED"
-    if len(old)==1 and categories:
-        # A single-CVE source can still contain a navigation CVE. Restrict
-        # this proof to per-CVE publisher sources or structured CSAF claims.
-        return old,"SINGLE_CVE_ADVISORY_PENDING_LINK_REVIEW"
+    if len(old)==1 and categories and source_id=="paloalto-advisories":
+        # PAN CNA mirror is designed around an individual CVE. A raw HTML
+        # article with one detected CVE is NOT equivalently scoped.
+        return old,"PALOALTO_DIRECT_SINGLE_CVE_CNA_SOURCE"
     def scoped_ids(obj):
         rows=obj.get("product_status_claims_unreviewed") or []
         if not isinstance(rows,list):raise ValueError("Malformed CSAF claims")
         return {r["cve_id"] for r in rows if isinstance(r,dict) and
                 isinstance(r.get("cve_id"),str) and CVE.fullmatch(r["cve_id"])}
-    if "AFFECTED_PRODUCT_OR_VERSION_CLAIM_CHANGED" in categories:
+    if (source_id in ("redhat-csaf","siemens-csaf") and
+            "AFFECTED_PRODUCT_OR_VERSION_CLAIM_CHANGED" in categories):
         before_ids=scoped_ids(before);after_ids=scoped_ids(after)
         # For multi-CVE documents field diffs must be calculated per-CVE.
         affected=set()
@@ -131,7 +132,7 @@ def _event(row,older,newer):
     body_changed=older["source_sha256"]!=newer["source_sha256"]
     parser_stable=old_parser==new_parser
     cats=_diff(old_facts,new_facts)
-    cves,link_status=_scoped(old_facts,new_facts,cats)
+    cves,link_status=_scoped(old_facts,new_facts,cats,row["source_id"])
     # This prefix means content difference under a stable parser, not proof
     # of author intent, original release date, or independent verification.
     content_change=(row["event_kind"]=="facts_updated" and
@@ -165,6 +166,7 @@ def _event(row,older,newer):
         "actual_exploitation_confirmed":False,
         "customer_impact_confirmed":False,
         "eligible_for_weekly_research":bool(content_change and cves),
+        "eligible_for_auto_claim_as_official_publisher_update":False,
         "safe_for_client_automatic_claims":False,
     }
 
