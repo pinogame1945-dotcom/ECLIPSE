@@ -131,8 +131,9 @@ class CveHistoryTest(unittest.TestCase):
 
     def test_missing_previous_snapshot_fails_closed_for_export(self):
         self.capture(delta(),result=record())
-        with self.assertRaisesRegex(ValueError,"No recorded"):
-            build_pairs(self.state,"2026-10-10","2026-10-10")
+        exported, summary=build_pairs(self.state,"2026-10-10","2026-10-10")
+        self.assertEqual(exported,b"")
+        self.assertEqual(summary["published_v5_pairs_exported"],0)
 
     def test_initial_rollup_baseline_does_not_download_current_full_cve_archive(self):
         d={"baseline":True,"event_count":0,"watermark_utc":"2026-10-11T00:00:00Z",
