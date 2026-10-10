@@ -18,7 +18,7 @@ concurrency:
 jobs:
   independent-join:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 72
     env:
       PYTHONPATH: src
       KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
