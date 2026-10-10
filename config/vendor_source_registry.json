@@ -839,12 +839,16 @@
       "allowed_hosts": [
         "www.mozilla.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T13:35:43Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+      "verified_capabilities": [
+        "Official HTTPS listing fetched without third-party redirects",
+        "Two independent official advisory details fetched and validated against exact publisher IDs",
+        "Source-linked normalized CVE candidates and SHA256 in one-shot READ_ONLY real run",
+        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)"
+      ],
       "pending_gates": [
-        "Independent live official HTML discover/detail fetch",
         "Source-scoped CVE extraction and version accuracy review",
         "Historical announcements and changed source format",
         "Commercial data reuse rights"
@@ -853,7 +857,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "publisher_expansion_live_probe": {
+        "status": "LIVE_READ_PARSE_TWO_OFFICIAL_DETAILS_VERIFIED",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+        "sampled_advisories": 2,
+        "all_details_parsed": true,
+        "sqlite_history_verified": false,
+        "observed_utc": "2026-10-10T13:35:43Z",
+        "accuracy_reviewed": false,
+        "production_enabled": false
+      }
     },
     {
       "source_id": "debian-dsa",
@@ -866,12 +880,16 @@
         "www.debian.org",
         "lists.debian.org"
       ],
-      "verification_status": "not_tested",
-      "last_verified_utc": null,
-      "evidence_run_url": null,
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T13:35:43Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+      "verified_capabilities": [
+        "Official HTTPS listing fetched without third-party redirects",
+        "Two independent official advisory details fetched and validated against exact publisher IDs",
+        "Source-linked normalized CVE candidates and SHA256 in one-shot READ_ONLY real run",
+        "0 confirmed affected/fixed installed-version assertions (intentionally not inferred)"
+      ],
       "pending_gates": [
-        "Independent live official DSA index/detail read",
         "CVE ID mail-header extraction reliability",
         "Exact Debian release and fixed package version parsing",
         "Listing to mail mapping and long-term archival coverage",
@@ -881,7 +899,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "publisher_expansion_live_probe": {
+        "status": "LIVE_READ_PARSE_TWO_OFFICIAL_DETAILS_VERIFIED",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+        "sampled_advisories": 2,
+        "all_details_parsed": true,
+        "sqlite_history_verified": false,
+        "observed_utc": "2026-10-10T13:35:43Z",
+        "accuracy_reviewed": false,
+        "production_enabled": false
+      }
     }
   ],
   "cross_run_proof": {
@@ -1107,14 +1135,17 @@
     "report_integration_into_main_customer_pptx": "NOT_IMPLEMENTED_NEEDS_REVIEW"
   },
   "expansion_20261010": {
-    "status": "OFFLINE_ADAPTERS_STAGED_REAL_SOURCE_PROBE_PENDING",
-    "new_candidate_source_ids": [
+    "status": "TWO_PUBLISHERS_LIVE_READ_PARSE_2_OF_2_VERIFIED_SQLITE_PENDING",
+    "verified_vendor_sources_before": 9,
+    "verified_vendor_sources_after": 11,
+    "real_probe_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38056308256",
+    "new_verified_sources": [
       "mozilla-mfsa",
       "debian-dsa"
     ],
-    "new_sources_not_yet_verified": 2,
-    "existing_verified_sources_untouched": 9,
-    "production_enabled": false,
-    "existing_kaggle_generations_untouched": true
+    "unreviewed_product_and_version_claims": true,
+    "no_production_polling": true,
+    "existing_kaggle_unchanged": true,
+    "archive_long_term_for_new_sources": false
   }
 }
