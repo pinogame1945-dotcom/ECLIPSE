@@ -1,0 +1,65 @@
+name: KEV briefing (manual / official source)
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'KEV dateAdded window, 1 to 31 days'
+        required: true
+        default: '7'
+        type: choice
+        options: ['1', '7', '14', '30']
+      customer_profile:
+        description: 'Synthetic monitoring profile (not a real customer)'
+        required: true
+        default: 'all'
+        type: choice
+        options: ['all', 'network']
+permissions:
+  contents: read
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - name: Download authoritative full KEV catalog
+        run: |
+          mkdir -p downloads output
+          curl --fail --location --retry 3 --max-time 90 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            -o downloads/kev.json
+          python -m json.tool downloads/kev.json >/dev/null
+      - name: L0-validated catalog to editable PPTX
+        env:
+          PYTHONPATH: src
+          DAYS: ${{ inputs.days }}
+          CUSTOMER_PROFILE: ${{ inputs.customer_profile }}
+        run: |
+          set -euo pipefail
+          case "$CUSTOMER_PROFILE" in
+            all) PROFILE='config/customer-all-example.json' ;;
+            network) PROFILE='config/customer-network-example.json' ;;
+            *) echo 'Unsupported profile' >&2; exit 1 ;;
+          esac
+          python -m eclipse_reports.pipeline \
+            --kev-json downloads/kev.json \
+            --db state/eclipse.sqlite3 \
+            --customer "$PROFILE" \
+            --output output/eclipse-kev-briefing.pptx \
+            --days "$DAYS"
+          PYTHONPATH=src python -m eclipse_l0.cli --db state/eclipse.sqlite3 audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-kev-briefing
+          path: |
+            output/*.pptx
+            output/*.manifest.json
+          if-no-files-found: error
+          retention-days: 7
+# Deliberately NO schedule and NO external distribution.
+# GitHub runner DB is ephemeral: this is a report of KEV dateAdded, not
+# a true since-last-run notification or a durable long-term BACKFILL service.

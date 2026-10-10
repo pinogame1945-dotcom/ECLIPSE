@@ -1,0 +1,6 @@
+{
+  "customer_name": "Sample Network Operations",
+  "vendors": ["Cisco", "Fortinet"],
+  "products": [],
+  "include_all": false
+}
