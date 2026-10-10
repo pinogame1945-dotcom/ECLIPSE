@@ -37,6 +37,15 @@ KaggleのV1／V2が存在することは、**将来の世代が自動的に保�
 
 これはCVE IDの**候補の関連付け**であり、影響製品や修正バージョンの真偽評価ではない。CVE正本の改変、顧客配信は実施していない。
 
-V2も独立した読取専用突合で評価する構成を追加済み（`.github/workflows/vendor-cve-full-link-v2.yml`）。評価が完了するまで結果を確定扱いしない。
+**V2でも本物の403,696件CVE正本との全件ID照合に成功。** [GitHub Actions — V2 READ ONLY x 403,696 CVE SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38053838061)。
+
+| V2の照合分類 | 実測結果 |
+|---|---:|
+| MATCHED_PUBLISHED | **12,279件（文書×CVEの延べ関係）** |
+| MATCHED_REJECTED | **17件（延べ関係）** |
+| UNMATCHED_SNAPSHOT | **3件（延べ関係）** |
+| UNASSIGNED | **30文書** |
+
+V2の**160文書・241保存版**を別Private Kaggleから独立復元し、固定した403,696件CVE SQLiteと結合した。両正本へ書込み0、CVE原本・KEV・EPSS・保存先を変更していない。11,066→12,279の増加は**CVEユニーク件数の増加ではなく**、新たな公式文書追加に伴う候補リンクの増加。製品・バージョンの実適用性は未審査である。
 
 **本番移行判定：NO-GO。** 保存・復元・独立したID照合の技術実証は成功しているが、全製品・全バージョンの厳密な一致、情報源の網羅性・更新監視・権利確認・運用SLAはまだ検証対象。
