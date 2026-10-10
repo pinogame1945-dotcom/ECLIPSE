@@ -1,0 +1,122 @@
+name: ECLIPSE independent historical EPSS gaps and frozen 80-20 trend candidate audit
+
+# One-shot, read-only, no vendor feed mutations or Kaggle upload.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-shot-epss-gap-research.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-epss-gap-research-20261010
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: src
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline no-leakage, fixed-budget, missing-cohort tests
+        run: |
+          python -m unittest discover -s tests -p test_epss_gap_research.py -v
+          python -m unittest discover -s tests -p test_kev_backtest.py -v
+      - name: Install authorized Kaggle CLI
+        run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Retrieve frozen trusted source-hash receipt from original warehouse run
+        uses: actions/download-artifact@v4
+        with:
+          name: eclipse-warehouse-trusted-receipts
+          path: trusted
+          run-id: 38050051810
+          github-token: ${{ github.token }}
+      - name: Verify provenance and retrieve existing immutable CISA KEV JSON only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || { echo '::error::Missing authorized Kaggle token'; exit 2; }
+          echo '2b86adb90258a5b2cc196dfcb0598977d802324c0c98642d133ca63efad39aa9  trusted/upload/warehouse-index.json' | sha256sum -c -
+          available="$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')"
+          test "$available" -ge 1048576 || { echo '::error::Less than 1 GiB free'; exit 3; }
+          mkdir -p "$RUNNER_TEMP/ecl-identity" "$RUNNER_TEMP/ecl-gap/kev" "$RUNNER_TEMP/ecl-gap/epss" "$RUNNER_TEMP/ecl-gap/results"
+          kaggle datasets init -p "$RUNNER_TEMP/ecl-identity" >/dev/null
+          dataset_ref="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          t=json.loads((Path(os.environ['RUNNER_TEMP'])/'ecl-identity/dataset-metadata.json').read_text())['id']
+          if not isinstance(t,str) or not t.endswith('/INSERT_SLUG_HERE'):
+              raise SystemExit('Unexpected authenticated Kaggle identity')
+          print(t.replace('INSERT_SLUG_HERE','eclipse-cve-warehouse-20261010-v1'))
+          PY
+          )"
+          echo "::add-mask::$dataset_ref"
+          kaggle datasets download "$dataset_ref" \
+            --file kev-original.payload --path "$RUNNER_TEMP/ecl-gap/kev" \
+            --unzip --force --quiet >/dev/null
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          idx=json.loads(Path('trusted/upload/warehouse-index.json').read_text())
+          spec=idx['evidence_files']['kev-original.payload']
+          path=Path(os.environ['RUNNER_TEMP'])/'ecl-gap/kev/kev-original.payload'
+          if (not path.is_file() or path.is_symlink()
+                  or path.stat().st_size!=spec['bytes'] or path.stat().st_size>25*1024*1024):
+              raise SystemExit('CISA evidence missing or wrong byte count')
+          actual=hashlib.sha256(path.read_bytes()).hexdigest()
+          if actual != spec['sha256'] or actual != idx['kev_source_sha256']:
+              raise SystemExit('CISA original source SHA-256 mismatch')
+          print('IMMUTABLE_CISA_ORIGINAL_SOURCE_VERIFIED',flush=True)
+          PY
+      - name: Assess EPSS-ranked missed cases and EPSS-unscored future KEV cohort together
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l2.epss_gap_research \
+            --kev "$RUNNER_TEMP/ecl-gap/kev/kev-original.payload" \
+            --epss-dir "$RUNNER_TEMP/ecl-gap/epss" \
+            --out "$RUNNER_TEMP/ecl-gap/results/epss-gap-research.json" \
+            --cutoff-date 2026-10-10 \
+            > "$RUNNER_TEMP/ecl-gap/progress.log"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'ecl-gap/results/epss-gap-research.json'
+          x=json.loads(p.read_text(encoding='utf-8'))
+          assert x['result']=='EPSS_MOMENTUM_AND_MISSING_COHORT_RETROSPECTIVE_AUDIT'
+          assert len(x['monthly_anchors'])==17
+          assert x['full_unrankable_30_day_cohort']['missing_kev_anchor_events']==171
+          a=x['results_paired_same_model_era']['ALL']['30']
+          assert a['paired_anchors']==15
+          assert a['baseline']['500']['reviewed']==a['fixed_80_20']['500']['reviewed']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('## Historical EPSS early-warning gap research: VERIFIED\n\n')
+              f.write('Original 17 as-of EPSS anchors and 374/203/171 coverage fully reconciled.\n\n')
+              f.write(f"- EPSS unscored future KEV anchor events: **{x['full_unrankable_30_day_cohort']['missing_kev_anchor_events']}**.\n")
+              f.write(f"- Matched EPSS model-era anchor pairs: **{a['paired_anchors']}**.\n")
+              for k in ('100','500','1000'):
+                  base=a['baseline'][k]['hits']
+                  trend=a['fixed_80_20'][k]['hits']
+                  f.write(f'- Paired top {k}: baseline {base}, fixed 80/20 {trend} KEV-label hits (same review budget).\n')
+              f.write('\n**Not a customer risk estimate, prospective exploit predictor, or statement that CVE identifier year is its publication date.**\n')
+          print('EPSS_MISSING_171_AND_FIXED_MOMENTUM_BACKTEST_COMPLETE=YES')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-early-warning-epss-gaps-17-anchors
+          path: ${{ runner.temp }}/ecl-gap/results/epss-gap-research.json
+          retention-days: 7
+          if-no-files-found: warn
