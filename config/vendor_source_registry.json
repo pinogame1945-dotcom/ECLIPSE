@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T11:23:00Z",
+  "updated_utc": "2026-10-10T11:35:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -27,18 +27,30 @@
         "official RSS: 50 entries",
         "4 official detail HTML documents retrieved",
         "affected/fixed version tables read",
-        "same-feed replay emitted zero events"
+        "same-feed replay emitted zero events",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "verified true item update (not replay)",
         "field-level impact and exploit booleans",
-        "durable store and expiry monitoring"
+        "durable store and expiry monitoring",
+        "Production-persistent snapshot restore across separate workflow runs"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "microsoft-msrc",
@@ -56,7 +68,8 @@
       "verified_capabilities": [
         "updates: 193 document references",
         "Sep-2026 CVRF XML approx 32MB; 2772 vulnerability nodes",
-        "product tree and tracking XML nodes parsed"
+        "product tree and tracking XML nodes parsed",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "normalize CVRF ProductTree and status changes",
@@ -67,7 +80,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "paloalto-advisories",
@@ -85,7 +108,8 @@
       "verified_capabilities": [
         "filtered critical listing: 9 entries",
         "individual CVE JSON detail obtained",
-        "affected and solution fields identified"
+        "affected and solution fields identified",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "remove severity filter for full-coverage design",
@@ -96,7 +120,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "redhat-csaf",
@@ -114,7 +148,8 @@
       "verified_capabilities": [
         "official CSAF metadata and releases.csv available",
         "official CSAF v2 detail retrieved; 2 vulnerabilities",
-        "legacy CVE listing endpoint had parse failures"
+        "legacy CVE listing endpoint had parse failures",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "CSV incrementals/last-modified validation",
@@ -125,7 +160,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "siemens-csaf",
@@ -143,7 +188,8 @@
       "verified_capabilities": [
         "841 advisory index entries",
         "CSAF 2.0 detail 3 CVEs",
-        "product tree and remediation sections"
+        "product tree and remediation sections",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "validate rolling/latest delta handling",
@@ -154,7 +200,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "yamaha-network",
@@ -173,7 +229,8 @@
       "verified_capabilities": [
         "notice listing and official detail fetched",
         "2 CVE identifiers extracted from HTML",
-        "product and remediation text present"
+        "product and remediation text present",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "test additional Yamaha notice layouts",
@@ -184,7 +241,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "gitlab-security-releases",
@@ -202,7 +269,8 @@
       "verified_capabilities": [
         "Atom release feed with 107 items",
         "selected security patch article retrieved",
-        "CVE-2026-90970 found in article"
+        "CVE-2026-90970 found in article",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "security-only filtering vs ordinary patches",
@@ -213,7 +281,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "ubuntu-security-api",
@@ -231,7 +309,8 @@
       "verified_capabilities": [
         "5 USN list items received",
         "USN-8911-1 detailed JSON retrieved",
-        "CVE/release_packages/instructions field names present"
+        "CVE/release_packages/instructions field names present",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "pagination and update audit",
@@ -242,7 +321,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "google-chrome-release",
@@ -286,7 +375,8 @@
       "verified_capabilities": [
         "Atlassian main advisory listing retrieved with 97 candidate links",
         "Official Confluence security advisory detail retrieved",
-        "Page HTML text parsed (unscoped; CVE IDs in nav may be unrelated)"
+        "Page HTML text parsed (unscoped; CVE IDs in nav may be unrelated)",
+        "2026-10-10 bounded official discovery → detail → normalized facts → local SQLite version → idempotent replay: 1 advisory sample"
       ],
       "pending_gates": [
         "scope CVE extraction to the article body; current raw page has unrelated navigation CVEs",
@@ -297,7 +387,17 @@
       "commercial_reuse_rights": "not_reviewed",
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
-      "live_polling": "not_enabled"
+      "live_polling": "not_enabled",
+      "one_shot_evidence_pipeline": {
+        "status": "local_sqlite_probe_pass",
+        "last_run_utc": "2026-10-10T11:35:00Z",
+        "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850",
+        "advisory_sample_count": 1,
+        "baseline_event_count": 1,
+        "idempotent_replay_count": 1,
+        "review_state": "parsed_unreviewed",
+        "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      }
     },
     {
       "source_id": "cisco-openvuln",
