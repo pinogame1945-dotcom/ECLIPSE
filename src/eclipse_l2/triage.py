@@ -202,7 +202,7 @@ def _sort_key(r: dict):
     # Missing EPSS sorts after known EPSS *within* a given queue, not as zero.
     return (
         QUEUE_ORDER.index(r["queue"]),
-        -(r["epss_probability"] if r["epss_probability"] is not None else -1),
+        -(r["epss_probability"] if (r["epss_status"]=="FRESH_MODEL_ESTIMATE" and r["epss_probability"] is not None) else -1),
         -(r["cvss_base_score"] if r["cvss_base_score"] is not None else -1),
         r["cve_id"],
     )
@@ -216,6 +216,8 @@ def analyze(db: Path, *, as_of: date, policy: Policy | None = None,
         raise ValueError("top must be between 0 and 1000")
     if not db.is_file():
         raise ValueError("SQLite warehouse missing")
+    if csv_path is not None and csv_path.resolve() == db.resolve():
+        raise ValueError("CSV export cannot overwrite the source SQLite database")
     policy = policy or Policy()
     con = sqlite3.connect(f"file:{db.resolve().as_posix()}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
@@ -315,6 +317,8 @@ def main() -> None:
     p.add_argument("--max-epss-age-days",type=int,default=7)
     p.add_argument("--top",type=int,default=100)
     args=p.parse_args()
+    if args.out.resolve() == args.db.resolve():
+        p.error("JSON report cannot overwrite source SQLite database")
     report=analyze(args.db,as_of=args.as_of,vendor=args.vendor,product=args.product,
        top=args.top,csv_path=args.csv,policy=Policy(
            epss_attention_probability=args.epss_attention,
