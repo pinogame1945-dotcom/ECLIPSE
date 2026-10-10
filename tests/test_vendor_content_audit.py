@@ -87,7 +87,7 @@ class ContentAuditTests(unittest.TestCase):
         counts=result["counts"]
         self.assertEqual(counts["EXACT_VERSION_STATUS_AGREEMENT_FOR_SHARED_LITERALS"],1)
         self.assertEqual(counts["EXACT_VERSION_STATUS_DISAGREEMENT_REVIEW_ONLY"],1)
-        self.assertEqual(counts["NO_EXACT_CNA_PRODUCT_NAME_MATCH"],1)
+        self.assertEqual(counts["NO_EXACT_CNA_PRODUCT_NAME_MATCH"],2)  # one unrelated CNA product plus ADP-only claim
         self.assertEqual(counts["PRODUCT_NAME_EXACT_MATCH_CSAF_STATUS_UNMAPPED"],1)
         self.assertEqual(counts["HTML_PAGEWIDE_CVE_LINK_UNVERIFIED"],1)
         self.assertEqual(counts["CLAIM_CVE_NOT_PUBLISHED_IN_SNAPSHOT"],1)
