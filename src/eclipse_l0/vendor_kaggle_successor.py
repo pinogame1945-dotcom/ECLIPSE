@@ -34,7 +34,14 @@ def prove_chain(parent_db,child_db,registry,parent_idx):
                       ("vendor_document_events","event_id")):
         old=rows(parent_db,tab,order)
         new=rows(child_db,tab,order)
-        if old!=new[:len(old)]:raise ValueError("Existing immutable audit events changed: "+tab)
+        if tab=="vendor_document_versions":
+            # New advisory IDs can sort between existing IDs. Preserve every
+            # prior composite (source_id, advisory_id, version) key and value.
+            new_map={(r[0],r[1],r[2]):r for r in new}
+            valid=all(new_map.get((r[0],r[1],r[2]))==r for r in old)
+        else:
+            valid=(old==new[:len(old)])
+        if not valid:raise ValueError("Existing immutable audit events changed: "+tab)
     old=rows(parent_db,"vendor_documents","source_id,advisory_id")
     new=rows(child_db,"vendor_documents","source_id,advisory_id")
     first={(x[0],x[1]):x[5] for x in old}
