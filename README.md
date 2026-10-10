@@ -317,6 +317,7 @@ Evidence: [successful Kaggle upload/readback run](https://github.com/pinogame194
 - **PRIVATE vendor Kaggle v1 (125/202) and v2 (160/241) both independently restored; full real 403,696 CVE read-only joins verified for both**: [docs/VENDOR_PRIVATE_KAGGLE_AND_CVE_JOIN_20261010.md](docs/VENDOR_PRIVATE_KAGGLE_AND_CVE_JOIN_20261010.md)
 - Two immutable vendor generations, +35 published documents, isolated redirects and acceptance gates: [docs/VENDOR_KAGGLE_INCREMENTAL_V2_AUDIT.md](docs/VENDOR_KAGGLE_INCREMENTAL_V2_AUDIT.md)
 - Real vendor product/version content audit: **14,147 claims checked against full 403,696-CVE source, 127 strict product matches, 3 *review-only* raw-predicate differences on a single CVE**: [docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md](docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md)
+- **Private customer-used product monitor V1:** Strict Red Hat / Siemens CSAF product ID/name, scoped CVE-status evidence + product-targeted remediation text; successful **real PRIVATE Kaggle data with two entirely SYNTHETIC monitored products, 436 review-only status candidates**: [docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md](docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md)
 - Verified one-shot source read/parse only: Fortinet, Microsoft, Palo Alto Networks,
   Red Hat CSAF, Siemens, Yamaha, GitLab, Canonical Ubuntu and Atlassian.
 - Not verified: Google Chrome release Atom (insecure FeedBurner redirect) and Cisco (OAuth required).
