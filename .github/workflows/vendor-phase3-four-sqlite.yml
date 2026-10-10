@@ -1,0 +1,51 @@
+name: ECLIPSE phase3 4 verified official publishers SQLite proof
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-phase3-four-sqlite.yml'
+      - 'tests/test_vendor_next_sources.py'
+      - 'src/eclipse_l0/vendor_next_sources.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'config/vendor_source_registry.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-phase3-four-sqlite-proof
+  cancel-in-progress: false
+jobs:
+  publisher-one-shot-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Registry, source schema and negative CVE navigation tests
+        run: |
+          python -m eclipse_l0.vendor_registry
+          python -m unittest discover -s tests -p 'test_vendor_next_sources.py' -v
+      - name: Four new official publishers, one detail each, immutable local SQLite + replay
+        run: |
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --sources apple-security-releases,adobe-security-bulletins,android-security-bulletins,postgresql-security \
+            --max-items 1 \
+            --db output/phase3-four.sqlite3 \
+            --out output/phase3-four-receipt.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-phase3-four-private-unreviewed-ledger
+          path: |
+            output/phase3-four.sqlite3
+            output/phase3-four-receipt.json
+          retention-days: 7
+          if-no-files-found: warn

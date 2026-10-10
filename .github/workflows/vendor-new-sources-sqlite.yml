@@ -1,0 +1,88 @@
+name: ECLIPSE 11-vendor expansion independent SQLite proof
+
+# Two newly verified sources; DOES NOT touch v1/v2 private Kaggle evidence.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-new-sources-sqlite.yml'
+      - 'src/eclipse_l0/vendor_additional_sources.py'
+      - 'tests/test_vendor_additional_sources.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-vendor-two-new-sqlite-20261010
+  cancel-in-progress: false
+
+jobs:
+  publisher-sqlite-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run offline publisher identity, extraction and registry regression tests
+        run: python -m unittest discover -s tests -p 'test_vendor_additional_sources.py' -v
+      - name: Read official Mozilla and Debian notices → source SHA + versioned SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db output/mozilla-debian-unreviewed.sqlite3 \
+            --out output/mozilla-debian-manifest.json \
+            --sources mozilla-mfsa,debian-dsa \
+            --max-items 2 > output/official-sqlite-probe-print.json
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          from eclipse_l0.vendor_registry import load_registry
+          from eclipse_l0.vendor_replay import inspect_db
+          db=Path("output/mozilla-debian-unreviewed.sqlite3")
+          reg=load_registry(Path("config/vendor_source_registry.json"))
+          state=inspect_db(db,reg)
+          doc=json.loads(Path("output/mozilla-debian-manifest.json").read_text())
+          assert state["integrity"]=="ok"
+          assert state["advisories"]==4 and state["versions"]==4 and state["events"]==4
+          assert doc["sources_pass"]==2 and doc["sources_partial"]==0 and doc["sources_failed"]==0
+          assert doc["sources_degraded"]==0
+          assert all(s["replay_unchanged"]==2 and s["saved"]==2 for s in doc["source_results"])
+          # No full third-party HTML/JSON, customer data, CVE raw archive, rights claims.
+          proof={"status":"TWO_NEW_PUBLISHER_SQLITE_AND_IDEMPOTENT_REPLAY_VERIFIED",
+                 "sources":[{"source_id":s["source_id"],"saved":s["saved"],
+                             "baseline":s["baseline"],"replay_unchanged":s["replay_unchanged"],
+                             "source_url_and_sha256":[{"id":e["id"],"url":e["source_url"],
+                                                      "sha256":e["source_sha256"]}
+                                                     for e in s["details"]]}
+                            for s in doc["source_results"]],
+                 "counts":{k:state[k] for k in ("advisories","versions","events")},
+                 "db_sha256":state["sqlite_sha256"],
+                 "sqlite_integrity":state["integrity"],
+                 "customer_data":False,"raw_vendor_pages_saved":False,
+                 "cve_master_and_existing_kaggle_modified":False,
+                 "verified_affect_patch_versions":0,
+                 "production_monitoring":False}
+          Path("output/mozilla-debian-aggregate-proof.json").write_text(
+              json.dumps(proof,ensure_ascii=False,sort_keys=True,indent=2)+"\n")
+          print(json.dumps(proof,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-mozilla-debian-readonly-sqlite-and-proof
+          path: |
+            output/mozilla-debian-unreviewed.sqlite3
+            output/mozilla-debian-manifest.json
+            output/mozilla-debian-aggregate-proof.json
+          retention-days: 7
+          if-no-files-found: warn

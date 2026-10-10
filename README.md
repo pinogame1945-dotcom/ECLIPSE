@@ -307,3 +307,27 @@ only as a derived searchable view.
 Evidence: [successful Kaggle upload/readback run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045830690) and [independent restore run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045881683). JSON audit receipts are short-lived GitHub Actions artifacts; the PRIVATE Kaggle dataset is retained. The account handle/API token is not in this public repository's commit or artifact receipts.
 
 **Scope:** This is still only 100 KEV-linked CVEs. Complete CVE baseline from the official release, capacity bounds, throughput benchmarks, crash recovery, source licensing and independent count reconciliation must be established before turning on mass BACKFILL. No paid runners, GPU, public Kaggle data publication, or customer data were used.
+
+## Vendor/source verification registry — design gate (2026-10-10)
+
+- Canonical review ledger: [config/vendor_source_registry.json](config/vendor_source_registry.json)
+- Architecture, limits and production acceptance: [docs/VENDOR_SOURCE_DESIGN.md](docs/VENDOR_SOURCE_DESIGN.md)
+- Real-world structured extraction coverage and remaining correctness gates: [docs/VENDOR_FIELD_AUDIT_20261010.md](docs/VENDOR_FIELD_AUDIT_20261010.md)
+- Bounded publisher scale-up: **125 advisory/monthly documents across 9 sources**, with provenance, statuses and limitations: [docs/VENDOR_SCALE_AUDIT_20261010.md](docs/VENDOR_SCALE_AUDIT_20261010.md)
+- **PRIVATE vendor Kaggle v1 (125/202) and v2 (160/241) both independently restored; full real 403,696 CVE read-only joins verified for both**: [docs/VENDOR_PRIVATE_KAGGLE_AND_CVE_JOIN_20261010.md](docs/VENDOR_PRIVATE_KAGGLE_AND_CVE_JOIN_20261010.md)
+- Two immutable vendor generations, +35 published documents, isolated redirects and acceptance gates: [docs/VENDOR_KAGGLE_INCREMENTAL_V2_AUDIT.md](docs/VENDOR_KAGGLE_INCREMENTAL_V2_AUDIT.md)
+- Real vendor product/version content audit: **14,147 claims checked against full 403,696-CVE source, 127 strict product matches, 3 *review-only* raw-predicate differences on a single CVE**: [docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md](docs/VENDOR_PRODUCT_CONTENT_AUDIT_DESIGN.md)
+- **Private customer-used product monitor V1:** Strict Red Hat / Siemens CSAF product ID/name, scoped CVE-status evidence + product-targeted remediation text; successful **real PRIVATE Kaggle data with two entirely SYNTHETIC monitored products, 436 review-only status candidates**: [docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md](docs/CUSTOMER_VENDOR_CSAF_PRODUCT_V1.md)
+- **Official vendor expansion: 9 → 11 verified read/parse source types**, newly Mozilla MFSA and Debian DSA, 2×2 official real samples saved to SQLite and idempotently replayed; not yet added to private Kaggle V2: [docs/VENDOR_EXPANSION_11_SOURCES_20261010.md](docs/VENDOR_EXPANSION_11_SOURCES_20261010.md)
+- **Phase 2 weekly evidence handoff:** reproducible **2.2 MB ZIP** from fixed **403,696 CVEs + 160 vendor docs** (2026-10-04–10 UTC): **6,355 source-date/KEV CVE candidates**, **40 related official vendor docs**, **12,537 provenance rows**; new-runner validated, **NOT A CERTIFIED COMPLETE WEEK**: [docs/WEEKLY_EVIDENCE_HANDOFF_PHASE2.md](docs/WEEKLY_EVIDENCE_HANDOFF_PHASE2.md)
+- **Phase 2-D three-layer evidence triage:** retains **all 6,355** CVEs in byte-identical L1, provides **4,016** rule-based higher-attention L2 CVEs and **2,052** source-attributed L3 analysis candidates in **2.71 MB** ZIP; deterministic new-runner proof, **not a certified complete or editorial weekly report**: [docs/WEEKLY_EVIDENCE_THREE_LAYERS_PHASE2D.md](docs/WEEKLY_EVIDENCE_THREE_LAYERS_PHASE2D.md)
+- Verified one-shot source read/parse only: Fortinet, Microsoft, Palo Alto Networks,
+  Red Hat CSAF, Siemens, Yamaha, GitLab, Canonical Ubuntu and Atlassian.
+- Not verified: Google Chrome release Atom (insecure FeedBurner redirect) and Cisco (OAuth required).
+- **No manufacturer feed is enabled for production polling or customer delivery.**
+  Data-storage prototype (`src/eclipse_l0/vendor_store.py`) is local/offline, not connected to live feeds.
+- Offline check: `PYTHONPATH=src python -m eclipse_l0.vendor_registry`
+- Live experimental one-shot evidence:
+  [Fortinet](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047330191),
+  [five-vendor batch](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167),
+  [four-vendor batch](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048161575).

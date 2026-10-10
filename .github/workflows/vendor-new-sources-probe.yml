@@ -1,0 +1,99 @@
+name: ECLIPSE two more official publishers read-only proof
+
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-new-sources-probe.yml'
+      - 'src/eclipse_l0/vendor_additional_sources.py'
+      - 'tests/test_vendor_additional_sources.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-vendor-new-sources-20261010-probe
+  cancel-in-progress: false
+
+jobs:
+  official-source-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline identity and false-CVE-link guard regressions
+        run: |
+          python -m unittest discover -s tests -p 'test_vendor_additional_sources.py' -v
+      - name: LIVE official HTTP proof, no customer data and no Kaggle mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          from eclipse_l0.vendor_registry import load_registry
+          from eclipse_l0.vendor_pilot import OfficialFetch,discover,normalize
+          ids=('mozilla-mfsa','debian-dsa')
+          registry=load_registry(Path('config/vendor_source_registry.json'))
+          sources={s['source_id']:s for s in registry['sources']}
+          evidence=[]
+          good=0
+          for sid in ids:
+              source=sources[sid]
+              result={'source_id':sid,'status':'FAIL','success':0,'issues':[],'samples':[]}
+              try:
+                  get=OfficialFetch(source)
+                  candidates=discover(source,get,2)
+                  if not 1<=len(candidates)<=2:
+                      raise ValueError('Unexpected official discovery count')
+                  for item in candidates:
+                      try:
+                          raw=get.get(item['url'])
+                          facts=normalize(source,item,raw)
+                          if not isinstance(facts.get('cve_ids'),list) or not isinstance(facts.get('affected'),list):
+                              raise ValueError('Missing normalized fields')
+                          if facts['affected']:
+                              raise ValueError('Non-reviewed claims must not be promoted to affected')
+                          result['samples'].append({
+                            'id':item['id'],'source_url':item['url'],
+                            'source_sha256':hashlib.sha256(raw).hexdigest(),
+                            'cve_reference_count':len(facts['cve_ids']),
+                            'impact_version_rows_certified':0,
+                            'parsed_unreviewed':True})
+                          result['success']+=1
+                      except Exception as exc:
+                          result['issues'].append(f"{item['id']}: {type(exc).__name__}: {str(exc)[:180]}")
+                  if result['success']==len(candidates):
+                      result['status']='READ_PARSE_PROBE_VERIFIED'
+                      good+=1
+                  elif result['success']:
+                      result['status']='PARTIAL_NOT_PROMOTABLE'
+              except Exception as exc:
+                  result['issues'].append(f"discovery: {type(exc).__name__}: {str(exc)[:180]}")
+              evidence.append(result)
+          proof={'status':'OFFICIAL_READ_PARSE_DISCOVERY_TWO_SOURCE_CHECK',
+                 'no_customer_data':True,'source_data_raw_archived':False,
+                 'existing_vendor_kaggle_datasets_changed':False,
+                 'sources_verified':good,'sources':evidence,
+                 'production_monitoring':False,'rights_reviewed':False}
+          Path('output/official-sample-proof.json').write_text(json.dumps(proof,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(proof,ensure_ascii=False,indent=2))
+          if good!=len(ids):
+              raise SystemExit('Additional official source probe not fully verified')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-two-new-official-publishers-proof
+          path: output/official-sample-proof.json
+          if-no-files-found: warn
+          retention-days: 7

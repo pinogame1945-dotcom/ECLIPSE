@@ -1,0 +1,72 @@
+name: ECLIPSE summarize prior vendor product content evidence (no new downloads)
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-content-evidence-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  review-existing-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch completed full CVE comparison JSON only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/vendor-content-readonly"
+          gh run download 38054491168 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-v2-cve-product-content-proof \
+            --dir "$RUNNER_TEMP/vendor-content-readonly"
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          p=Path(os.environ["RUNNER_TEMP"])/"vendor-content-readonly/product-content-comparison.json"
+          d=json.loads(p.read_text("utf-8"))
+          assert d["result"]=="SOURCE_ATTRIBUTED_PRODUCT_PREDICATE_AUDIT_REVIEW_ONLY"
+          assert d["snapshot"]["cve_records"]==403696
+          assert d["snapshot"]["vendor_documents"]==160
+          assert d["policy"]["input_databases_read_only"]
+          by_source={s:dict(sorted(c.items())) for s,c in sorted(d["per_source"].items())}
+          details={}
+          for cat in ("PREDICATE_RAW_STRUCTURAL_DIFFERENCE_REVIEW_ONLY",
+                      "PREDICATE_RAW_STRUCTURAL_EQUAL_POSSIBLY_SHARED_CNA",
+                      "PRODUCT_NAME_EXACT_MATCH_CSAF_STATUS_UNMAPPED"):
+              details[cat]=[
+                  {"source":r["source"],"advisory":r["advisory"],
+                   "cve_id":r["cve_id"],"vendor":r.get("vendor"),
+                   "product":r.get("product"),"cve_product":r.get("cve_product"),
+                   "cve_vendor":r.get("cve_vendor"),
+                   "evidence_path":r["vendor_evidence_path"],"comparison":cat}
+                  for r in d.get("evidence_samples",{}).get(cat,[])[:8]]
+          review={"source_result_run":38054491168,
+                  "result":"REVIEW_ONLY_NOT_CONFIRMED_VERSION_CONFLICTS",
+                  "counts":d["counts"],"per_source":by_source,
+                  "evidence_samples_redacted_to_identity_and_paths":details,
+                  "source_review_required":True,
+                  "affected_product_certified":False,
+                  "data_sources_written":False}
+          out=Path(os.environ["RUNNER_TEMP"])/"vendor-content-readonly/review-only-summary.json"
+          out.write_text(json.dumps(review,ensure_ascii=False,indent=2)+"\n")
+          print(json.dumps(review,ensure_ascii=False,sort_keys=True))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:
+              f.write("## ECLIPSE actual 160-document × 403696 CVE content audit\n\n")
+              f.write("Snapshot-pinned read-only review. **No confirmed customer impact or contradictory patch/version yet.**\n\n")
+              for sid,counts in sorted(by_source.items()):
+                  f.write(f"**{sid}**: "+", ".join(f"{k}={v}" for k,v in sorted(counts.items()))+"\n\n")
+          print("READONLY_VENDOR_CONTENT_EVIDENCE_REVIEW=SUCCESS")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-vendor-content-review-only-summary
+          path: ${{ runner.temp }}/vendor-content-readonly/review-only-summary.json
+          retention-days: 7
+          if-no-files-found: error

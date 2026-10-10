@@ -1,0 +1,51 @@
+name: ECLIPSE enterprise batch2 4 official sources SQLite pilot
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-enterprise-batch2-sqlite.yml'
+      - 'src/eclipse_l0/vendor_enterprise_batch.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'config/vendor_source_registry.json'
+      - 'tests/test_vendor_enterprise_batch.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-enterprise-batch2-four-sqlite
+  cancel-in-progress: false
+jobs:
+  one-shot-official-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fail-closed source evidence and parser tests
+        run: |
+          python -m eclipse_l0.vendor_registry
+          python -m unittest discover -s tests -p test_vendor_enterprise_batch.py -v
+      - name: Four official sources, individual detail to SQLite and replay
+        run: |
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --sources cisco-public-advisories,sap-security-patch-days,drupal-core-security,apache-httpd-security \
+            --max-items 1 \
+            --db output/enterprise-batch2-four.sqlite3 \
+            --out output/enterprise-batch2-four-receipt.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-enterprise-batch2-four-archived-probe
+          path: |
+            output/enterprise-batch2-four.sqlite3
+            output/enterprise-batch2-four-receipt.json
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,89 @@
+name: ECLIPSE Phase 2 weekly ZIP evidence counters and readback report
+
+# Tiny audit only: consumes the previously tested ZIP, no Kaggle or API secrets.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/weekly-evidence-readback-report.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect-evidence-contents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read previous full-data evidence ZIP without touching CVE or Kaggle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir evidence
+          python -m eclipse_l0.weekly_evidence verify \
+            --zip evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip > evidence/reverified.json
+          python - <<'PY'
+          import json,os,zipfile
+          from pathlib import Path
+          path=Path("evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip")
+          with zipfile.ZipFile(path) as z:
+              index=json.loads(z.read("weekly_index.json"))
+              quality=json.loads(z.read("quality_report.json"))
+              manifest=json.loads(z.read("manifest.json"))
+              reasons={}
+              for raw in z.read("vulnerabilities.jsonl").splitlines():
+                  cve=json.loads(raw)
+                  for tag in cve["week_reasons"]:
+                      reasons[tag]=reasons.get(tag,0)+1
+              vendor={}
+              for raw in z.read("vendor_advisories.jsonl").splitlines():
+                  doc=json.loads(raw)
+                  vendor[doc["source_id"]]=vendor.get(doc["source_id"],0)+1
+          proof=json.loads(Path("evidence/reverified.json").read_text())
+          summary={
+              "result":"PHASE2_SNAPSHOT_WEEKLY_EVIDENCE_INDEPENDENT_READBACK_COUNTS",
+              "utc_window":[index["window_start_utc"],index["window_end_utc"]],
+              "cve_candidates":index["candidate_total"],
+              "candidate_reason_counts_nonexclusive":dict(sorted(reasons.items())),
+              "linked_or_changed_vendor_documents":index["vendor_advisory_documents_linked_or_observed_changed"],
+              "vendor_documents_by_source_included":dict(sorted(vendor.items())),
+              "change_events":index["change_events"],
+              "evidence_entries":index["evidence_entries"],
+              "missing_verified_publishers_from_v2":quality["missing_publisher_data_in_vendor_snapshot"],
+              "cve_master_count":manifest["input_provenance"]["cve_record_count"],
+              "vendor_v2_document_count":manifest["input_provenance"]["vendor_document_count"],
+              "zip_sha256":proof["sha256"],
+              "zip_bytes":path.stat().st_size,
+              "weekly_coverage_certified":False,
+              "source_freshness":"PINNED_2026_10_10_SNAPSHOT_ONLY",
+              "real_customer_data":False,
+              "report_generated":False,
+              "release_approved":False
+          }
+          Path("evidence/safe-summary.json").write_text(json.dumps(summary,sort_keys=True,indent=2,ensure_ascii=False)+"\n")
+          print(json.dumps(summary,sort_keys=True,ensure_ascii=False,indent=2))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+              out.write("## Phase 2 ZIP actual information counts\n")
+              out.write(f"- CVE candidates: {summary['cve_candidates']:,}\n")
+              out.write(f"- Included vendor notices: {summary['linked_or_changed_vendor_documents']:,}\n")
+              out.write(f"- ZIP bytes: {summary['zip_bytes']:,}\n")
+              out.write("- **Snapshot-only; completeness not demonstrated.**\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-weekly-evidence-audited-counts
+          path: evidence/safe-summary.json
+          retention-days: 7
+          if-no-files-found: error

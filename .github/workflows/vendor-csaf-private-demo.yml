@@ -1,0 +1,164 @@
+name: ECLIPSE private exact-product CSAF report demonstration
+
+# Only synthetic inventory generated from OFFICIAL public product trees.
+# No customer inventory ever enters Actions, Kaggle, or public artifacts.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/vendor-csaf-private-demo.yml'
+      - 'src/eclipse_l0/vendor_product_monitor.py'
+      - 'tests/test_vendor_product_monitor.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  synthetic-redhat-siemens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline fail-closed customer product tests
+        run: python -m unittest discover -s tests -p 'test_vendor_product_monitor.py' -v
+      - run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Retrieve immutable private parent and v2 pre-upload indices
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || exit 2
+          mkdir -p "$RUNNER_TEMP/ecl-private-indices/parent" \
+                   "$RUNNER_TEMP/ecl-private-indices/child" \
+                   "$RUNNER_TEMP/ecl-private-identity" \
+                   "$RUNNER_TEMP/ecl-private-v2" \
+                   "$RUNNER_TEMP/ecl-private-output" trusted
+          gh run download 38052640331 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-kaggle-trusted-source-index \
+            --dir "$RUNNER_TEMP/ecl-private-indices/parent"
+          gh run download 38053669895 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-v2-trusted-preupload-index \
+            --dir "$RUNNER_TEMP/ecl-private-indices/child"
+          mapfile -t parent < <(find "$RUNNER_TEMP/ecl-private-indices/parent" -name vendor-evidence-index.json -type f)
+          mapfile -t next < <(find "$RUNNER_TEMP/ecl-private-indices/child" -name vendor-evidence-v2-index.json -type f)
+          test "${#parent[@]}" -eq 1 && test "${#next[@]}" -eq 1 || exit 3
+          cp "${parent[0]}" trusted/vendor-evidence-index.json
+          cp "${next[0]}" trusted/vendor-evidence-v2-index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from eclipse_l0.vendor_kaggle_successor import validate
+          validate(json.loads(Path("trusted/vendor-evidence-v2-index.json").read_text()),
+                   Path("trusted/vendor-evidence-index.json"))
+          print("PRIVATE_V2_PROVENANCE=VERIFIED")
+          PY
+      - name: Restore PRIVATE vendor V2 into ephemeral runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          kaggle datasets init -p "$RUNNER_TEMP/ecl-private-identity" >/dev/null
+          ref="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          raw=json.loads((Path(os.environ["RUNNER_TEMP"])/"ecl-private-identity/dataset-metadata.json").read_text())["id"]
+          if not isinstance(raw,str) or not raw.endswith("/INSERT_SLUG_HERE"):
+              raise SystemExit("No approved Kaggle account")
+          print(raw.replace("INSERT_SLUG_HERE","eclipse-vendor-evidence-20261010-v2"))
+          PY
+          )"
+          echo "::add-mask::$ref"
+          for name in vendor-evidence-v2-index.json part-0000.dbpart; do
+            ok=0
+            for attempt in 1 2 3; do
+              if kaggle datasets download "$ref" --file "$name" \
+                 --path "$RUNNER_TEMP/ecl-private-v2" --unzip --force --quiet >/dev/null 2>&1 \
+                 && test -s "$RUNNER_TEMP/ecl-private-v2/$name"; then
+                ok=1; break
+              fi
+              sleep 3
+            done
+            test "$ok" -eq 1 || { echo "::error::Vendor v2 private file missing"; exit 4; }
+          done
+          python -m eclipse_l0.vendor_kaggle_successor restore \
+            --trusted-index trusted/vendor-evidence-v2-index.json \
+            --parent-index trusted/vendor-evidence-index.json \
+            --downloaded "$RUNNER_TEMP/ecl-private-v2" \
+            --dest "$RUNNER_TEMP/ecl-private-output/vendor-v2.sqlite3" \
+            --registry config/vendor_source_registry.json \
+            > "$RUNNER_TEMP/ecl-private-output/restore-proof.json"
+      - name: EXCLUSIVELY SYNTHETIC products — demonstrate private product matching
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from eclipse_l0.vendor_product_monitor import product_catalog,match_customer_products
+          from eclipse_l0.vendor_registry import load_registry
+          from pathlib import Path
+          import json,os,re
+          root=Path(os.environ["RUNNER_TEMP"])/"ecl-private-output"
+          db=root/"vendor-v2.sqlite3"
+          registry=load_registry(Path("config/vendor_source_registry.json"))
+          demo=[]
+          for vendor,source in (("Red Hat","redhat-csaf"),("Siemens","siemens-csaf")):
+              catalog=product_catalog(db,registry,source,max_entries=1000)
+              usable=next((p for p in catalog["entries"]
+                           if isinstance(p["publisher_product_name"],str)
+                           and 1<=len(p["publisher_product_name"])<=160
+                           and isinstance(p["publisher_product_id"],str)
+                           and re.fullmatch(r"[A-Za-z0-9:._+/-]{1,180}",p["publisher_product_id"])),None)
+              if usable is None:
+                  raise ValueError("Missing verified public CSAF product identity for "+source)
+              demo.append({"id":f"SYNTH-{source}","vendor":vendor,
+                           "product":usable["publisher_product_name"],
+                           "csaf_product_id":usable["publisher_product_id"],
+                           "installed_version":None})
+          file=root/"SYNTHETIC-NOT-A-CUSTOMER-INVENTORY.json"
+          file.write_text(json.dumps({"schema_version":1,
+                      "customer_name":"SYNTHETIC_DEMO_NO_REAL_CUSTOMER",
+                      "products":demo},ensure_ascii=False))
+          result=match_customer_products(db,file,registry)
+          assert result["coverage"]["monitored_products"]==2
+          assert result["coverage"]["candidate_status_rows"]>=2
+          assert result["coverage"]["inventory_entries_without_exact_evidence"]==0
+          assert {x["source_id"] for x in result["candidate_findings"]}=={"redhat-csaf","siemens-csaf"}
+          assert all(x["customer_version_impact"]=="NOT_ASSESSED" and
+                     x["fixed_version_certified"] is False and
+                     x["notification_approved"] is False
+                     for x in result["candidate_findings"])
+          assert result["security_policy"]["client_inventory_never_sent_to_github_or_kaggle"]
+          summary={"result":"PRIVATE_VENDOR_PRODUCT_REVIEW_CANDIDATES_SYNTHETIC_SUCCESS",
+                   "vendor_documents":160,"vendor_versions":241,
+                   "synthetic_inventory_entries":2,
+                   "candidate_status_rows":result["coverage"]["candidate_status_rows"],
+                   "distinct_product_cve_candidates":result["coverage"]["distinct_product_cve_candidates"],
+                   "sources":sorted({x["source_id"] for x in result["candidate_findings"]}),
+                   "vendor_sha256":result["source_provenance"]["vendor_sqlite_sha256"],
+                   "client_data_in_public_git_or_kaggle":False,
+                   "affected_or_patched_status_certified":False,
+                   "customer_delivery_enabled":False}
+          # ONLY aggregate counters. Absolutely no client/identity/profile leak
+          # or raw advisory bodies into artifacts or job summary.
+          out=root/"safe-aggregate-synthetic-proof.json"
+          out.write_text(json.dumps(summary,sort_keys=True,indent=2)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as s:
+              s.write("## Private CSAF product evidence — SYNTHETIC DEMO ONLY\n")
+              s.write(f"- Exactly scoped vendor sources: Red Hat and Siemens\n")
+              s.write(f"- Candidate source-CVE-product status rows: {summary['candidate_status_rows']}\n")
+              s.write("- Customer installed-version exposure remains NOT_ASSESSED\n")
+              s.write("- The demonstration used NO real customer inventory; inputs never uploaded\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-synthetic-redhat-siemens-aggregate-proof-only
+          path: ${{ runner.temp }}/ecl-private-output/safe-aggregate-synthetic-proof.json
+          retention-days: 7
+          if-no-files-found: error

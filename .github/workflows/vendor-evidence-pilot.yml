@@ -1,0 +1,109 @@
+name: ECLIPSE official vendor → cross-run SQLite evidence pilot (read-only)
+on:
+  push:
+    branches:
+      - feature/vendor-source-registry-20261010
+    paths:
+      - '.github/workflows/vendor-evidence-pilot.yml'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'src/eclipse_l0/vendor_replay.py'
+      - 'src/eclipse_l0/vendor_store.py'
+      - 'src/eclipse_l0/vendor_csaf.py'
+      - 'src/eclipse_l0/vendor_quality.py'
+      - 'tests/test_vendor_pilot.py'
+      - 'tests/test_vendor_csaf.py'
+      - 'tests/test_vendor_quality.py'
+      - 'tests/test_vendor_schema_migration.py'
+      - 'tests/test_vendor_replay.py'
+      - 'tests/test_vendor_expansion.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-vendor-evidence-pilot
+  cancel-in-progress: false
+
+jobs:
+  bounded-one-shot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm offline regression tests before external fetch
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p "test_vendor*.py" -v
+      - name: Find prior successful run and restore its validated short-lived state
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          mkdir -p output/prior
+          api="repos/${GITHUB_REPOSITORY}/actions/workflows/vendor-evidence-pilot.yml/runs"
+          previous="$(gh api -X GET "$api" -f branch="$GITHUB_REF_NAME" \
+              -f status=success -f per_page=20 \
+              --jq '.workflow_runs[0].id // empty')"
+          if [[ -n "$previous" ]]; then
+            echo "Prior successful vendor pilot run: $previous"
+            gh run download "$previous" --repo "$GITHUB_REPOSITORY" \
+              --name eclipse-vendor-to-sqlite-one-shot --dir output/prior
+            python -m eclipse_l0.vendor_replay \
+              --registry config/vendor_source_registry.json \
+              --dest output/vendor-evidence.sqlite3 \
+              --previous-dir output/prior \
+              --previous-run-id "$previous" \
+              --report output/vendor-replay-provenance.json
+          else
+            # Even a prior failed completed run means we cannot claim a clean
+            # first execution. Refuse a silent reset of missing history.
+            completed="$(gh api -X GET "$api" -f branch="$GITHUB_REF_NAME" \
+                -f status=completed -f per_page=20 \
+                --jq '[.workflow_runs[] | select(.id != env.GITHUB_RUN_ID)] | length')"
+            if [[ "$completed" != "0" ]]; then
+              echo "::error::Prior vendor pilot runs exist but no successful state to restore"
+              exit 1
+            fi
+            python -m eclipse_l0.vendor_replay \
+              --registry config/vendor_source_registry.json \
+              --dest output/vendor-evidence.sqlite3 \
+              --bootstrap --report output/vendor-replay-provenance.json
+          fi
+      - name: Expand unseen publisher advisories (up to 8 per source) with historical refresh
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db output/vendor-evidence.sqlite3 \
+            --out output/vendor-evidence-manifest.json \
+            --max-items 8
+      - name: Validate saved state after collection (fail closed)
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -c "from pathlib import Path; from eclipse_l0.vendor_registry import load_registry; from eclipse_l0.vendor_replay import inspect_db; print(inspect_db(Path('output/vendor-evidence.sqlite3'),load_registry(Path('config/vendor_source_registry.json'))))"
+      - name: Upload short-lived proof (not a production database)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-vendor-to-sqlite-one-shot
+          path: |
+            output/vendor-evidence.sqlite3
+            output/vendor-evidence-manifest.json
+            output/vendor-replay-provenance.json
+          if-no-files-found: warn
+          retention-days: 7

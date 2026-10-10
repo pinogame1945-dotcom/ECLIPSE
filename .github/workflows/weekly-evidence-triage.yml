@@ -1,0 +1,140 @@
+name: ECLIPSE weekly evidence L1 all / L2 priority / L3 details
+
+# Uses a separately verified, source-pinned historical weekly ZIP.
+# CVE/KEV/EPSS/vendor input databases and Kaggle storage are untouched.
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - '.github/workflows/weekly-evidence-triage.yml'
+      - 'src/eclipse_l0/weekly_triage.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-weekly-evidence-three-tier-20261004-20261010
+  cancel-in-progress: false
+
+jobs:
+  build-tiers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run L1/L2/L3 no-dropping and anti-tamper offline tests
+        run: python -m unittest discover -s tests -p test_weekly_evidence.py -v
+      - name: Recover previously verified actual weekly evidence ZIP from GitHub Actions only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-weekly-evidence-snapshot-20261004-20261010 \
+            --dir evidence
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify \
+            --zip evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip > evidence/base-proof.json
+      - name: Make transparent three-layer ZIP without losing any of 6355 CVEs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_triage build \
+            --source-weekly-zip evidence/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --out evidence/ECLIPSE_WEEKLY_EVIDENCE_3LAYERS_20261004_20261010.zip \
+            > evidence/triage-build-proof.json
+          python -m eclipse_l0.weekly_triage verify \
+            --zip evidence/ECLIPSE_WEEKLY_EVIDENCE_3LAYERS_20261004_20261010.zip \
+            > evidence/triage-verified-proof.json
+          python - <<'PY'
+          import json,zipfile,os
+          from pathlib import Path
+          root=Path('evidence')
+          a=json.loads((root/'triage-build-proof.json').read_text())
+          b=json.loads((root/'triage-verified-proof.json').read_text())
+          assert a['l1_total']==6355
+          assert a['l2_total']+a['watch_or_inactive']==a['l1_total']
+          assert 0<a['l3_total']<=a['l2_total']
+          assert a['l1_total']==b['l1_total']
+          assert b['source_zip_sha256']=='74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af'
+          assert b['weekly_coverage_certified'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('## 2026-10-04..10 source-pinned L1/L2/L3 handoff\n')
+              f.write(f"- All CVEs retained in L1: **{b['l1_total']:,}**\n")
+              f.write(f"- Rule-based L2 priority index: **{b['l2_total']:,}**\n")
+              f.write(f"- L3 evidence-rich candidate packets: **{b['l3_total']:,}**\n")
+              f.write(f"- Watch/unselected/inactive remaining in L1: **{b['watch_or_inactive']:,}**\n")
+              for key,count in b['counts_by_bucket'].items():
+                  f.write(f'- {key}: {count:,}\n')
+              f.write('**Historical snapshot only, NOT a complete weekly-monitoring certification.**\n')
+          print('THREE_LAYER_REAL_DATA_COUNTS='+json.dumps({
+              'L1_all_CVEs':b['l1_total'],
+              'L2_prioritized_CVEs':b['l2_total'],
+              'L3_deep_dive_CVEs':b['l3_total'],
+              'L1_only_or_inactive':b['watch_or_inactive'],
+              'bucket_counts':b['counts_by_bucket'],
+              'triage_zip_bytes':a['bytes'],
+              'triage_zip_sha256':a['zip_sha256']
+          },sort_keys=True))
+          print('REAL_6355_CVE_NO_DROP_PRIORITY_HANDOFF_BUILT')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-three-tier-evidence-week-20261004-20261010
+          path: |
+            evidence/ECLIPSE_WEEKLY_EVIDENCE_3LAYERS_20261004_20261010.zip
+            evidence/triage-build-proof.json
+            evidence/triage-verified-proof.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independent-reader:
+    needs: build-tiers
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-three-tier-evidence-week-20261004-20261010
+          path: evidence
+      - name: Recompute source L1 integrity and exact L2/L3 rankings on a fresh runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_triage verify \
+            --zip evidence/ECLIPSE_WEEKLY_EVIDENCE_3LAYERS_20261004_20261010.zip \
+            > evidence/independent-three-layer-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('evidence/independent-three-layer-proof.json').read_text())
+          assert p['result']=='INDEPENDENT_THREE_LAYER_EVIDENCE_CONTRACT_VERIFIED'
+          assert p['l1_total']==6355
+          assert p['l2_total']+p['watch_or_inactive']==p['l1_total']
+          assert p['weekly_coverage_certified'] is False
+          print('FRESH_RUNNER_L1_L2_L3_HANDOFF_VERIFIED',json.dumps({
+              k:p[k] for k in ('l1_total','l2_total','l3_total','watch_or_inactive')},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-three-tier-independent-reader-verified
+          path: evidence/independent-three-layer-proof.json
+          if-no-files-found: error
+          retention-days: 7

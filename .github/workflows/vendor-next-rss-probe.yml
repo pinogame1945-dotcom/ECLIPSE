@@ -1,0 +1,72 @@
+name: ECLIPSE next 2 official Juniper Mist / Ivanti publisher RSS probes
+on:
+  push:
+    branches: [feature/vendor-source-registry-20261010]
+    paths:
+      - 'src/eclipse_l0/vendor_next_rss.py'
+      - 'src/eclipse_l0/vendor_pilot.py'
+      - 'tests/test_vendor_next_rss.py'
+      - 'config/vendor_source_registry.json'
+      - '.github/workflows/vendor-next-rss-probe.yml'
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-two-official-rss-probes
+  cancel-in-progress: false
+jobs:
+  verify-two-rss:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Source registry and zero-trust RSS tests
+        run: |
+          python -m eclipse_l0.vendor_registry
+          python -m unittest discover -s tests -p test_vendor_next_rss.py -v
+      - name: Real official RSS index to concrete detail; record errors without false promotion
+        shell: bash
+        run: |
+          mkdir -p output
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          from eclipse_l0.vendor_registry import load_registry
+          from eclipse_l0.vendor_pilot import OfficialFetch,discover,normalize
+          ss={x["source_id"]:x for x in load_registry(Path("config/vendor_source_registry.json"))["sources"]}
+          selected=["juniper-mist-security-rss","ivanti-security-advisory-rss"]
+          results=[]
+          for sid in selected:
+              row={"source_id":sid,"status":"FAIL","errors":[]}
+              source=ss[sid]
+              try:
+                  getter=OfficialFetch(source)
+                  item=discover(source,getter,1)[0]
+                  raw=getter.get(item["url"])
+                  facts=normalize(source,item,raw)
+                  if facts["affected"]:raise ValueError("Unsupported product exposure assertion")
+                  row.update({"status":"LIVE_SAMPLE_PARSE_PASS","advisory_id":item["id"],
+                      "source_url":item["url"],"cve_refs":len(facts["cve_ids"]),
+                      "publisher_sha256":hashlib.sha256(raw).hexdigest()})
+              except Exception as e:row["errors"].append(type(e).__name__+": "+str(e)[:250])
+              results.append(row)
+          summary={"attempted":2,"passed":sum(x["status"]=="LIVE_SAMPLE_PARSE_PASS" for x in results),
+                   "results":results,"main_unchanged":True,"private_v3_unchanged":True,
+                   "production_enabled":False}
+          Path("output/next-two-rss.json").write_text(json.dumps(summary,indent=2)+"\n")
+          print(json.dumps(summary,indent=2))
+          if not summary["passed"]:raise SystemExit("Neither official RSS source validated")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-next2-official-rss-evidence
+          path: output/next-two-rss.json
+          retention-days: 7
+          if-no-files-found: warn
