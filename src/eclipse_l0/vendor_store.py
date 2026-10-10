@@ -80,7 +80,7 @@ def connect(path: Path) -> sqlite3.Connection:
         event_id INTEGER PRIMARY KEY AUTOINCREMENT,
         source_id TEXT NOT NULL, advisory_id TEXT NOT NULL,
         event_kind TEXT NOT NULL CHECK(event_kind IN
-          ('baseline','facts_updated','source_changed_only')),
+          ('baseline','facts_updated','source_changed_only','extraction_revised')),
         observed_utc TEXT NOT NULL, version INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS ix_vendor_document_events
@@ -149,8 +149,14 @@ def observe(db: sqlite3.Connection, *, registry: dict, source_id: str,
         version = db.execute("""SELECT COALESCE(MAX(version),0)+1
                                 FROM vendor_document_versions WHERE source_id=? AND advisory_id=?""",
                              (source_id, advisory_id)).fetchone()[0]
+        # Claims changed while source bytes did NOT: the extraction changed,
+        # not the publisher. Never label this a new vendor security update.
+        # A source byte change without changed claims is likewise not a
+        # vulnerability update. All extracted claims are unreviewed.
         kind = ("baseline" if old is None else
-                "source_changed_only" if old["current_facts_sha"] == facts_hash else "facts_updated")
+                "extraction_revised" if old["current_source_sha"] == source_sha256 else
+                "source_changed_only" if old["current_facts_sha"] == facts_hash else
+                "facts_updated")
         if old is None:
             db.execute("INSERT INTO vendor_documents VALUES (?,?,?,?,?,?,?)",
                        (source_id, advisory_id, source_url, facts_hash, source_sha256, stamp, stamp))
