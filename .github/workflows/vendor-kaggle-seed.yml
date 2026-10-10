@@ -82,6 +82,19 @@ jobs:
           with open(os.environ['GITHUB_ENV'],'a') as f:
               f.write('VENDOR_DATASET_REF='+ref+'\n')
           PY
+          # GITHUB_ENV variables are only available in the NEXT step.
+          # Resolve the just-created dataset identity in the CURRENT shell.
+          VENDOR_DATASET_REF="$(python - "$stage" <<'PY'
+          import json,sys
+          from pathlib import Path
+          p=Path(sys.argv[1])/'dataset-metadata.json'
+          ref=json.loads(p.read_text())['id']
+          if not isinstance(ref,str) or not ref.endswith('/eclipse-vendor-evidence-20261010-v1'):
+              raise SystemExit('Unexpected private vendor dataset reference')
+          print(ref)
+          PY
+          )"
+          echo "::add-mask::$VENDOR_DATASET_REF"
           if kaggle datasets status "$VENDOR_DATASET_REF" >/dev/null 2>&1; then
             echo "::error::Private vendor dataset exists. Immutable create-only; do not overwrite"
             exit 5
