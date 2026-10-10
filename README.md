@@ -63,3 +63,55 @@ Or go to **Actions → KEV briefing (manual / official source) → Run workflow*
 4. Review distribution rights and authorization before any commercial customer delivery.
 
 Data: [CISA KEV official repo](https://github.com/cisagov/kev-data); [CVE List V5](https://github.com/CVEProject/cvelistV5). OpenCVE is **not** used as a reusable commercial source.
+
+## v0.4 — Persistent CISA KEV monitoring (public data only)
+
+**New workflow:** `Actions → ECLIPSE durable KEV monitor (public-data only)`.
+Scheduled hourly at minute 23 UTC (GitHub scheduled execution may be delayed or skipped).
+This is **not** a realtime monitoring SLA. A manual `workflow_dispatch` is also available.
+
+State is persisted in the separate **`eclipse-state` Git branch**, not an Actions
+artifact or an ephemeral runner SQLite file. The first successful run establishes a
+baseline from the complete CISA KEV catalog without spamming historical entries.
+Later runs compare per-CVE JSON content and capture **newly observed additions,
+modifications, and removals** in `data/events/YYYY-MM.jsonl`, with timestamps and
+source SHA-256. A repeated source run produces no duplicate events/commit. Suspicious
+feed truncation, duplicate CVE IDs, invalid dates and stale release timestamps fail closed.
+
+If meaningful changes are detected, the workflow produces two **editable PPTX**
+examples using **public, fictional monitoring profiles only** (all/network). The
+reports are attached to the run for 7 days; no mail/customer distribution is enabled.
+KEV `dateAdded` is a CISA catalog-registration date, not the poll detection instant
+or exploitation start. A metadata-only feed update creates no vulnerability alarm.
+The output uses only official KEV fields; **no AI technical commentary** or
+unverified patches/impact claims have been added.
+
+### Security and cost constraints
+
+- PUBLIC repo/state: never add private customer settings, names, secrets, CMDBs,
+  inventories, unpublished vulnerabilities or employer data.
+- Uses ordinary GitHub-hosted runners and built-in GITHUB_TOKEN; no paid storage.
+- The data branch holds only a public CISA KEV snapshot + append-only change logs;
+  it is **not** a permanent CVE raw-data archive. Full CVE BACKFILL remains local.
+- No destructive rewrites of state branch; a failed non-fast-forward push fails the job.
+- `contents: write` is required for state branch commits; branch protection/repo
+  Actions permissions might require configuration by repository owner.
+- Never equate KEV absence with no exploitation or catalog deletion with safety.
+
+### Manual local deterministic run
+
+```bash
+PYTHONPATH=src python -m eclipse_l0.kev_monitor \
+  --feed downloads/kev.json --state-dir /path/to/public-state-checkout/data \
+  --out output/observed-changes.json
+# On first execution: event_count=0 and baseline=true.
+# After a genuine feed change: an event JSON and event PPTX can be generated.
+PYTHONPATH=src python -m eclipse_reports.event_report \
+  --events output/observed-changes.json \
+  --customer config/customer-all-example.json \
+  --out output/eclipse-kev-observed-changes.pptx
+```
+
+The last command intentionally refuses baseline and no-change input. Long-term
+roadmap: source license audit, genuine advisories (including pre-CVE information),
+severity triage validated by human review, and approved private client delivery.

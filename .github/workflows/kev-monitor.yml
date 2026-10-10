@@ -1,0 +1,113 @@
+name: ECLIPSE durable KEV monitor (public-data only)
+
+on:
+  schedule:
+    # Hourly UTC. GitHub schedule can be delayed or skipped; this is NOT realtime.
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # scoped to this workflow: commits ONLY public KEV state branch
+
+concurrency:
+  group: eclipse-kev-state-branch
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout application code from default branch
+        uses: actions/checkout@v4
+        with:
+          path: app
+          persist-credentials: false
+
+      - name: Checkout durable public KEV observation state
+        uses: actions/checkout@v4
+        with:
+          ref: eclipse-state
+          path: observed
+          fetch-depth: 1
+
+      - name: Download complete CISA KEV (do not scrape unofficial sites)
+        working-directory: app
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output
+          curl --fail --location --retry 3 --retry-all-errors --max-time 120 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            --output downloads/kev.json
+
+      - name: Reconcile official catalog against persistent state
+        id: diff
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.kev_monitor \
+            --feed downloads/kev.json \
+            --state-dir ../observed/data \
+            --out output/observed-changes.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          data=json.loads(Path('output/observed-changes.json').read_text())
+          print(f"event_count={data['event_count']}")
+          print(f"material_event_count={data['material_event_count']}")
+          print(f"baseline={str(data['baseline']).lower()}")
+          PY
+
+      - name: Install presentation dependency only when important changes exist
+        if: steps.diff.outputs.material_event_count != '0'
+        working-directory: app
+        run: python -m pip install -r requirements.txt
+
+      - name: Create editable PowerPoint for public example profiles
+        if: steps.diff.outputs.material_event_count != '0'
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_reports.event_report \
+            --events output/observed-changes.json \
+            --customer config/customer-all-example.json \
+            --out output/eclipse-all-kev-observed-changes.pptx
+          python -m eclipse_reports.event_report \
+            --events output/observed-changes.json \
+            --customer config/customer-network-example.json \
+            --out output/eclipse-network-kev-observed-changes.pptx
+
+      - name: Commit official-only baseline or diff to durable branch
+        working-directory: observed
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- data/
+          if git diff --cached --quiet; then
+            echo 'KEV source unchanged; no state commit.'
+          else
+            git commit -m 'data: observe CISA KEV and persist catalog differences'
+            # Non-force push fails closed if anything else altered the state branch.
+            git push origin HEAD:eclipse-state
+          fi
+
+      - name: Upload observed-change reports (non-durable, public examples)
+        if: steps.diff.outputs.material_event_count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-kev-observed-changes
+          path: |
+            app/output/observed-changes.json
+            app/output/*.pptx
+            app/output/*.manifest.json
+          retention-days: 7
+          if-no-files-found: error
+
+# Never publish customer data, asset inventories, real client names or secrets.
+# Only read/write official PUBLIC CISA KEV rows on a dedicated state branch.
+# The first run saves a baseline WITHOUT declaring all historical CVEs new alerts.
