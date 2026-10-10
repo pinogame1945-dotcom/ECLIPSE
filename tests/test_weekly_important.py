@@ -49,15 +49,21 @@ class ImportantReviewTests(unittest.TestCase):
         self.assertEqual(audit["mandatory_kev"], 1)
         self.assertEqual(audit["mandatory_vendor_only"], 1)
         self.assertEqual(audit["risk_selected"], 0)
+        self.assertEqual(audit["top50"], 2)
+        self.assertEqual(audit["top50_vendor"], 1)
         self.assertFalse(audit["weekly_coverage_certified"])
         with zipfile.ZipFile(path) as z:
             self.assertEqual(z.read("source-weekly-evidence.zip"), self.source.read_bytes())
             candidates = [json.loads(s) for s in z.read("important_candidates.jsonl").splitlines()]
             ledger = [json.loads(s) for s in z.read("decision_ledger.jsonl").splitlines()]
+            top50 = [json.loads(s) for s in z.read("top50_research_candidates.jsonl").splitlines()]
             quality = json.loads(z.read("important_quality.json"))
         self.assertEqual([x["cve_id"] for x in candidates],
                          ["CVE-2026-50002", "CVE-2026-50001"])
         self.assertEqual(len(ledger), 4)
+        self.assertEqual(len(top50), 2)
+        self.assertEqual([x["cve_id"] for x in top50],
+                         ["CVE-2026-50002","CVE-2026-50001"])
         self.assertIn("WATCH", {x["lane"] for x in ledger})
         self.assertIn("INACTIVE", {x["lane"] for x in ledger})
         self.assertFalse(quality["important_126_vendor_collector_coverage_certified"])
@@ -67,6 +73,7 @@ class ImportantReviewTests(unittest.TestCase):
         path, audit = self._build(target=1)
         self.assertEqual(audit["selected"], 2)
         self.assertEqual(audit["mandatory_overflow"], 1)
+        self.assertEqual(audit["top50"], 1)
         self.assertEqual(verify(path)["l1_total"], 4)
 
     def test_determinism(self):
@@ -126,6 +133,7 @@ class ImportantReviewTests(unittest.TestCase):
                            ["important_index.json"])
         self.assertEqual(index["important_review_candidate_count"], 3)
         self.assertEqual(index["discretionary_risk_count"], 1)
+        self.assertEqual(index["top50_research_count"], 3)
         self.assertEqual(index["mandatory_new_kev_count"], 1)
         self.assertEqual(index["mandatory_126_vendor_count_excluding_new_kev_overlap"], 1)
         self.assertTrue(base)
