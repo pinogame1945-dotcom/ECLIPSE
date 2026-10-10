@@ -83,19 +83,19 @@ jobs:
                      "likely_body_classes":sorted(shp.classes,key=shp.classes.get,reverse=True)[:25]}
               except Exception as diag_exc:
                   result["dom_diagnostic_error"]=type(diag_exc).__name__+":"+str(diag_exc)[:180]
-          if sid=="google-chrome-releases" and result["state"]=="FAIL":
-              # Only final public scheme+host/path; never follow a new domain.
-              from urllib.request import build_opener, Request, HTTPRedirectHandler
-              from urllib.parse import urlsplit
-              class RedirectReport(HTTPRedirectHandler):
-                  def redirect_request(self,req,fp,code,msg,headers,newurl):
-                      p=urlsplit(newurl)
-                      raise RuntimeError("redirect target="+p.scheme+"://"+str(p.hostname)+p.path[:140])
-              try:
-                  opener=build_opener(RedirectReport)
-                  opener.open(Request(item["url"],headers={"User-Agent":"ECLIPSE research 1.0"}),timeout=10)
-              except Exception as exc:
-                  result["redirect_scope_probe"]=type(exc).__name__+":"+str(exc)[:200]
+              if sid=="google-chrome-releases" and result["state"]=="FAIL":
+                  # Only final public scheme+host/path; never follow a new domain.
+                  from urllib.request import build_opener, Request, HTTPRedirectHandler
+                  from urllib.parse import urlsplit
+                  class RedirectReport(HTTPRedirectHandler):
+                      def redirect_request(self,req,fp,code,msg,headers,newurl):
+                          p=urlsplit(newurl)
+                          raise RuntimeError("redirect target="+p.scheme+"://"+str(p.hostname)+p.path[:140])
+                  try:
+                      opener=build_opener(RedirectReport)
+                      opener.open(Request(item["url"],headers={"User-Agent":"ECLIPSE research 1.0"}),timeout=10)
+                  except Exception as exc:
+                      result["redirect_scope_probe"]=type(exc).__name__+":"+str(exc)[:200]
               results.append(result)
           out={"research_only":True,"main_modified":False,"kaggle_modified":False,
                "production_enabled":False,"official_sources_attempted":len(results),
@@ -105,7 +105,7 @@ jobs:
           print(json.dumps(out,indent=2))
           core={"apple-security-releases","adobe-security-bulletins",
                 "android-security-bulletins","postgresql-security"}
-          if any(x["state"]!="LIVE_SAMPLE_PARSE_PASS" for x in results if x["source_id"] in core):
+          if len(results)!=len(chosen) or any(x["state"]!="LIVE_SAMPLE_PARSE_PASS" for x in results if x["source_id"] in core):
               raise SystemExit("One or more of the 4 proven sources regressed")
           print("Chrome remains quarantined until official redirect path reviewed; overall 5/5 NOT claimed")
           PY

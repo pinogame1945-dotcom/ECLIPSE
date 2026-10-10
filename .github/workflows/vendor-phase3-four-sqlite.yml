@@ -4,6 +4,7 @@ on:
     branches: [feature/vendor-source-registry-20261010]
     paths:
       - '.github/workflows/vendor-phase3-four-sqlite.yml'
+      - 'tests/test_vendor_next_sources.py'
       - 'src/eclipse_l0/vendor_next_sources.py'
       - 'src/eclipse_l0/vendor_pilot.py'
       - 'config/vendor_source_registry.json'
