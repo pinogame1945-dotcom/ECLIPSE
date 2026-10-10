@@ -117,6 +117,29 @@ class ContentAuditTests(unittest.TestCase):
         content_audit(self.vendor,self.cve,REGISTRY)
         self.assertEqual((self.vendor.read_bytes(),self.cve.read_bytes()),original)
 
+    def test_raw_predicate_same_does_not_mean_independent_vendor_verification(self):
+        structured=[{"version":"11.0.0","versionType":"semver","lessThan":"11.0.2",
+                     "status":"affected"}]
+        with sqlite3.connect(self.cve) as db:
+            db.execute("INSERT INTO cve_current VALUES (?,?,?)",
+                       ("CVE-2026-00007","PUBLISHED","a"*64))
+            db.execute("INSERT INTO warehouse_affected VALUES (?,?,?,?,?,?,?)",
+                       ("CVE-2026-00007","cna",0,"Palo Alto Networks","PAN-OS",
+                        json.dumps(structured),None))
+        db=connect(self.vendor)
+        try:
+            observe(db,registry=REGISTRY,source_id="paloalto-advisories",
+                advisory_id="CVE-2026-00007",
+                source_url=SOURCES["paloalto-advisories"]["detail_sample_url"],
+                source_sha256="f"*64,observed_utc="2026-10-10T15:00:00Z",
+                facts={"title":"SYNTHETIC typed range", "cve_ids":["CVE-2026-00007"],
+                       "affected":[{"vendor":"Palo Alto Networks","product":"PAN-OS",
+                                    "versions_raw":structured}],"evidence_fields":["fixture"]})
+        finally:db.close()
+        result=content_audit(self.vendor,self.cve,REGISTRY)
+        self.assertEqual(result["counts"]["PREDICATE_RAW_STRUCTURAL_EQUAL_POSSIBLY_SHARED_CNA"],1)
+        self.assertFalse(result["policy"]["customer_delivery_allowed"])
+
     def test_full_403696_count_gate(self):
         with self.assertRaisesRegex(ValueError,"403696"):
             content_audit(self.vendor,self.cve,REGISTRY,require_full_cve=True)
