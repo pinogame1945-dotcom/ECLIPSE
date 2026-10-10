@@ -80,7 +80,7 @@ class CveRevisionPairTest(unittest.TestCase):
                 analyze_pair_jsonl(source.read_bytes(),"2026-10-11","2026-10-11")
 
     def test_no_prior_version_is_not_comparable(self):
-        with self.assertRaisesRegex(ValueError,"Missing"):
+        with self.assertRaisesRegex(ValueError,"missing"):
             compare_pair({"cve_id":"CVE-2026-999998","after":rec()})
 
 
