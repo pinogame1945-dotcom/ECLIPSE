@@ -1,65 +1,11 @@
-# PROJECT ECLIPSE — L0 + KEV PowerPoint pipeline v0.3
+# ECLIPSE durable public-source state
 
-Cybersecurity intelligence prototype using authoritative public CISA KEV and CVE List V5 releases. This repository is **PUBLIC** and intentionally contains **no real customer details or private asset inventories**.
+This separate branch is written by the hourly CISA KEV monitoring workflow on `main`.
+Only public CISA KEV record snapshots and change-event logs are allowed here.
+No customer names, asset inventories, access tokens, unpublished findings, or employer data.
 
-## Implemented (this release)
+`data/kev-current.json` is initialized automatically by the first successful poll.
+The first poll is a historical baseline, **not** a new-alert stream.
+Events after the baseline go into `data/events/YYYY-MM.jsonl`.
 
-- **L0**: CVE full-snapshot ZIP importer, complete CISA KEV catalog importer, deduplication, version event history, restartable imports and SQLite integrity audit.
-- **Integration**: Official KEV catalog → L0 SQLite evidence store → byte-identical validated source snapshot → editable PowerPoint and provenance manifest.
-- **Customer profiles**: Local JSON vendor/product filters; example profiles only. Vendor labels are heuristic substring matches, **not** an exhaustive vendor/product mapping.
-- **PowerPoint**: KEV `dateAdded` day/period selection, executive summary, matching entries, plain-language contextual notes, caveats and source hashes.
-- **CI**: Offline unit + cross-module integration tests; **manually triggered** official KEV briefing workflow, downloadable as a short-lived Actions artifact.
-
-Not implemented: production persistent cloud storage, scheduled collection, CVE incremental delta ingestion, manufacturer advisories, EPSS/NVD correlation, generative AI technical commentary, live incident detection, customer deployment, and automatic distribution. **No claimed exploit details or remediation version are fabricated.**
-
-## Run tests
-
-```bash
-python -m pip install -r requirements.txt
-PYTHONPATH=src python -m unittest discover -s tests -v
-```
-
-## Full CVE BACKFILL (local workstation with adequate disk)
-
-```bash
-PYTHONPATH=src python -m eclipse_l0.cli --db state/eclipse.sqlite3 sync-official
-PYTHONPATH=src python -m eclipse_l0.cli --db state/eclipse.sqlite3 audit
-```
-
-This downloads an official CVE baseline ZIP (potentially large) plus KEV and imports them locally. Only perform with disk/bandwidth quotas; **do not schedule the full CVE baseline in default GitHub Actions**. The method currently uses full daily snapshots; hourly incremental CVE ingestion is a future step.
-
-## Make a customer-filtered KEV briefing
-
-1. Retrieve official CISA KEV JSON from the upstream project.
-2. Use an example monitoring profile; clone it for an **approved private environment** if you need real customer filtering.
-3. Execute:
-
-```bash
-PYTHONPATH=src python -m eclipse_reports.pipeline \
-  --kev-json downloads/kev.json \
-  --db state/eclipse.sqlite3 \
-  --customer config/customer-all-example.json \
-  --output output/kev-briefing.pptx \
-  --days 7
-```
-
-Output: editable `.pptx` and `.manifest.json`. Use `--end-date YYYY-MM-DD` to produce a historic window. For synthetic demo data, add `--demo`, which marks all slides as fictional. Production mode refuses undersized feeds.
-
-Or go to **Actions → KEV briefing (manual / official source) → Run workflow**. Artifacts are retained for 7 days. This workflow does **not** maintain cross-run history and does **not** automatically send reports.
-
-### Interpretation and evidence
-
-- `dateAdded` = the date an issue entered the KEV catalog, **not** publication date, exploit start, or first system detection.
-- Reports include CISA-provided short descriptions and required actions; **technical AI analysis is not yet implemented**.
-- No matching KEV events does not prove no relevant new vulnerabilities.
-- On the first complete catalog ingestion, historical `added` entries are **baseline import events**, not fresh alerts. True new-to-us detection requires a durable store and diff across subsequent polling cycles.
-- KEV data is not a full vulnerability intelligence corpus. Vendor monitoring beyond KEV requires upstream manufacturer feeds.
-
-### Next milestones
-
-1. Choose durable, access-controlled blob/object store for original snapshots + SQLite backup, within no-paid-service constraints.
-2. Add explicit **baseline vs observed update** semantics and alert idempotency, then scheduled KEV polling.
-3. Merge manufacturer advisories, CVE/EPSS evidence and validated commentary into customer-specific PPTX reports.
-4. Review distribution rights and authorization before any commercial customer delivery.
-
-Data: [CISA KEV official repo](https://github.com/cisagov/kev-data); [CVE List V5](https://github.com/CVEProject/cvelistV5). OpenCVE is **not** used as a reusable commercial source.
+Read application source and tests on `main`. Do not merge this branch into `main`.
