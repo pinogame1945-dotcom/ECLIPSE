@@ -58,10 +58,21 @@ def stage(parent_db,child_db,parent_idx,manifest,dest,registry):
     prior,newer=prove_chain(parent_db,child_db,registry,parent_idx)
     audit=json.loads(Path(manifest).read_text("utf-8"))
     if (audit.get("mode")!="ONE_SHOT_OFFICIAL_UNREVIEWED_PILOT" or
-        (audit.get("sources_pass"),audit.get("sources_partial"),audit.get("sources_failed"))!=(9,0,0) or
+        audit.get("sources_pass",0)+audit.get("sources_degraded",0)!=9 or
+        audit.get("sources_degraded",0)>1 or
+        audit.get("sources_partial")!=0 or audit.get("sources_failed")!=0 or
         audit.get("db_counts",{}).get("integrity")!="ok" or
         any(audit["db_counts"].get(k)!=newer[k] for k in ("advisories","versions","events"))):
         raise ValueError("Incomplete or inconsistent official 9-source collection")
+    degraded=[x for x in audit.get("source_results",[]) if x.get("status")=="DEGRADED"]
+    if any(x.get("source_id")!="atlassian-security" or
+           x.get("quarantine_reason")!="UNTRUSTED_OFFSITE_REDIRECT_BLOCKED" or
+           not x.get("errors") or
+           any("Source redirected outside official HTTPS allowlist" not in msg
+               for msg in x.get("errors",[])) for x in degraded):
+        raise ValueError("Unapproved degraded source cannot be archived")
+    if len(degraded)!=audit.get("sources_degraded",0):
+        raise ValueError("Degraded source count does not reconcile")
     dest=Path(dest)
     if dest.exists() and any(dest.iterdir()):raise ValueError("Refuse overwrite of staged files")
     dest.mkdir(parents=True,exist_ok=True)
@@ -80,6 +91,8 @@ def stage(parent_db,child_db,parent_idx,manifest,dest,registry):
         "counts":{k:newer[k] for k in ("advisories","versions","events")},
         "source_counts":newer["source_counts"],"part_name":PART_NAME,
         "collection_manifest_sha256":sha256(manifest),
+        "quarantined_untrusted_redirects":sum(len(x.get("errors",[])) for x in degraded),
+        "archive_quality":"DEGRADED_NOT_PRODUCTION" if degraded else "UNREVIEWED_NOT_PRODUCTION",
         "append_only_verified":True,"customer_records_included":False,
         "raw_vendor_source_bodies_included":False,"cve_database_touched":False,
         "human_verified_vendor_claims":False,
