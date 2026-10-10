@@ -127,7 +127,6 @@ def compute(source_bytes, *, vendor_material=None,cve_material=None,watch_limit=
     # the unverified-risk backlog.
     unverified=[x for x in ledger if x["state"]!= "MATERIAL_CHANGE_REVIEW_CANDIDATE"]
     unverified.sort(key=lambda x:(-x["review_order_score_only"],x["cve_id"]))
-    queue.sort(key=lambda x:(-xx["review_order_score_only"],x["cve_id"])) if False else None
     queue.sort(key=lambda x:(-x["review_order_score_only"],x["cve_id"]))
     summary={
         "kind":"ECLIPSE_WEEKLY_UPDATED_CVE_CONTENT_CHANGE_REVIEW_NOT_WEEKLY_REPORT",
