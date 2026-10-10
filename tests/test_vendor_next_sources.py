@@ -38,8 +38,10 @@ class ExpandedOfficialTests(unittest.TestCase):
     def test_all_five_no_premature_verified_claim(self):
         self.assertEqual(len(samples),5)
         for sid in samples:
-            self.assertEqual(sources[sid]["verification_status"],"not_tested")
+            state="probe_failed" if sid=="google-chrome-releases" else "read_parse_verified"
+            self.assertEqual(sources[sid]["verification_status"],state)
             self.assertFalse(sources[sid]["enabled_for_production"])
+            self.assertEqual(sources[sid]["live_polling"],"not_enabled")
     def test_advisory_identity_and_navigation_scope(self):
         for sid,(ident,url,title,heading) in samples.items():
             with self.subTest(sid=sid):
