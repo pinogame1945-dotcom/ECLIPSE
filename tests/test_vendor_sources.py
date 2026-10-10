@@ -99,15 +99,24 @@ class ManufacturerVersionStoreTest(unittest.TestCase):
         changed["observed_utc"]="2026-10-10T11:47:00Z"
         changed["facts"]["affected"][0]["versions"]="1.0 through 1.2"
         result=observe(self.db,**changed)
-        self.assertEqual(result["event"],"facts_updated")
+        self.assertEqual(result["event"],"extraction_revised")
+        # A genuine upstream-byte change plus changed normalized claims
+        # remains review-required; the event itself is not an exploit alarm.
+        upstream=copy.deepcopy(changed)
+        upstream["source_sha256"]="c"*64
+        upstream["observed_utc"]="2026-10-10T11:48:00Z"
+        upstream["facts"]["affected"][0]["versions"]="1.0 through 1.3"
+        upstream_result=observe(self.db,**upstream)
+        self.assertEqual(upstream_result["event"],"facts_updated")
         history=facts_history(self.db,"fortinet-psirt","FG-IR-TEST-1")
-        self.assertEqual(len(history),3)
-        self.assertEqual([x["version"] for x in history],[1,2,3])
+        self.assertEqual(len(history),4)
+        self.assertEqual([x["version"] for x in history],[1,2,3,4])
         self.assertEqual(history[0]["facts"]["affected"][0]["versions"],"1.0 through 1.1")
         self.assertEqual(history[2]["facts"]["affected"][0]["versions"],"1.0 through 1.2")
+        self.assertEqual(history[3]["facts"]["affected"][0]["versions"],"1.0 through 1.3")
         self.assertEqual([row[0] for row in self.db.execute(
             "SELECT event_kind FROM vendor_document_events ORDER BY event_id")],
-            ["baseline","source_changed_only","facts_updated"])
+            ["baseline","source_changed_only","extraction_revised","facts_updated"])
 
     def test_disallow_unverified_source_and_http_url(self):
         wrong={**self.kwargs,"source_id":"cisco-openvuln"}
