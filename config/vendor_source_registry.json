@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T11:50:36Z",
+  "updated_utc": "2026-10-10T12:01:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -60,6 +60,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 7,
+        "extracted_remediation_evidence_rows_unreviewed": 7,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -110,6 +121,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -160,6 +182,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 6,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -210,6 +243,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 6,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -260,6 +304,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 9,
+        "extracted_remediation_evidence_rows_unreviewed": 6,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -311,6 +366,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 1,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -361,6 +427,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -411,6 +488,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -487,6 +575,17 @@
         "source_data_review": "parsed_unreviewed",
         "lifecycle": "not_durable_7_day_actions_artifact",
         "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
+      },
+      "structured_evidence_audit": {
+        "sample_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+        "observed_utc": "2026-10-10T12:01:00Z",
+        "sampled_documents_in_run": 2,
+        "extracted_affected_evidence_rows_unreviewed": 0,
+        "extracted_remediation_evidence_rows_unreviewed": 0,
+        "customer_impact_exposure_verified": false,
+        "parsed_fields_human_reviewed": false,
+        "source_wide_completeness_assessed": false,
+        "scope": "Small per-source sample; not a coverage or SLA claim"
       }
     },
     {
@@ -532,5 +631,14 @@
     "source_only_raw_body_changes": 2,
     "security_facts_updates_confirmed": 0,
     "durable": false
+  },
+  "structured_evidence_pilot": {
+    "result": "9_SOURCES_PASS",
+    "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38050337430",
+    "sample_advisories_saved": 17,
+    "sqlite_versions_at_that_run": 27,
+    "sqlite_events_at_that_run": 27,
+    "integrity": "ok",
+    "safety": "all parsed claims unreviewed; no confirmed vendor security content changes or exposure assessment"
   }
 }
