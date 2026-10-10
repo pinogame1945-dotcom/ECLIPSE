@@ -1249,6 +1249,256 @@
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
       "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "juniper-jsa",
+      "vendor": "Juniper Networks",
+      "product_scope": "Juniper Security Advisories (JSA), public support portal",
+      "collector_kind": "html",
+      "discovery_url": "https://supportportal.juniper.net/s/knowledge",
+      "detail_sample_url": "https://supportportal.juniper.net/s/article/JSA00000",
+      "allowed_hosts": [
+        "supportportal.juniper.net"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "hpe-psirt",
+      "vendor": "Hewlett Packard Enterprise",
+      "product_scope": "HPE PSIRT Security Bulletin Library, including Aruba networking",
+      "collector_kind": "html",
+      "discovery_url": "https://support.hpe.com/connect/s/securitybulletinlibrary?language=en_US",
+      "detail_sample_url": "https://support.hpe.com/hpesc/public/docDisplay?docId=hpesbnw05134en_us&docLocale=en_US",
+      "allowed_hosts": [
+        "support.hpe.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "ibm-security-bulletins",
+      "vendor": "IBM",
+      "product_scope": "IBM Product Security Central public security bulletins",
+      "collector_kind": "html",
+      "discovery_url": "https://www.ibm.com/support/pages/bulletin/",
+      "detail_sample_url": "https://www.ibm.com/support/pages/node/1170946",
+      "allowed_hosts": [
+        "www.ibm.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "netapp-psirt",
+      "vendor": "NetApp",
+      "product_scope": "NetApp PSIRT vendor advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://security.netapp.com/",
+      "detail_sample_url": "https://security.netapp.com/advisory/ntap-20260130-0010",
+      "allowed_hosts": [
+        "security.netapp.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "jenkins-security",
+      "vendor": "Jenkins",
+      "product_scope": "Jenkins core and plugin security advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://www.jenkins.io/security/advisories/",
+      "detail_sample_url": "https://www.jenkins.io/security/advisory/2026-09-16/",
+      "allowed_hosts": [
+        "www.jenkins.io"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "grafana-security",
+      "vendor": "Grafana Labs",
+      "product_scope": "Grafana, Loki, Tempo, Alloy security advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://grafana.com/security/security-advisories/",
+      "detail_sample_url": "https://grafana.com/security/security-advisories/cve-2026-17033/",
+      "allowed_hosts": [
+        "grafana.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "nginx-security",
+      "vendor": "NGINX Open Source",
+      "product_scope": "nginx open-source official security advisory aggregate",
+      "collector_kind": "html",
+      "discovery_url": "https://nginx.org/en/security_advisories.html",
+      "detail_sample_url": "https://nginx.org/en/security_advisories.html",
+      "allowed_hosts": [
+        "nginx.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "openssl-security",
+      "vendor": "OpenSSL",
+      "product_scope": "OpenSSL Library official public vulnerabilities aggregate",
+      "collector_kind": "html",
+      "discovery_url": "https://www.openssl-library.org/news/vulnerabilities/",
+      "detail_sample_url": "https://www.openssl-library.org/news/vulnerabilities/",
+      "allowed_hosts": [
+        "www.openssl-library.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "tomcat-security",
+      "vendor": "Apache Tomcat",
+      "product_scope": "Apache Tomcat security vulnerabilities by major branch",
+      "collector_kind": "html",
+      "discovery_url": "https://tomcat.apache.org/security.html",
+      "detail_sample_url": "https://tomcat.apache.org/security-11.html",
+      "allowed_hosts": [
+        "tomcat.apache.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "wordpress-core-security",
+      "vendor": "WordPress",
+      "product_scope": "WordPress Core official security release posts",
+      "collector_kind": "html",
+      "discovery_url": "https://wordpress.org/news/category/security/",
+      "detail_sample_url": "https://wordpress.org/news/2026/10/wordpress-7-1-3-maintenance-and-security-release/",
+      "allowed_hosts": [
+        "wordpress.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Live official HTTPS index -> validated detail and scoped CVE evidence",
+        "Exact product, affected/fixed version and publisher update date review",
+        "Publisher coverage/pagination, permitted use and version-preserving durable storage"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
     }
   ],
   "cross_run_proof": {

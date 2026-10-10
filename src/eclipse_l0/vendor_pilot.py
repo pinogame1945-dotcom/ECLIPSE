@@ -38,6 +38,7 @@ SUPPORTED = {
     "apple-security-releases", "adobe-security-bulletins", "google-chrome-releases",
     "android-security-bulletins", "postgresql-security",
     "cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security",
+    "juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security",
 }
 
 
@@ -232,7 +233,10 @@ def discover(source, getter, max_items, known_ids=None):
     url = source["discovery_url"]
     raw = getter.get(url)
     entries = []
-    if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
+    if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
+        from .vendor_wave3_sources import discover_wave3
+        entries = discover_wave3(source, raw)
+    el   if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
         from .vendor_enterprise_batch import discover_enterprise
         entries=discover_enterprise(source,raw)
     elif sid in ("apple-security-releases", "adobe-security-bulletins",
@@ -362,6 +366,9 @@ def _csaf_facts(doc, title):
 
 def normalize(source, item, raw):
     sid = source["source_id"]
+    if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
+        from .vendor_wave3_sources import normalize_wave3
+        return normalize_wave3(source, item, raw)
     if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
         from .vendor_enterprise_batch import normalize_enterprise
         return normalize_enterprise(source,item,raw)
