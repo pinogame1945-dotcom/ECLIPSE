@@ -77,8 +77,8 @@ def inspect_db(path: Path, registry: dict) -> dict:
                 ORDER BY version DESC LIMIT 1""",(sid,row["advisory_id"])).fetchone()
             if latest is None or latest["facts_sha256"]!=row["current_facts_sha"] or latest["source_sha256"]!=row["current_source_sha"]:
                 raise ValueError("Latest advisory version disagrees with current source")
-            if latest["observed_utc"]!=row["last_observed_utc"]:
-                raise ValueError("Last observation disagrees with last saved version")
+            if row["last_observed_utc"] < latest["observed_utc"]:
+                raise ValueError("Last observation predates last saved version")
             sources[sid]=sources.get(sid,0)+1
         # Verify content-addressed fact payloads; do not trust artifact summary alone.
         for row in db.execute("SELECT facts_json,facts_sha256,source_sha256 FROM vendor_document_versions"):
