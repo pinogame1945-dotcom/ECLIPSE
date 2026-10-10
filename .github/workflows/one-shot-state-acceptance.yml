@@ -1,0 +1,75 @@
+name: ECLIPSE official-source persistence acceptance
+on:
+  push:
+    paths:
+      - .github/workflows/one-shot-state-acceptance.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: eclipse-public-state-writer
+  cancel-in-progress: false
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: eclipse-state
+          path: observed
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch bounded official KEV, CVE index, EPSS
+        working-directory: app
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output
+          curl -fL --retry 2 --max-time 120 --max-filesize 26214400 https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json -o downloads/kev.json
+          curl -fL --retry 2 --max-time 120 --max-filesize 41943040 https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves/deltaLog.json -o downloads/deltaLog.json
+          curl -fL --retry 2 --max-time 120 --max-filesize 104857600 https://epss.empiricalsecurity.com/epss_scores-current.csv.gz -o downloads/epss.csv.gz
+      - name: Reconcile and validate
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.kev_monitor --feed downloads/kev.json --state-dir ../observed/data --out output/kev-repeat.json
+          python -m eclipse_l0.cve_delta --log downloads/deltaLog.json --state-dir ../observed/data --out output/cve-index.json --max-events 5000
+          python -m eclipse_l0.epss --file downloads/epss.csv.gz --kev-state ../observed/data/kev-current.json --out ../observed/data/epss-selected.json
+      - name: Persist public state on dedicated branch
+        working-directory: observed
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: initialize CVE delta and EPSS, reconcile KEV"
+            git push origin HEAD:eclipse-state
+          fi
+      - name: Build actual official-data report
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m pip install -r requirements.txt
+          python -m eclipse_l1.timeline --state-dir ../observed/data --out output/timeline.json --hours 168
+          python -m eclipse_l1.briefing --timeline output/timeline.json --kev-state ../observed/data/kev-current.json --epss-json ../observed/data/epss-selected.json --profile config/customer-all-example.json --out output/briefing.json
+          python -m eclipse_reports.intelligence --briefing-json output/briefing.json --out output/eclipse-observed.pptx
+          python -m eclipse_reports.pipeline --kev-json downloads/kev.json --db output/temp.sqlite3 --customer config/customer-all-example.json --output output/eclipse-weekly-kev.pptx --days 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-official-state-reports
+          path: |
+            app/output/*.json
+            app/output/*.pptx
+          retention-days: 7
+          if-no-files-found: warn
