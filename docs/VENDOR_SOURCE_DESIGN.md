@@ -117,3 +117,23 @@ PYTHONPATH=src python -m unittest discover -s tests -p 'test_vendor*.py' -v
 ```
 
 次の合格ゲートは、(1) 許諾を確認した**非公開の永続保存先**を準備すること、(2) 異なる実行間でDBを復元して**本当の更新差分**を観測すること、(3) パーサー項目をソース横断で監査すること、(4) 承認済みのCORE/WATCH/CUSTOMへのリンクを構築すること、(5) ベンダーごとの権利と更新間隔を確定させること。
+
+## 異なるGitHub Actions実行間でのDB復元・再検証（2026-10-10）
+
+**別実行での復元・差分記録を実データで検証済み**。CVE全件基盤・Kaggle保存処理には手を加えていない。
+
+| 実行 | 証拠 | 保存内容 |
+|---|---|---|
+| 第1回（初回） | [one-shot pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048877850) | 9件・9版・9イベント |
+| 第2回（過去Artifactから復元） | [cross-run pilot #1](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195) | 9件・11版・11イベント（Fortinet/AtlassianのHTML原文ハッシュ変更のみ2件） |
+| 第3回（第2回のArtifactを復元） | [cross-run pilot #2](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582) | 9件・13版・13イベント（原文ハッシュ変更のみ2件） |
+
+**確認した事実**：過去の成功した実行からSQLiteファイルを取得→SHA・コンテンツハッシュ・外部キー・DB整合性と出典ホストを確認→ローカル復元→9件を再取得→同一事実なら上書き・baselineの再発行はしない→結果を次回用Artifactに書き出す。異なる実行での継承を2回連続で確認した。情報源別の最新実証結果は `config/vendor_source_registry.json` に記録。
+
+- 生のHTML変更だけで重要な脆弱性更新とはみなさない。`source_changed_only` は構造化事実の変更 `facts_updated` から区別する。今回実際のセキュリティ事実更新は **0件**であり、その真の運用検証は次の課題。
+- SQLite改ざん・欠落、履歴のハッシュ不一致、前回の成功実行があるのにArtifactが存在しない状況は**自動初期化せず失敗**とする。
+- 同じ前回版からの再実行・復元に伴う重複アラートは生まない。単体テストでは仮の影響バージョン変更が版更新になることを別々のDBの間で確認した。
+- GitHubの7日間Artifact以外の永久保存先はまだない。7日以上実行しなかった場合は原則復元不可になる。**継続的・長期の永続保存と呼べる状態ではない**。
+- 本収集はスケジュール未有効・顧客配布未有効・原文再配布未承認、詳細抽出は `parsed_unreviewed`。保存は9ベンダーの代表各1件のみ。ソース群の網羅性証明にはならない。
+
+実装：`src/eclipse_l0/vendor_replay.py`、`src/eclipse_l0/vendor_pilot.py`、`tests/test_vendor_replay.py`、`.github/workflows/vendor-evidence-pilot.yml`。複数ベンダーの1件だけを積み増す小規模PoCなので、次段階の本番化には非公開永続ストレージ、製品/バージョン別の解析精度評価、掲載変更の異常検知、法的な利用条件確認が必要。
