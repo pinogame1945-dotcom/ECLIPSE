@@ -319,14 +319,34 @@ def normalize(source, item, raw):
         descs = cna.get("descriptions", []) if cna else []
         desc = next((x.get("value") for x in descs if isinstance(x,dict) and
                      str(x.get("lang","")).lower().startswith("en")),None)
+        remediations=[]
+        for key in ("solutions","workarounds"):
+            rows = cna.get(key,[]) if isinstance(cna,dict) else []
+            if rows is None: rows=[]
+            if not isinstance(rows,list):
+                raise ValueError("CNA "+key+" must be an array")
+            if len(rows)>200:
+                raise ValueError("Oversized CNA remediation array")
+            for i,row in enumerate(rows):
+                if not isinstance(row,dict) or not isinstance(row.get("value"),str):
+                    raise ValueError("Invalid CNA remediation entry")
+                remediations.append({
+                    "category":"vendor_fix_text" if key=="solutions" else "workaround_text",
+                    "details_original":row["value"][:4000],
+                    "evidence_path":f"containers.cna.{key}[{i}].value",
+                    "status":"unreviewed"
+                })
         return {"title": (desc or doc.get("title") or item["title"])[:500],
                 "cve_ids": [ident] if ident else ([] if not CVE.fullmatch(item["id"]) else [item["id"]]),
                 "affected":[{"vendor":v.get("vendor"),"product":v.get("product"),
                              "versions_raw":v.get("versions",[]),"status":"unreviewed"}
                             for v in versions if isinstance(v,dict)],
+                "remediations_unreviewed":remediations,
                 "evidence_fields":["cveMetadata.cveId" if ident else "advisory.title",
-                                   "containers.cna.affected" if cna else "advisory"],
-                "extraction_notes":["Affected/version records copied from publisher CNA; no customer matching performed."]}
+                                   "containers.cna.affected" if cna else "advisory",
+                                   "containers.cna.solutions","containers.cna.workarounds"],
+                "extraction_notes":["Affected/version and remediation statements copied from CNA with paths.",
+                                    "No fixed-version interval derived; no customer matching performed."]}
     if sid == "ubuntu-security-api":
         doc = _json(raw)
         if not isinstance(doc,dict) or doc.get("id")!=item["id"]:
@@ -334,12 +354,27 @@ def normalize(source, item, raw):
         ids = doc.get("cves_ids",[])
         if not isinstance(ids,list):raise ValueError("Unexpected cves_ids structure")
         cves = sorted(set(x for x in ids if isinstance(x,str) and CVE.fullmatch(x)))
+        by_release=doc.get("release_packages") or {}
+        if not isinstance(by_release,dict) or len(by_release)>100:
+            raise ValueError("Unexpected Ubuntu release_packages structure")
+        release_evidence=[]
+        for release,packages in by_release.items():
+            if not isinstance(release,str) or not isinstance(packages,(list,dict)):
+                raise ValueError("Invalid Ubuntu release/package mapping")
+            release_evidence.append({
+                "release_id":release[:100],
+                "package_container_type":type(packages).__name__,
+                "package_records_count":len(packages),
+                "evidence_path":f"release_packages.{release}",
+                "status":"unreviewed"
+            })
         return {"title":str(doc.get("title") or item["title"])[:500],"cve_ids":cves,
-                "affected":[],"releases_unreviewed":list((doc.get("release_packages") or {}).keys())
-                if isinstance(doc.get("release_packages"),dict) else [],
+                "affected":[],"releases_unreviewed":list(by_release.keys()),
+                "release_package_evidence_unreviewed":release_evidence,
                 "instructions_present":bool(doc.get("instructions")),
                 "evidence_fields":["id","cves_ids","release_packages","instructions"],
-                "extraction_notes":["Exact fixed package versions not yet interpreted."]}
+                "extraction_notes":["Publisher Ubuntu package/release containers enumerated, NOT interpreted as fixed-version assertions.",
+                                    "Exact fixed package versions and customer impact remain unverified."]}
     if sid == "microsoft-msrc":
         doc = _xml(raw)
         cves=[]
@@ -434,7 +469,7 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 facts = normalize(source,item,raw)
                 # Metadata about interpretation, not a vendor-published claim.
                 # The ledger will classify schema upgrades as extraction_revised.
-                facts["_extractor_revision"] = "vendor_semantics_20261010_v2"
+                facts["_extractor_revision"] = "vendor_semantics_20261010_v3"
                 quality = inspect_facts(facts,sid)
                 key = hashlib.sha256(raw).hexdigest()
                 stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
