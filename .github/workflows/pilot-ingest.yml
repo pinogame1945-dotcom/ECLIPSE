@@ -1,0 +1,62 @@
+name: ECLIPSE bounded KEV + CVE pilot (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      cve_samples:
+        description: 'Number of individual CVE JSON records to test (never full BACKFILL)'
+        required: true
+        default: '10'
+        type: choice
+        options: ['10', '25', '50']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-manual-bounded-pilot
+  cancel-in-progress: false
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download bounded official complete KEV catalog (25 MiB max)
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output/pilot
+          curl --fail --location --retry 2 --retry-all-errors --connect-timeout 10 --max-time 90 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            --output downloads/kev.json
+          test "$(wc -c < downloads/kev.json)" -le 26214400
+          python -m json.tool downloads/kev.json >/dev/null
+      - name: Run bounded SQLite import and 10-50 CVE source checks
+        env:
+          PYTHONPATH: src
+          PILOT_SAMPLES: ${{ inputs.cve_samples }}
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.pilot --kev-json downloads/kev.json \
+            --out output/pilot --limit "$PILOT_SAMPLES"
+          echo 'Official source sampling done: full-catalog KEV validation, bounded CVE documents only.' >> "$GITHUB_STEP_SUMMARY"
+          cat output/pilot/pilot-manifest.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload pilot evidence (short-lived, public official data only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-bounded-pilot-evidence
+          path: |
+            output/pilot/pilot-manifest.json
+            output/pilot/pilot-cve-observations.csv
+          if-no-files-found: warn
+          retention-days: 7
+# No schedule, no durable data write, no auto-delivery, no full CVE ZIP.
+# This is a manual controlled preflight only. First *durable* KEV monitor poll
+# is a baseline, never a flood of alerts.

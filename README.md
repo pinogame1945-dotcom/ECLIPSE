@@ -237,3 +237,28 @@ Current limitations: EPSS selection is KEV-targeted only; many CVE-only event
 records will lack EPSS scores. The report enriches a bounded subset of the
 current official CVE records and is **not** a retrospective snapshot of every
 record exactly as it existed when the source change was first observed.
+
+## v0.7 — Controlled initial ingestion (NO full CVE download)
+
+**Safety first:** Before a full CVE BACKFILL, use **Actions → ECLIPSE bounded KEV + CVE pilot (read-only) → Run workflow**, choosing 10 first, then 25, then 50 records. This is a **manual-only workflow**, with `contents: read`, no schedule, and no writes to the `eclipse-state` branch. It never downloads the massive CVE baseline ZIP.
+
+Pilot actions:
+
+1. Download the **full but relatively small CISA KEV JSON** (hard cap 25 MiB) and verify count/schema; ingest in a **throwaway SQLite DB**.
+2. Choose the 10/25/50 *most recently KEV-listed* CVE IDs, fetch **only those individual official CVE JSON records**, with 2 MiB per-record cap, HTTPS/host restrictions, redirects refused, and bounded timeouts.
+3. Validate each record's CVE ID matches the requested ID; log any 404, timeout, mismatched document or excess size **without inventing the missing data**.
+4. Run a local SQLite structural audit and produce an evidence CSV and JSON manifest as a 7-day GitHub Actions artifact. These selected samples are **not representative of all global CVEs**, and the pilot is not a monitoring service.
+
+The pilot does not generate or send customer reports, does not download EPSS, and does not alter durable monitoring state. The automatic KEV/CVE-delta/EPSS workflows already exist separately but **have not been verified as successfully running**. Repository owner may need to enable Actions and grant configured workflow token permissions before those can persist their public state.
+
+**Stage gates for controlled rollout** (suggested, not automated success guarantees):
+
+| Gate | Check | Next step |
+| --- | --- | --- |
+| P0: dry-run | 61+ offline tests pass; GitHub workflow can start | Manual 10-record pilot |
+| P1: 10 | Complete KEV catalog parses; SQLite `quick_check=ok`; individual per-CVE fetch results reviewed; at least 8/10 accessible or root-caused | Manual 25-record pilot |
+| P2: 25/50 | No malformed silent imports; all failures have evidence; response size and runtime acceptable | Manually run existing durable KEV baseline and inspect `eclipse-state` |
+| P3: incremental | Re-run KEV with identical feed without duplicate events; validate bounded CVE delta and EPSS selected scores | Enable source expansion on approved schedule |
+| P4: historical archive | Decide an independent durable database location and acceptable storage quotas first | Only then consider full CVE ZIP BACKFILL locally (never as default Actions step) |
+
+**CVE vs KEV**: Full KEV catalog validation is safe as a small baseline; do **not** confuse that with downloading every CVE in history. Source observations are not proof of exploitation at a customer. Do not put customer profiles or private work data in public GitHub Actions artifacts.
