@@ -1,0 +1,47 @@
+name: ECLIPSE official vendor → local evidence SQLite pilot (read-only)
+on:
+  push:
+    branches:
+      - feature/vendor-source-registry-20261010
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: eclipse-vendor-evidence-pilot
+  cancel-in-progress: false
+jobs:
+  bounded-one-shot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure all offline regression tests pass
+        env:
+          PYTHONPATH: src
+        run: python -m unittest tests.test_vendor_pilot tests.test_vendor_sources -v
+      - name: Read official source catalogs and save one detailed advisory per vendor
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python -m eclipse_l0.vendor_pilot \
+            --registry config/vendor_source_registry.json \
+            --db output/vendor-evidence.sqlite3 \
+            --out output/vendor-evidence-manifest.json \
+            --max-items 1
+      - name: Upload one-shot proof only; NOT durable production state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-vendor-to-sqlite-one-shot
+          path: |
+            output/vendor-evidence.sqlite3
+            output/vendor-evidence-manifest.json
+          if-no-files-found: warn
+          retention-days: 7
