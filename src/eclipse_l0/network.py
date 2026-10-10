@@ -29,7 +29,7 @@ def fetch_latest_cve_full_asset() -> tuple[str, str]:
     for release in releases:
         for asset in release.get('assets', []):
             name = asset.get('name', '')
-            if name.endswith('_all_CVEs_at_midnight.zip') and asset.get('browser_download_url'):
+            if (name.endswith('_all_CVEs_at_midnight.zip') or name.endswith('_all_CVEs_at_midnight.zip.zip')) and asset.get('browser_download_url'):
                 candidates.append((name, asset['browser_download_url']))
     if not candidates:
         raise RuntimeError('No official CVE full baseline in latest 100 releases; verify upstream manually')
