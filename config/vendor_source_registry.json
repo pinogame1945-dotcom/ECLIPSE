@@ -1078,6 +1078,157 @@
       "durable_advisory_ingestion": "not_implemented",
       "coverage_assurance": "not_established",
       "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "cisco-public-advisories",
+      "vendor": "Cisco",
+      "product_scope": "Cisco PSIRT advisory publications",
+      "collector_kind": "json",
+      "discovery_url": "https://sec.cloudapps.cisco.com/security/center/publicationService.x?limit=20&offset=0&publicationTypeIDs=1",
+      "detail_sample_url": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ssm-access-nttb2dhE",
+      "allowed_hosts": [
+        "sec.cloudapps.cisco.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "oracle-security-patches",
+      "vendor": "Oracle",
+      "product_scope": "Critical Patch Updates, public source-level bulletins",
+      "collector_kind": "html",
+      "discovery_url": "https://www.oracle.com/security-alerts/",
+      "detail_sample_url": "https://www.oracle.com/security-alerts/cpujul2026.html",
+      "allowed_hosts": [
+        "www.oracle.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "sap-security-patch-days",
+      "vendor": "SAP",
+      "product_scope": "Public monthly patch-day bulletin (not authenticated SAP Notes)",
+      "collector_kind": "html",
+      "discovery_url": "https://support.sap.com/en/my-support/knowledge-base/security-notes-news.html",
+      "detail_sample_url": "https://support.sap.com/en/my-support/knowledge-base/security-notes-news/september-2026.html",
+      "allowed_hosts": [
+        "support.sap.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "vmware-broadcom-vmsa",
+      "vendor": "Broadcom VMware",
+      "product_scope": "VMSA security advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://www.broadcom.com/support/vmware-security-advisories",
+      "detail_sample_url": "https://support.broadcom.com/web/ecx/support-content-notification/-/external/content/SecurityAdvisories/0/38288",
+      "allowed_hosts": [
+        "www.broadcom.com",
+        "support.broadcom.com"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "drupal-core-security",
+      "vendor": "Drupal",
+      "product_scope": "Drupal Core security advisories",
+      "collector_kind": "html",
+      "discovery_url": "https://www.drupal.org/security/core/advisory",
+      "detail_sample_url": "https://www.drupal.org/sa-core-2026-012",
+      "allowed_hosts": [
+        "www.drupal.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
+    },
+    {
+      "source_id": "apache-httpd-security",
+      "vendor": "Apache HTTP Server",
+      "product_scope": "Apache httpd 2.4 security vulnerability aggregate bulletin",
+      "collector_kind": "html",
+      "discovery_url": "https://httpd.apache.org/security/",
+      "detail_sample_url": "https://httpd.apache.org/security/vulnerabilities_24.html",
+      "allowed_hosts": [
+        "httpd.apache.org"
+      ],
+      "verification_status": "not_tested",
+      "last_verified_utc": null,
+      "evidence_run_url": null,
+      "verified_capabilities": [],
+      "pending_gates": [
+        "Official live index to detail pilot",
+        "Affected/fixed version and publisher date exact-source audit",
+        "Licensing, private persistent snapshots, update coverage and errors"
+      ],
+      "enabled_for_production": false,
+      "commercial_reuse_rights": "not_reviewed",
+      "durable_advisory_ingestion": "not_implemented",
+      "coverage_assurance": "not_established",
+      "live_polling": "not_enabled"
     }
   ],
   "cross_run_proof": {
@@ -1339,5 +1490,17 @@
       "google-chrome-releases"
     ],
     "production_enabled": false
+  },
+  "enterprise_batch2": {
+    "source_ids": [
+      "cisco-public-advisories",
+      "oracle-security-patches",
+      "sap-security-patch-days",
+      "vmware-broadcom-vmsa",
+      "drupal-core-security",
+      "apache-httpd-security"
+    ],
+    "state": "candidate_only_before_actions_live_verification",
+    "changed_main": false
   }
 }

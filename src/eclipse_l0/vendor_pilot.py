@@ -37,6 +37,7 @@ SUPPORTED = {
     "atlassian-security", "microsoft-msrc", "mozilla-mfsa", "debian-dsa",
     "apple-security-releases", "adobe-security-bulletins", "google-chrome-releases",
     "android-security-bulletins", "postgresql-security",
+    "cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security",
 }
 
 
@@ -231,7 +232,10 @@ def discover(source, getter, max_items, known_ids=None):
     url = source["discovery_url"]
     raw = getter.get(url)
     entries = []
-    if sid in ("apple-security-releases", "adobe-security-bulletins",
+    if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
+        from .vendor_enterprise_batch import discover_enterprise
+        entries=discover_enterprise(source,raw)
+    elif sid in ("apple-security-releases", "adobe-security-bulletins",
                "google-chrome-releases", "android-security-bulletins",
                "postgresql-security"):
         from .vendor_next_sources import discover_official
@@ -358,6 +362,9 @@ def _csaf_facts(doc, title):
 
 def normalize(source, item, raw):
     sid = source["source_id"]
+    if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
+        from .vendor_enterprise_batch import normalize_enterprise
+        return normalize_enterprise(source,item,raw)
     if sid in ("apple-security-releases", "adobe-security-bulletins",
                "google-chrome-releases", "android-security-bulletins",
                "postgresql-security"):
