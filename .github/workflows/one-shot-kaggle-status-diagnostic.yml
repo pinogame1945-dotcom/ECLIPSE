@@ -1,0 +1,51 @@
+name: ECLIPSE one-shot Kaggle dataset existence diagnosis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-shot-kaggle-status-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-kaggle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Read-only private dataset status and file listing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/kaggle-diag"
+          kaggle datasets init -p "$RUNNER_TEMP/kaggle-diag" >/dev/null
+          python - <<'PY'
+          import json,os,subprocess
+          from pathlib import Path
+          meta=json.loads((Path(os.environ['RUNNER_TEMP'])/'kaggle-diag/dataset-metadata.json').read_text())
+          ref=meta['id'].replace('INSERT_SLUG_HERE','eclipse-cve-full-20261010-v1')
+          print("::add-mask::"+ref,flush=True)
+          cmds=[("full_snapshot_status",["kaggle","datasets","status",ref]),
+                ("full_snapshot_files",["kaggle","datasets","files",ref,"--page-size","5"])]
+          results={}
+          for name,cmd in cmds:
+              out=subprocess.run(cmd,capture_output=True,text=True,timeout=35)
+              message=(out.stdout+"\n"+out.stderr).lower()
+              # Avoid revealing owner/token and provider payload in logs.
+              results[name]={"exit_code":out.returncode,
+                "http_404":("404" in message or "not found" in message),
+                "http_403":("403" in message or "forbidden" in message),
+                "http_429":("429" in message or "too many requests" in message),
+                "pending":("pending" in message),
+                "ready":("ready" in message),
+                "error_status":("error" in message)}
+          print(json.dumps(results,sort_keys=True))
+          PY
