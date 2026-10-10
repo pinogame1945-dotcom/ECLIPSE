@@ -404,8 +404,14 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 continue
             if not _host_allowed(row["source_url"],source["allowed_hosts"]):
                 raise ValueError("Previously tracked source URL outside official allowlist")
+            previous = db.execute("""SELECT facts_json FROM vendor_document_versions
+                                      WHERE source_id=? AND advisory_id=?
+                                      ORDER BY version DESC LIMIT 1""",
+                                  (sid,row["advisory_id"])).fetchone()
+            preserved_title = (json.loads(previous["facts_json"]).get("title")
+                               if previous else row["advisory_id"])
             candidates.append({"id":row["advisory_id"],"url":row["source_url"],
-                               "title":row["advisory_id"]})
+                               "title":preserved_title or row["advisory_id"]})
             break
         status["candidates"] = len(candidates)
         for item in candidates:
@@ -474,8 +480,9 @@ def main():
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print(json.dumps(result,ensure_ascii=False,indent=2))
-    if result["db_counts"]["integrity"]!="ok" or result["sources_pass"]+result["sources_partial"]<4:
-        raise SystemExit("Too few sources produced valid evidence; consult manifest")
+    if (result["db_counts"]["integrity"]!="ok" or result["sources_failed"] or
+            result["sources_partial"] or result["sources_pass"]!=len(result["source_results"])):
+        raise SystemExit("Incomplete vendor pilot: refusing to promote partial state as successful")
 
 
 if __name__=="__main__":
