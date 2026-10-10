@@ -17,6 +17,7 @@ import re
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.error import HTTPError, URLError
 from xml.etree import ElementTree as ET
 import hashlib
 import sqlite3
@@ -62,32 +63,48 @@ class OfficialFetch:
     def __init__(self, source: dict):
         self.allowed = source["allowed_hosts"]
         self.total = 0
-        self.max_requests = 11
+        self.max_requests = 13
         self.min_spacing_seconds = 0.35
         self.last_request_at = None
 
     def get(self, url: str, limit: int = MAX_FEED) -> bytes:
         if not _host_allowed(url, self.allowed):
             raise ValueError("Nonofficial HTTPS URL refused")
-        if self.total >= self.max_requests:
-            raise ValueError("Request budget exceeded")
-        if self.last_request_at is not None:
-            delay = self.min_spacing_seconds - (time.monotonic() - self.last_request_at)
-            if delay > 0:
-                time.sleep(delay)
-        self.last_request_at = time.monotonic()
-        self.total += 1
-        req = Request(url, headers={"User-Agent": "PROJECT-ECLIPSE-one-shot-vendor-evidence/1.0",
-                     "Accept": "application/json,application/rss+xml,application/atom+xml,text/html,application/xml,*/*"})
-        opener = build_opener(_StrictRedirect(self.allowed))
-        with opener.open(req, timeout=25) as response:
-            if not _host_allowed(response.url, self.allowed):
-                raise ValueError("Final host outside official allowlist")
-            raw = response.read(limit + 1)
-        if len(raw) > limit:
-            raise ValueError("Official response exceeded bounded limit")
-        return raw
-
+        # Only transient upstream/network errors are retried, once. 4xx except
+        # rate-limiting and all trust/parse/size failures are never retried.
+        for attempt in range(2):
+            if self.total >= self.max_requests:
+                raise ValueError("Request budget exceeded")
+            if self.last_request_at is not None:
+                delay = self.min_spacing_seconds - (time.monotonic() - self.last_request_at)
+                if delay > 0:
+                    time.sleep(delay)
+            self.last_request_at = time.monotonic()
+            self.total += 1
+            req = Request(url, headers={
+                "User-Agent": "PROJECT-ECLIPSE-one-shot-vendor-evidence/1.0",
+                "Accept": "application/json,application/rss+xml,application/atom+xml,text/html,application/xml,*/*"
+            })
+            opener = build_opener(_StrictRedirect(self.allowed))
+            try:
+                with opener.open(req, timeout=25) as response:
+                    if not _host_allowed(response.url, self.allowed):
+                        raise ValueError("Final host outside official allowlist")
+                    raw = response.read(limit + 1)
+                if len(raw) > limit:
+                    raise ValueError("Official response exceeded bounded limit")
+                return raw
+            except HTTPError as exc:
+                if attempt == 0 and exc.code in (429, 500, 502, 503, 504):
+                    time.sleep(1.2)
+                    continue
+                raise
+            except (URLError, TimeoutError, ConnectionResetError):
+                if attempt == 0:
+                    time.sleep(1.2)
+                    continue
+                raise
+        raise RuntimeError("Unreachable bounded retry state")
 
 def _json(raw):
     doc = json.loads(raw)
@@ -446,11 +463,17 @@ def normalize(source, item, raw):
                 affected.append({"product_release":row[0],"affected_versions_raw":row[1],
                                  "remediation_raw":solution,
                                  "status":"not_affected" if row[1]=="Not affected" else "unreviewed"})
-        if not affected:
-            raise ValueError("Fortinet impact/remediation table not extracted")
-        return {"title":item["title"][:500],"cve_ids":_ids(fulltext),
-                "affected":affected,"evidence_fields":["psirt HTML visible title","psirt HTML impact table rows"],
-                "extraction_notes":["Version/status strings unreviewed; exploit label presence is NOT proof of exploitation."]}
+        provisional_ids=_ids(fulltext)
+        if not affected and not provisional_ids and item["id"].lower() not in fulltext.lower():
+            raise ValueError("No impact table, CVE nor advisory identity found in HTML")
+        return {"title":item["title"][:500],"cve_ids":provisional_ids,
+                "affected":affected,
+                "impact_table_extraction":"rows_parsed_unreviewed" if affected else "not_extracted",
+                "evidence_fields":["psirt HTML visible title","psirt HTML impact table rows" if affected
+                                   else "psirt HTML page: no impact table extracted"],
+                "extraction_notes":["Version/status strings unreviewed; exploit label presence is NOT proof of exploitation.",
+                                    "Missing affected rows does NOT imply that no products are affected."
+                                    if not affected else "Affected/remediation rows parsed but not verified."]}
     if sid in ("gitlab-security-releases","yamaha-network","atlassian-security"):
         # HTML pages can include unrelated CVE references in global navigation.
         # Only CVEs appearing in publisher-supplied feed title/individual URL
