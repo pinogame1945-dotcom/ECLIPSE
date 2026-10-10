@@ -79,7 +79,8 @@ jobs:
             --days 90 --mode recent --demo
           python -m eclipse_reports.customer_product_slides \
             --report-json "$RUNNER_TEMP/ecl-demo-out/customer-product-report.json" \
-            --out "$RUNNER_TEMP/ecl-demo-out/customer-product-report.pptx"
+            --out "$RUNNER_TEMP/ecl-demo-out/customer-product-report.pptx" \
+            --briefs-ja config/SYNTHETIC-approved-ja-cve-briefs.json
           python - <<'PY'
           import csv,json,os
           from pathlib import Path
