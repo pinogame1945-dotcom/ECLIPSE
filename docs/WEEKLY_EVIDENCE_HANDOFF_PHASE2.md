@@ -72,3 +72,17 @@ ChatGPTレポート作成側はまず `manifest.json` と `quality_report.json` 
 - ベンダー公式公告の公開日時・改訂日時をソース別に正規化し、`first_seen` / `last_seen` / `publisher_published` / `publisher_updated` / `extractor_changed` を区別する。
 - **週間完全性の検査**：カバーした日付・時間、公式一覧のどこまで走査できたか、未解析文書の件数、失敗したソース、各ソースの取得遅延、継続性を必ず検査する。
 - 技術的な原因、認証前後の攻撃条件、修正バージョン・回避策など、現DBに構造化されていない情報は、ソース出典の明示と人手検証を伴って追加する。
+
+## 実データ検証結果（2026-10-10）
+
+**Phase 2-A契約・2-B実スナップショットZIP・2-C別ランナー再読込までSUCCESS。**
+
+| 完了ゲート | 確認したこと | 証拠 |
+|---|---|---|
+| 2-A | JSONL、根拠・週次日付・不足宣言・ZIPハッシュ、同入力からのバイト同一再生成と故意改ざんの拒否 | [オフラインCI SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38057992037) |
+| 2-B | PRIVATE Kaggle上のCVE原本**403,696件**とベンダーV2原本**160公告／241版**を独立復元し、**2026-10-04〜2026-10-10 UTC**の研究用週間ZIPを生成。ZIP再読込とSQLite・元ソースハッシュを検証 | [実データZIP作成 SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38057989531) |
+| 2-C | **2-Bとは別のまっさらなランナー**がZIP Artifactを再ダウンロードし、**元のCVE原本SHA・ベンダーV2 SHA・マニフェスト・全JSONL件数・品質警告**を検査した。KaggleトークンもソースDBも不要 | [同ワークフローの `independently-read-zip` Job SUCCESS](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38057989531) |
+
+出力Artifact名：`eclipse-weekly-evidence-snapshot-20261004-20261010`（GitHub Actionsの標準保存は**7日間のみ**）。パッケージ自体とbuild-receipt / verify-receiptを収録。現段階で長期保存済みではないので、そのまま週報の商用・恒常供給ができると誤認しないこと。
+
+**品質上の判定は研究用限定である。** 週次の網羅性は `weekly_coverage_certified=false`、新規Mozilla/Debianの4公告は未反映。重要事項・攻撃条件・修正バージョンなどが未確認なら「未確認」のまま渡す。別の週報制作スレッドにおいて読解・執筆実績が出るまで、実運用での週報生成完成とはしない。
