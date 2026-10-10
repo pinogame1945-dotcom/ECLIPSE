@@ -39,7 +39,7 @@ def ordered_parts(z):
         if relation is None or relation.get("Type")!=SLIDE_REL:
             raise ValueError("missing slide relationship")
         target=relation.get("Target")
-        if not re.fullmatch(r"slides/slide[0-9]+\\.xml",target or ""):
+        if not re.fullmatch(r"slides/slide[0-9]+\.xml",target or ""):
             raise ValueError("unexpected slide target")
         result.append("ppt/"+target)
     if len(set(result))!=len(result):
@@ -61,14 +61,14 @@ def verify(path, spec):
             if len(parts)<len(expected):errors.append("some approved baseline slides removed")
             if len(parts)>spec.get("pagination",{}).get("max_pages",250):
                 errors.append("page count exceeds limit")
-            if set(parts)!={f for f in files if re.fullmatch(r"ppt/slides/slide[0-9]+\\.xml",f)}:
+            if set(parts)!={f for f in files if re.fullmatch(r"ppt/slides/slide[0-9]+\.xml",f)}:
                 errors.append("orphan slide parts")
             next_base=1
             for i,name in enumerate(parts,1):
                 if name not in files:
                     errors.append(f"slide {i}: missing source");continue
                 actual=shape_hash(z.read(name))
-                m=re.fullmatch(r"ppt/slides/slide([0-9]+)\\.xml",name)
+                m=re.fullmatch(r"ppt/slides/slide([0-9]+)\.xml",name)
                 number=int(m.group(1)) if m else -1
                 if number<=len(expected):
                     if number!=next_base:errors.append(f"slide {i}: baseline ordering changed")
