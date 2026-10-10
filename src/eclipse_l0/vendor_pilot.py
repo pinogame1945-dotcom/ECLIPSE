@@ -23,6 +23,7 @@ import sqlite3
 
 from .vendor_registry import load_registry
 from .vendor_store import connect, observe
+from .vendor_quality import inspect_facts, summarize_source_quality
 
 CVE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.I)
 ATOM = "{http://www.w3.org/2005/Atom}"
@@ -396,6 +397,7 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 size = MAX_DOCUMENT if sid == "microsoft-msrc" else MAX_FEED
                 raw = get.get(item["url"],size)
                 facts = normalize(source,item,raw)
+                quality = inspect_facts(facts,sid)
                 key = hashlib.sha256(raw).hexdigest()
                 stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
                 args = dict(registry=registry,source_id=sid,advisory_id=item["id"],
@@ -418,10 +420,12 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                     "extraction_review":"parsed_unreviewed",
                     "remediation_claims_unreviewed":len(facts.get("remediations_unreviewed",[])),
                     "product_status_claims_unreviewed":len(facts.get("product_status_claims_unreviewed",[])),
-                    "unresolved_product_ids":len(facts.get("unresolved_product_ids",[]))})
+                    "unresolved_product_ids":len(facts.get("unresolved_product_ids",[])),
+                    "field_quality":quality})
             except Exception as exc:
                 status["errors"].append(item["id"]+": "+type(exc).__name__+": "+str(exc)[:190])
     status["status"]="PASS" if status["saved"]==status["candidates"] else "PARTIAL" if status["saved"] else "FAIL"
+    status["quality_summary"]=summarize_source_quality(status["details"])
     return status
 
 
