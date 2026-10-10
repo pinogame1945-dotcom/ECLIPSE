@@ -541,7 +541,10 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 facts = normalize(source,item,raw)
                 # Metadata about interpretation, not a vendor-published claim.
                 # The ledger will classify schema upgrades as extraction_revised.
-                facts["_extractor_revision"] = "vendor_semantics_20261010_v3"
+                facts["_extractor_revision"] = (
+                    "fortinet_optional_impact_v4" if sid=="fortinet-psirt"
+                    else "vendor_semantics_20261010_v3"
+                )
                 quality = inspect_facts(facts,sid)
                 key = hashlib.sha256(raw).hexdigest()
                 stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -600,7 +603,9 @@ def run(*,registry:dict,db_path:Path,source_ids:list[str],max_items:int):
         "sources_pass":sum(x["status"]=="PASS" for x in results),
         "sources_partial":sum(x["status"]=="PARTIAL" for x in results),
         "sources_failed":sum(x["status"]=="FAIL" for x in results),
-        "caution":"Read/parse success does not certify completeness, affected versions, exploitation, rights or customer coverage."}
+        "customer_verified_security_updates":0,
+        "unreviewed_normalized_facts_differences":sum(x["updates"] for x in results),
+        "caution":"Facts-update events are UNREVIEWED differences, not verified publisher security disclosures. Read/parse success does not certify completeness, affected versions, exploitation, rights or customer coverage."}
 
 
 def main():
