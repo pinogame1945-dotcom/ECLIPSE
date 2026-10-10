@@ -1,4 +1,4 @@
-name: ECLIPSE L2 history: EPSS as-of versus future CISA KEV catalog additions
+name: 'ECLIPSE L2 history - EPSS as-of versus future CISA KEV catalog additions'
 
 # Fixed, preregistered 17-month retrospective. Do not add a schedule or write to
 # vendor source verification. No new Kaggle dataset and no full SQLite rebuild.
