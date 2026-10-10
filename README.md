@@ -287,3 +287,20 @@ capacity planning. No real customer assets or confidential data were accessed.
 change-index checkpoint and selected EPSS state, then test the actual daily
 source-grounded report; only afterward design a quota-bounded complete CVE
 snapshot import with resumability and checksum audit.
+
+## 2026-10-10 — Live source acceptance verified
+
+Completed [official-feed run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043972659) on GitHub Actions (standard runner).
+
+| Check | Verified observation |
+| --- | --- |
+| KEV full catalog | 1,739 records; repeat poll was a no-op (0 new events) |
+| CVE delta index | Durable checkpoint 2026-10-10T09:25:14.092+00:00; not full CVE records |
+| FIRST EPSS | 384,993 scored CVEs examined; all 1,739 watched KEV IDs matched |
+| EPSS provenance | Score date 2026-10-09, model v2026.06.15 (header parsing regression fixed) |
+| PowerPoint | Editable observed-event report + 7-day KEV dateAdded report; both exported |
+| Date-based KEV report | 6 matching entries for the 7-day window |
+| Observed event report | 0 new observations after baselining; NOT a claim of no threats |
+| Offline tests | GitHub Actions CI passed |
+
+IMPORTANT: The rolling CVE delta is only an update INDEX, not a durable complete CVE archive. EPSS scores are limited to the official KEV watchlist, not every CVE. Current reports use synthetic PUBLIC customer profiles and must not be interpreted as customer-specific exposure assessments. Github schedule is best-effort; recurring success has not yet been verified.
