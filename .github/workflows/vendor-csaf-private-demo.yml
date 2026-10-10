@@ -7,6 +7,8 @@ on:
     branches: [feature/vendor-source-registry-20261010]
     paths:
       - '.github/workflows/vendor-csaf-private-demo.yml'
+      - 'src/eclipse_l0/vendor_product_monitor.py'
+      - 'tests/test_vendor_product_monitor.py'
   workflow_dispatch:
 permissions:
   contents: read
