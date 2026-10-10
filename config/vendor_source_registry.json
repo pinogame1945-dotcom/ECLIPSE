@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T15:27:03Z",
+  "updated_utc": "2026-10-10T15:32:36Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -1976,13 +1976,24 @@
   "next_two_official_rss_20261011": {
     "attempted": 2,
     "read_parse_verified": 2,
-    "local_sqlite_verified": false,
+    "local_sqlite_verified": true,
     "kaggle_v3_modified": false,
     "source_ids": [
       "juniper-mist-security-rss",
       "ivanti-security-advisory-rss"
     ],
     "run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063948711",
-    "narrow_scope_only": true
+    "narrow_scope_only": true,
+    "sqlite_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38064028621",
+    "sqlite_receipt": {
+      "official_sources_passed": 2,
+      "documents": 2,
+      "versions": 2,
+      "events": 2,
+      "quick_check": "ok",
+      "unchanged_replay": 2,
+      "failed": 0,
+      "cve_references_in_sampled_articles": 0
+    }
   }
 }
