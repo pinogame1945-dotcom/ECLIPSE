@@ -125,6 +125,17 @@ class EPSSParserTests(unittest.TestCase):
         self.assertEqual(s['score_date'],'2026-10-10')
         self.assertEqual(json.loads(self.out.read_text()),s)
 
+    def test_official_combined_metadata_version_and_timestamp(self):
+        # Real FIRST daily feed places model_version and score_date on one line.
+        with gzip.open(self.csv, 'wt') as f:
+            f.write('#model_version:v2026.06.15,score_date:2026-10-10T12:03:43Z\\n'.replace('\\n', '\n'))
+            f.write('cve,epss,percentile\\n'.replace('\\n', '\n'))
+            f.write('CVE-2026-11111,0.8,0.98\\n'.replace('\\n', '\n'))
+        result = select_scores(self.csv, {'CVE-2026-11111'}, self.out, min_scored=1)
+        self.assertEqual(result['score_date'], '2026-10-10')
+        self.assertEqual(result['score_timestamp'], '2026-10-10T12:03:43Z')
+        self.assertEqual(result['model_version'], 'v2026.06.15')
+
     def test_fail_closed_before_creating_output(self):
         self.write(['CVE-2026-11111,1.8,0.98'])
         with self.assertRaisesRegex(ValueError,'out of range'):
