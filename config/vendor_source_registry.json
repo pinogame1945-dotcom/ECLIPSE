@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T11:35:00Z",
+  "updated_utc": "2026-10-10T11:50:36Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -50,6 +50,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -90,6 +100,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -130,6 +150,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -170,6 +200,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -210,6 +250,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -251,6 +301,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -291,6 +351,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -331,6 +401,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -397,6 +477,16 @@
         "idempotent_replay_count": 1,
         "review_state": "parsed_unreviewed",
         "persistence_state": "one_run_local_sqlite_artifact_7_days_only"
+      },
+      "cross_run_evidence": {
+        "verification_level": "short_lived_artifact_replay_only",
+        "previous_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049736195",
+        "current_successful_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38049818582",
+        "verified_at_utc": "2026-10-10T11:50:36Z",
+        "sample_advisories_retained": 1,
+        "source_data_review": "parsed_unreviewed",
+        "lifecycle": "not_durable_7_day_actions_artifact",
+        "scope": "run_N SQLite retained, revalidated and reprocessed on independent run_N+1"
       }
     },
     {
@@ -424,5 +514,23 @@
       "coverage_assurance": "not_established",
       "live_polling": "not_enabled"
     }
-  ]
+  ],
+  "cross_run_proof": {
+    "status": "verified_short_lived",
+    "previous_run_id": 38049736195,
+    "next_run_id": 38049818582,
+    "restored_counts": {
+      "advisories": 9,
+      "versions": 11,
+      "events": 11
+    },
+    "after_counts": {
+      "advisories": 9,
+      "versions": 13,
+      "events": 13
+    },
+    "source_only_raw_body_changes": 2,
+    "security_facts_updates_confirmed": 0,
+    "durable": false
+  }
 }
