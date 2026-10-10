@@ -263,33 +263,9 @@ def discover(source, getter, max_items):
 
 
 def _csaf_facts(doc, title):
-    if not isinstance(doc, dict) or not isinstance(doc.get("document"), dict):
-        raise ValueError("No CSAF document")
-    vulns = doc.get("vulnerabilities")
-    if not isinstance(vulns, list) or not vulns:
-        raise ValueError("No CSAF vulnerability entries")
-    cves = sorted({v["cve"] for v in vulns if isinstance(v,dict)
-                   and isinstance(v.get("cve"),str) and CVE.fullmatch(v["cve"])})
-    affected = []
-    remediation_refs = []
-    for n, v in enumerate(vulns):
-        if not isinstance(v, dict):
-            continue
-        for prod in (v.get("product_status") or {}).get("known_affected", []):
-            if not isinstance(prod,str):
-                raise ValueError("Unrecognized CSAF affected product")
-            affected.append({"product_id_unresolved": prod, "status": "known_affected_from_csaf",
-                             "evidence_path": f"vulnerabilities[{n}].product_status.known_affected"})
-        if v.get("remediations"):
-            remediation_refs.append(f"vulnerabilities[{n}].remediations")
-    if len(affected) > 3000:
-        raise ValueError("Oversized affected product matrix; no silent truncation")
-    return {"title": (doc["document"].get("title") or title)[:500], "cve_ids":cves,
-            "affected":affected,"remediation_evidence_paths":remediation_refs,
-            "product_tree_present":isinstance(doc.get("product_tree"),dict),
-            "evidence_fields":["document.title","vulnerabilities[*].cve",
-                               "vulnerabilities[*].product_status","vulnerabilities[*].remediations"],
-            "extraction_notes":["Product IDs not resolved into installed versions; do not claim customer impact."]}
+    # Semantic extraction is centralized; legacy callers use this wrapper.
+    from .vendor_csaf import normalize_csaf
+    return normalize_csaf(doc, title)
 
 
 def normalize(source, item, raw):
@@ -380,7 +356,8 @@ def normalize(source, item, raw):
 def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
     sid = source["source_id"]
     status = {"source_id":sid,"status":"FAIL","candidates":0,"saved":0,"replay_unchanged":0,
-              "baseline":0,"updates":0,"source_only_changes":0,"errors":[],"details":[]}
+              "baseline":0,"updates":0,"source_only_changes":0,"extraction_revisions":0,
+              "errors":[],"details":[]}
     if source.get("verification_status")!="read_parse_verified":
         status["errors"].append("Not verified; blocked by registry")
         return status
@@ -433,11 +410,15 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
                 if first["event"]=="baseline":status["baseline"]+=1
                 if first["event"]=="facts_updated":status["updates"]+=1
                 if first["event"]=="source_changed_only":status["source_only_changes"]+=1
+                if first["event"]=="extraction_revised":status["extraction_revisions"]+=1
                 status["details"].append({"id":item["id"],"source_url":item["url"],
                     "first_event":first["event"],"source_sha256":key,
                     "provisional_cve_count":len(facts["cve_ids"]),
                     "affected_rows_unreviewed":len(facts["affected"]),
-                    "extraction_review":"parsed_unreviewed"})
+                    "extraction_review":"parsed_unreviewed",
+                    "remediation_claims_unreviewed":len(facts.get("remediations_unreviewed",[])),
+                    "product_status_claims_unreviewed":len(facts.get("product_status_claims_unreviewed",[])),
+                    "unresolved_product_ids":len(facts.get("unresolved_product_ids",[]))})
             except Exception as exc:
                 status["errors"].append(item["id"]+": "+type(exc).__name__+": "+str(exc)[:190])
     status["status"]="PASS" if status["saved"]==status["candidates"] else "PARTIAL" if status["saved"] else "FAIL"
