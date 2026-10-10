@@ -34,7 +34,7 @@ MAX_FEED = 6 * 1024 * 1024
 SUPPORTED = {
     "fortinet-psirt", "paloalto-advisories", "siemens-csaf", "redhat-csaf",
     "ubuntu-security-api", "gitlab-security-releases", "yamaha-network",
-    "atlassian-security", "microsoft-msrc",
+    "atlassian-security", "microsoft-msrc", "mozilla-mfsa", "debian-dsa",
 }
 
 
@@ -229,7 +229,10 @@ def discover(source, getter, max_items, known_ids=None):
     url = source["discovery_url"]
     raw = getter.get(url)
     entries = []
-    if sid == "fortinet-psirt":
+    if sid in ("mozilla-mfsa","debian-dsa"):
+        from .vendor_additional_sources import discover_html
+        entries=discover_html(source,raw)
+    elif sid == "fortinet-psirt":
         from .advisory_feeds import parse_feed
         rows = parse_feed(raw, source_id="fortinet-psirt", vendor="Fortinet",
                           allowed_hosts=source["allowed_hosts"])
@@ -348,6 +351,9 @@ def _csaf_facts(doc, title):
 
 def normalize(source, item, raw):
     sid = source["source_id"]
+    if sid in ("mozilla-mfsa","debian-dsa"):
+        from .vendor_additional_sources import normalize_html
+        return normalize_html(source,item,raw)
     if sid in ("redhat-csaf","siemens-csaf"):
         return _csaf_facts(_json(raw), item["title"])
     if sid == "paloalto-advisories":
