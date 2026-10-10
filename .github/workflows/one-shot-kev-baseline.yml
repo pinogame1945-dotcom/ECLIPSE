@@ -1,0 +1,86 @@
+name: ECLIPSE one-shot durable CISA KEV baseline bootstrap
+
+# One-time trigger when this workflow file is added. No CVE full backfill.
+# The existing scheduled KEV monitor will take over once initialized.
+on:
+  push:
+    paths:
+      - .github/workflows/one-shot-kev-baseline.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eclipse-public-state-writer
+  cancel-in-progress: false
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout application source without write credentials
+        uses: actions/checkout@v4
+        with:
+          path: app
+          persist-credentials: false
+      - name: Checkout isolated public-source state branch
+        uses: actions/checkout@v4
+        with:
+          path: observed
+          ref: eclipse-state
+          fetch-depth: 1
+      - name: Download bounded CISA official KEV JSON
+        working-directory: app
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output
+          curl --fail --location --retry 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 90 --max-filesize 26214400 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            --output downloads/kev.json
+          test "$(wc -c < downloads/kev.json)" -le 26214400
+      - name: Validate all KEV rows and write baseline (zero artificial alerts)
+        working-directory: app
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.kev_monitor \
+            --feed downloads/kev.json --state-dir ../observed/data \
+            --out output/kev-bootstrap-observation.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=json.loads(Path('output/kev-bootstrap-observation.json').read_text())
+          if p['catalog_count'] < 1000:
+              raise SystemExit('KEV source unexpectedly small')
+          if p['baseline'] and p['event_count']:
+              raise SystemExit('First baseline cannot emit historical alerts')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('## Durable official KEV initialization\n\n')
+              for key in ('catalog_count','baseline','event_count','material_event_count','source_sha256','observed_utc'):
+                  f.write(f"- {key}: {p[key]}\n")
+              f.write('- Public KEV observations only; no customer data; no CVE full archive.\n')
+          PY
+      - name: Persist official public KEV state (non-force, fail on race)
+        working-directory: observed
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- data/
+          if git diff --cached --quiet; then
+            echo 'Already initialized or feed unchanged; no commit.'
+          else
+            git commit -m 'data: initialize observed CISA KEV baseline'
+            git push origin HEAD:eclipse-state
+          fi
+      - name: Attach public bootstrap evidence (short-lived)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-kev-bootstrap-observation
+          path: app/output/kev-bootstrap-observation.json
+          retention-days: 7
+          if-no-files-found: warn
