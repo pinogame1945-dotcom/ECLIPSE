@@ -192,7 +192,18 @@ def content_audit(vendor_db,cve_db,registry,*,require_full_cve=False):
                         raise ValueError("Malformed CVE authoritative versions_json") from exc
                     c_fixed=literal_exact_versions(cve_versions)
                     if not v_fixed or not c_fixed:
-                        cls="PRODUCT_MATCH_VERSION_SYNTAX_INCOMPARABLE"
+                        original=claim.get("version_rows")
+                        # Byte-structural equality of ordered, publisher
+                        # predicates provides evidence of the same text but
+                        # NOT independent corroboration; often the CNA is
+                        # mirrored into both repositories.
+                        if isinstance(original,list) and original and isinstance(cve_versions,list) and cve_versions:
+                            if json.dumps(original,sort_keys=True,ensure_ascii=False)==json.dumps(cve_versions,sort_keys=True,ensure_ascii=False):
+                                cls="PREDICATE_RAW_STRUCTURAL_EQUAL_POSSIBLY_SHARED_CNA"
+                            else:
+                                cls="PREDICATE_RAW_STRUCTURAL_DIFFERENCE_REVIEW_ONLY"
+                        else:
+                            cls="PRODUCT_MATCH_VERSION_SYNTAX_INCOMPARABLE"
                     else:
                         shared=set(v_fixed)&set(c_fixed)
                         if not shared:
