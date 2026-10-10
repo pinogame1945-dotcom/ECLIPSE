@@ -21,7 +21,7 @@ FEEDS = (
     "https://fortiguard.fortinet.com/rss/ir.xml",
 )
 MAX_BYTES = 5 * 1024 * 1024
-CVE_RE = re.compile(r"CVE-\\d{4}-\\d{4,}", re.I)
+CVE_RE = re.compile(r"CVE-\d{4}-\d{4,}", re.I)
 
 
 def official(url):
@@ -105,7 +105,7 @@ class Tables(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag in ("td", "th") and self.cell is not None:
-            self.row.append(re.sub(r"\\s+", " ", " ".join(self.cell)).strip())
+            self.row.append(re.sub(r"\s+", " ", " ".join(self.cell)).strip())
             self.cell = None
         if tag == "tr" and self.in_row:
             if self.row:
@@ -178,13 +178,14 @@ def main():
                 }
 
             chosen = [r["url"] for r in rows if official(r["url"]) and "/psirt/" in urlparse(r["url"]).path]
-            chosen = chosen[:3]\n            chosen.append("https://fortiguard.fortinet.com/psirt/FG-IR-26-124")
+            chosen = chosen[:3]
+            chosen.append("https://fortiguard.fortinet.com/psirt/FG-IR-26-124")
             for detail_url in list(dict.fromkeys(chosen))[:4]:
                 try:
                     raw, final, ct = get(detail_url)
                     parsed = Tables()
                     parsed.feed(raw.decode("utf-8", errors="replace"))
-                    text = re.sub(r"\\s+", " ", " ".join(parsed.text))
+                    text = re.sub(r"\s+", " ", " ".join(parsed.text))
                     affected_rows = [r for r in parsed.rows if len(r) >= 3 and (
                         "Upgrade to" in " ".join(r) or "Migrate to" in " ".join(r) or
                         "Not affected" in " ".join(r))]
@@ -211,14 +212,14 @@ def main():
                 for x in result["details"]
             ):
                 result["verdict"] = "PASS_READ_AND_PARSE_ONLY"
-        args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["verdict"] == "FAIL":
             return 1
         return 0
     except Exception as e:
         result["fatal"] = type(e).__name__ + ": " + str(e)[:400]
-        args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 1
 
