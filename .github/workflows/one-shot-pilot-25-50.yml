@@ -1,0 +1,91 @@
+name: ECLIPSE one-shot 25-then-50 official CVE pilot
+
+# Only this workflow file path triggers it. No recurring polling or full backfill.
+# Reuses fetched public record bytes between 25/50 stages (<=50 requests total).
+on:
+  push:
+    paths:
+      - .github/workflows/one-shot-pilot-25-50.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eclipse-one-shot-official-pilot-25-50
+  cancel-in-progress: false
+
+jobs:
+  staged-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download official KEV (<=25 MiB)
+        run: |
+          set -euo pipefail
+          mkdir -p downloads output/pilot-staged
+          curl --fail --location --retry 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 90 --max-filesize 26214400 \
+            'https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json' \
+            --output downloads/kev.json
+          test "$(wc -c < downloads/kev.json)" -le 26214400
+          python -m json.tool downloads/kev.json >/dev/null
+      - name: Audit 25 first; proceed to 50 only on a fully valid 25
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from functools import lru_cache
+          from pathlib import Path
+          from eclipse_l0.pilot import fetch_record, run_pilot
+          root = Path('output/pilot-staged')
+          source = Path('downloads/kev.json')
+          fetch_cached = lru_cache(maxsize=50)(fetch_record)
+          summary = {'kind': 'bounded_official_cve_kev_pilot', 'source': 'CISA KEV + CVE List V5',
+                     'max_cve_http_requests': 50, 'stages': {}}
+          for n in (25, 50):
+              result = run_pilot(source, root / f'stage-{n}', limit=n, fetcher=fetch_cached)
+              summary['stages'][str(n)] = {
+                  'kev_catalog_rows': result['kev_catalog_rows'],
+                  'kev_present': result['sqlite_counts']['kev_present'],
+                  'selected': result['selected_kev_identifiers'],
+                  'imported': result['cve_records_imported'],
+                  'failed': result['cve_records_missing_or_invalid'],
+                  'sqlite_quick_check': result['sqlite_audit']['sqlite_quick_check']
+              }
+              (root / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+              x = summary['stages'][str(n)]
+              print(f"STAGE_{n}: KEV={x['kev_catalog_rows']}, CVE_OK={x['imported']}, FAILED={x['failed']}, SQLITE={x['sqlite_quick_check']}", flush=True)
+              if x['selected'] != n or x['imported'] != n or x['kev_catalog_rows'] != x['kev_present'] or x['sqlite_quick_check'] != 'ok':
+                  raise SystemExit(f'Stage {n} did not meet the full-integrity gate; STOP. Inspect CSV.')
+          print(f"NETWORK_REQUEST_CACHE={fetch_cached.cache_info()}", flush=True)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as handle:
+              handle.write('## Staged official-data CVE/KEV pilot\n')
+              for n in ('25', '50'):
+                  x=summary['stages'][n]
+                  handle.write(f"- {n} CVE stage: {x['imported']}/{x['selected']} imported, SQLite {x['sqlite_quick_check']}\n")
+              handle.write(f"- KEV: {summary['stages']['50']['kev_catalog_rows']} records from official CISA JSON\n")
+              handle.write('- Samples taken from newest KEV entries, **not** representative of all CVEs.\n')
+              handle.write('- No full ZIP, no Git state changes, no customer data, no automatic delivery.\n')
+          PY
+      - name: Upload manifests and row-level evidence (public records only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-staged-real-data-pilot-25-50
+          path: |
+            output/pilot-staged/summary.json
+            output/pilot-staged/stage-25/pilot-manifest.json
+            output/pilot-staged/stage-25/pilot-cve-observations.csv
+            output/pilot-staged/stage-50/pilot-manifest.json
+            output/pilot-staged/stage-50/pilot-cve-observations.csv
+          retention-days: 7
+          if-no-files-found: warn
