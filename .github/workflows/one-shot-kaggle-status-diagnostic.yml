@@ -34,13 +34,20 @@ jobs:
           ref=meta['id'].replace('INSERT_SLUG_HERE','eclipse-cve-full-20261010-v1')
           print("::add-mask::"+ref,flush=True)
           cmds=[("full_snapshot_status",["kaggle","datasets","status",ref]),
-                ("full_snapshot_files",["kaggle","datasets","files",ref,"--page-size","5"])]
+                ("full_snapshot_files",["kaggle","datasets","files",ref,"--page-size","200","--csv"])]
           results={}
           for name,cmd in cmds:
               out=subprocess.run(cmd,capture_output=True,text=True,timeout=35)
               message=(out.stdout+"\n"+out.stderr).lower()
               # Avoid revealing owner/token and provider payload in logs.
+              import re,csv,io
+              lines=list(csv.reader(io.StringIO(out.stdout))) if name=="full_snapshot_files" else []
+              names=[c for row in lines for c in row]
               results[name]={"exit_code":out.returncode,
+                "file_rows":len(lines),
+                "cve_shards":sum(bool(re.fullmatch(r"\\d{6}-\\d{6}\\.cvepack",n)) for n in names),
+                "index_present":("archive-index.json" in names),
+                "manifest_present":("manifest.json" in names),
                 "http_404":("404" in message or "not found" in message),
                 "http_403":("403" in message or "forbidden" in message),
                 "http_429":("429" in message or "too many requests" in message),
