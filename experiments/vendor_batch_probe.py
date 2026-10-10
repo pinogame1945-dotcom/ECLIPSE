@@ -127,17 +127,36 @@ def probe_microsoft():
                 "sample": [str(x.get("ID", x.get("Id", x.get("id", ""))))[:80]
                            for x in records[:4] if isinstance(x, dict)]}
     def detail():
-        obj, ev = json_source("https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Sep", hosts, max_bytes=64 * 1024 * 1024)
+        import xml.etree.ElementTree as ET
+        raw, ev = fetch("https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Sep",
+                        hosts, max_bytes=64 * 1024 * 1024)
+        if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
+            raise ValueError("Refusing unsafe XML")
+        # Official CVRF endpoints may return application/xml regardless of Accept.
+        if raw.lstrip().startswith(b"<"):
+            root = ET.fromstring(raw)
+            tags = [node.tag.rsplit("}", 1)[-1] for node in root.iter()]
+            count = tags.count("Vulnerability")
+            if count < 1:
+                raise ValueError("XML CVRF has no vulnerability nodes")
+            samples = []
+            for node in root.iter():
+                if node.tag.rsplit("}", 1)[-1] in ("CVE", "CVEID") and node.text:
+                    samples.append(node.text.strip())
+                    if len(samples) >= 4:
+                        break
+            return {"evidence": ev, "format": "XML/CVRF", "vulnerability_count": count,
+                    "cve_samples": samples, "product_tree": "ProductTree" in tags,
+                    "tracking_present": "DocumentTracking" in tags,
+                    "root_element": root.tag.rsplit("}", 1)[-1]}
+        obj = json.loads(raw)
         if not isinstance(obj, dict):
-            raise ValueError("CVRF detail is not object")
+            raise ValueError("Unknown CVRF structure")
         issues = obj.get("Vulnerability", obj.get("vulnerabilities", []))
         if not isinstance(issues, list) or not issues:
-            raise ValueError("Microsoft CVRF contains no vulnerability array")
-        sample = [str(x.get("CVE", "")) for x in issues[:4] if isinstance(x, dict)]
-        return {"evidence": ev, "vulnerability_count": len(issues),
-                "cve_samples": sample, "product_tree": "ProductTree" in obj,
-                "tracking_present": "DocumentTracking" in obj,
-                "root_keys": list(obj.keys())[:12]}
+            raise ValueError("JSON CVRF has no vulnerabilities")
+        return {"evidence": ev, "format": "JSON/CVRF", "vulnerability_count": len(issues),
+                "product_tree": "ProductTree" in obj, "tracking_present": "DocumentTracking" in obj}
     a = call(r, "updates_list", listing)
     b = call(r, "monthly_cvrf_details", detail)
     r["verdict"] = "PASS" if a and b else "PARTIAL" if a or b else "FAIL"
