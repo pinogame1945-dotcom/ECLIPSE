@@ -26,7 +26,7 @@ class MemoryFetcher:
 
 def evidence(html_versions: str) -> bytes:
     return ("""<html><body><h1>SYNTHETIC test CVE-2026-12345</h1>
-      <p>Version impact demonstration is synthetic and not from Fortinet.</p>
+      <p>Version impact demonstration is synthetic and not from Fortinet. This regression fixture represents an unreviewed vendor advisory with an affected version and remediation statement. It must never be treated as a genuine vulnerability notice or forwarded to a customer. A historical observation can be replayed without creating new vulnerability alerts.</p>
       <table><tr><td>FortiMail 7.6</td><td>"""+html_versions+
       """</td><td>Upgrade to 7.6.3 or above</td></tr></table></body></html>""").encode()
 
