@@ -1,0 +1,187 @@
+name: ECLIPSE PRIVATE vendor Kaggle pinned seed and independent restore
+
+# One-time pinned research seed, never overwrites the CVE/warehouse dataset.
+# Subsequent vendor updates need a separately reviewed monotonic version flow.
+on:
+  push:
+    branches:
+      - feature/vendor-source-registry-20261010
+    paths:
+      - '.github/workflows/vendor-kaggle-seed.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-private-vendor-seed-20261010-v1
+  cancel-in-progress: false
+
+jobs:
+  immutable-create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline provenance tests, independent of all CVE/Kaggle workflows
+        run: python -m unittest discover -s tests -p 'test_vendor_kaggle.py' -v
+      - name: Install official Kaggle CLI
+        run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Download trusted previous successful vendor evidence (exact pinned run)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || { echo '::error::Kaggle API token missing'; exit 2; }
+          mkdir -p "$RUNNER_TEMP/eclipse-vendor-source" "$RUNNER_TEMP/eclipse-vendor-stage"
+          gh run download 38051672457 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-vendor-to-sqlite-one-shot \
+            --dir "$RUNNER_TEMP/eclipse-vendor-source"
+          test -s "$RUNNER_TEMP/eclipse-vendor-source/vendor-evidence.sqlite3"
+          test -s "$RUNNER_TEMP/eclipse-vendor-source/vendor-evidence-manifest.json"
+          python -m eclipse_l0.vendor_kaggle stage \
+            --db "$RUNNER_TEMP/eclipse-vendor-source/vendor-evidence.sqlite3" \
+            --source-manifest "$RUNNER_TEMP/eclipse-vendor-source/vendor-evidence-manifest.json" \
+            --registry config/vendor_source_registry.json \
+            --dest "$RUNNER_TEMP/eclipse-vendor-stage" > "$RUNNER_TEMP/vendor-source-stage-receipt.json"
+          test -s "$RUNNER_TEMP/eclipse-vendor-stage/vendor-evidence-index.json"
+          test -s "$RUNNER_TEMP/eclipse-vendor-stage/part-0000.dbpart"
+      - name: Create a new, separate PRIVATE vendor-only Kaggle dataset
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/eclipse-vendor-stage"
+          kaggle datasets init -p "$stage" >/dev/null
+          python - "$stage" <<'PY'
+          import json, os,sys
+          from pathlib import Path
+          folder=Path(sys.argv[1])
+          p=folder/'dataset-metadata.json'
+          meta=json.loads(p.read_text())
+          template=meta.get('id','')
+          if not isinstance(template,str) or not template.endswith('/INSERT_SLUG_HERE'):
+              raise SystemExit('Unrecognized authenticated Kaggle account template')
+          ref=template.replace('INSERT_SLUG_HERE','eclipse-vendor-evidence-20261010-v1')
+          meta.update(id=ref,title='ECLIPSE Official Vendor Normalized Evidence V1',
+                      description='PRIVATE source-attributed UNREVIEWED normalized public vendor notices and immutable audit events. No raw vendor pages, no customer assets, no CVE warehouse mutation.',
+                      licenses=[{'name':'other'}])
+          p.write_text(json.dumps(meta,sort_keys=True,indent=2)+'\n')
+          print('::add-mask::'+ref)
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('VENDOR_DATASET_REF='+ref+'\n')
+          PY
+          if kaggle datasets status "$VENDOR_DATASET_REF" >/dev/null 2>&1; then
+            echo "::error::Private vendor dataset exists. Immutable create-only; do not overwrite"
+            exit 5
+          fi
+          if ! kaggle datasets create -p "$stage" --quiet --keep-tabular --dir-mode skip >/dev/null 2>&1; then
+            if ! kaggle datasets status "$VENDOR_DATASET_REF" >/dev/null 2>&1; then
+              echo "::error::Vendor dataset create failed; destination absent"
+              exit 6
+            fi
+            echo 'Kaggle create returned nonzero but dataset exists; independent byte audit decides success.'
+          fi
+          echo "PRIVATE_VENDOR_SEED=CREATED_AWAITING_FRESH_RUNNER_RESTORE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-vendor-kaggle-trusted-source-index
+          path: |
+            ${{ runner.temp }}/eclipse-vendor-stage/vendor-evidence-index.json
+            ${{ runner.temp }}/vendor-source-stage-receipt.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independently-restore:
+    needs: immutable-create
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-vendor-kaggle-trusted-source-index
+          path: trusted
+      - name: Independent private Kaggle targeted downloads and SHA256/SQLite verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || exit 2
+          mkdir -p "$RUNNER_TEMP/eclipse-vendor-identity" "$RUNNER_TEMP/eclipse-vendor-returned"
+          kaggle datasets init -p "$RUNNER_TEMP/eclipse-vendor-identity" >/dev/null
+          dataset_ref="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          meta=json.loads((Path(os.environ['RUNNER_TEMP'])/'eclipse-vendor-identity/dataset-metadata.json').read_text())
+          template=meta.get('id','')
+          if not isinstance(template,str) or not template.endswith('/INSERT_SLUG_HERE'):
+              raise SystemExit('Unrecognized Kaggle account')
+          print(template.replace('INSERT_SLUG_HERE','eclipse-vendor-evidence-20261010-v1'))
+          PY
+          )"
+          echo "::add-mask::$dataset_ref"
+          for name in vendor-evidence-index.json part-0000.dbpart; do
+            ok=0
+            for attempt in 1 2 3; do
+              if kaggle datasets download "$dataset_ref" --file "$name" \
+                   --path "$RUNNER_TEMP/eclipse-vendor-returned" \
+                   --unzip --force --quiet >/dev/null 2>&1 &&
+                 test -s "$RUNNER_TEMP/eclipse-vendor-returned/$name"; then
+                ok=1
+                break
+              fi
+              sleep 3
+            done
+            if [ "$ok" -ne 1 ]; then
+              echo "::error::Missing private Kaggle file $name"
+              exit 8
+            fi
+          done
+          python -m eclipse_l0.vendor_kaggle restore \
+            --trusted-index trusted/vendor-evidence-index.json \
+            --downloaded "$RUNNER_TEMP/eclipse-vendor-returned" \
+            --out "$RUNNER_TEMP/eclipse-vendor-restored.sqlite3" \
+            --registry config/vendor_source_registry.json \
+            > "$RUNNER_TEMP/eclipse-vendor-independent-receipt.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'eclipse-vendor-independent-receipt.json'
+          audit=json.loads(p.read_text())
+          assert audit['result']=='INDEPENDENT_PRIVATE_KAGGLE_VENDOR_SQLITE_RESTORE_VERIFIED'
+          assert audit['counts']=={'advisories':125,'versions':202,'events':202}
+          assert audit['sqlite_quick_check']=='ok'
+          assert audit['cve_warehouse_untouched'] is True
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('## Vendor Kaggle private seed: independently recovered and VERIFIED\n')
+              f.write('- Official vendor documents: 125 across 9 sources; 202 historical versions.\n')
+              f.write('- Fresh runner; complete SHA-256 + SQLite source provenance audit.\n')
+              f.write('- Separate vendor dataset; original CVE/KEV/EPSS warehouse untouched.\n')
+              f.write('- Facts are still UNREVIEWED and no customer-facing claims are enabled.\n')
+          print('INDEPENDENT_PRIVATE_KAGGLE_VENDOR_EVIDENCE=VERIFIED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-vendor-kaggle-independent-receipt
+          path: ${{ runner.temp }}/eclipse-vendor-independent-receipt.json
+          if-no-files-found: warn
+          retention-days: 7
