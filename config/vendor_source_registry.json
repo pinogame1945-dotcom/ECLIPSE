@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T11:22:00Z",
+  "updated_utc": "2026-10-10T11:23:00Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -21,7 +21,7 @@
         "fortiguard.fortinet.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:07:01Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047330191",
       "verified_capabilities": [
         "official RSS: 50 entries",
@@ -51,7 +51,7 @@
         "api.msrc.microsoft.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:14:18Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "updates: 193 document references",
@@ -80,7 +80,7 @@
         "security.paloaltonetworks.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:14:14Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "filtered critical listing: 9 entries",
@@ -109,7 +109,7 @@
         "security.access.redhat.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:14:15Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "official CSAF metadata and releases.csv available",
@@ -138,7 +138,7 @@
         "cert-portal.siemens.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:14:14Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "841 advisory index entries",
@@ -168,7 +168,7 @@
         "www.rtpro.yamaha.co.jp"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:14:15Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167",
       "verified_capabilities": [
         "notice listing and official detail fetched",
@@ -197,7 +197,7 @@
         "docs.gitlab.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:22:19Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
       "verified_capabilities": [
         "Atom release feed with 107 items",
@@ -226,7 +226,7 @@
         "ubuntu.com"
       ],
       "verification_status": "read_parse_verified",
-      "last_verified_utc": "2026-10-10T11:21:10Z",
+      "last_verified_utc": "2026-10-10T11:22:45Z",
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
       "verified_capabilities": [
         "5 USN list items received",
@@ -259,9 +259,9 @@
       "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
       "verified_capabilities": [],
       "pending_gates": [
-        "feed redirects outside current exact-host allowlist",
-        "verify publisher-owned redirect and disclosure feed",
-        "do not claim full security coverage"
+        "Chrome Atom endpoint redirects to insecure http://feeds.feedburner.com/GoogleChromeReleases; no permission to treat redirect as trusted data source",
+        "find HTTPS-only official alternative for stable-channel security updates",
+        "do not enable live polling until verified"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
@@ -280,14 +280,18 @@
         "www.atlassian.com",
         "confluence.atlassian.com"
       ],
-      "verification_status": "probe_failed",
-      "last_verified_utc": null,
-      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048065645",
-      "verified_capabilities": [],
+      "verification_status": "read_parse_verified",
+      "last_verified_utc": "2026-10-10T11:22:19Z",
+      "evidence_run_url": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048161575",
+      "verified_capabilities": [
+        "Atlassian main advisory listing retrieved with 97 candidate links",
+        "Official Confluence security advisory detail retrieved",
+        "Page HTML text parsed (unscoped; CVE IDs in nav may be unrelated)"
+      ],
       "pending_gates": [
-        "previous parser omitted confluence.atlassian.com links",
-        "validate official link + detailed bulletin parsing",
-        "cloud vs Data Center scope separate"
+        "scope CVE extraction to the article body; current raw page has unrelated navigation CVEs",
+        "multiple-products bulletin decomposition + affected version verification",
+        "release cadence/changes and terms of reuse"
       ],
       "enabled_for_production": false,
       "commercial_reuse_rights": "not_reviewed",
