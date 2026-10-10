@@ -81,7 +81,7 @@ class SourcePilotOfflineTest(unittest.TestCase):
                                                 "product_status":{"known_affected":["RHSA:PACKAGE"]}}]}).encode()})
         result=ingest_source(self.registry,s,self.db,1,getter)
         self.assertEqual(result["status"],"PASS")
-        self.assertEqual(result["details"][0]["asserted_cve_count"],1)
+        self.assertEqual(result["details"][0]["provisional_cve_count"],1)
         with connect(self.db) as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM vendor_document_versions").fetchone()[0],1)
 
