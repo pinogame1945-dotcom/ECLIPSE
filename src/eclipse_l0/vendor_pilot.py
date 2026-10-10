@@ -20,6 +20,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 from xml.etree import ElementTree as ET
 import hashlib
 import sqlite3
+import time
 
 from .vendor_registry import load_registry
 from .vendor_store import connect, observe
@@ -61,13 +62,20 @@ class OfficialFetch:
     def __init__(self, source: dict):
         self.allowed = source["allowed_hosts"]
         self.total = 0
-        self.max_requests = 12
+        self.max_requests = 11
+        self.min_spacing_seconds = 0.35
+        self.last_request_at = None
 
     def get(self, url: str, limit: int = MAX_FEED) -> bytes:
         if not _host_allowed(url, self.allowed):
             raise ValueError("Nonofficial HTTPS URL refused")
         if self.total >= self.max_requests:
             raise ValueError("Request budget exceeded")
+        if self.last_request_at is not None:
+            delay = self.min_spacing_seconds - (time.monotonic() - self.last_request_at)
+            if delay > 0:
+                time.sleep(delay)
+        self.last_request_at = time.monotonic()
         self.total += 1
         req = Request(url, headers={"User-Agent": "PROJECT-ECLIPSE-one-shot-vendor-evidence/1.0",
                      "Accept": "application/json,application/rss+xml,application/atom+xml,text/html,application/xml,*/*"})
@@ -193,7 +201,13 @@ def _safe_candidates(entries, source, count):
     return unique
 
 
-def discover(source, getter, max_items):
+def discover(source, getter, max_items, known_ids=None):
+    """Select unseen advisories before known ones, reserving 1 recent recheck.
+
+    Avoid re-fetching the same first N items every run, while still checking
+    newest published content and one old stored item separately. The index
+    itself is authoritative discovery; this is not an all-history backfill.
+    """
     sid = source["source_id"]
     url = source["discovery_url"]
     raw = getter.get(url)
@@ -235,7 +249,7 @@ def discover(source, getter, max_items):
             file_id = row[0].rsplit("/", 1)[-1].removesuffix(".json")
             entries.append({"id": file_id, "url": "https://security.access.redhat.com/data/csaf/v2/advisories/"+row[0],
                             "title": file_id})
-            if len(entries) >= max_items:
+            if len(entries) >= 600:
                 break
     elif sid == "ubuntu-security-api":
         data = _json(raw)
@@ -289,7 +303,24 @@ def discover(source, getter, max_items):
                             "title": ident})
     else:
         raise ValueError("Unsupported collector source type")
-    return _safe_candidates(entries, source, max_items)
+    # Enforce source host, ID and URL checks before selecting work.
+    pool = _safe_candidates(entries, source, 1200)
+    if known_ids is None:
+        return pool[:max_items]
+    known_ids = set(known_ids)
+    selected = []
+    # Recheck the newest previously seen advisory every run for updates.
+    newest_known = next((x for x in pool if x["id"] in known_ids), None)
+    if newest_known is not None:
+        selected.append(newest_known)
+    for item in pool:
+        if item["id"] not in known_ids:
+            selected.append(item)
+            if len(selected) >= max_items:
+                break
+    if not selected:
+        selected = pool[:1]
+    return selected[:max_items]
 
 
 def _csaf_facts(doc, title):
@@ -434,7 +465,10 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
         return status
     get = getter or OfficialFetch(source)
     try:
-        candidates=discover(source,get,max_items)
+        with closing(connect(db_path)) as prior:
+            known_ids = {row[0] for row in prior.execute(
+                "SELECT advisory_id FROM vendor_documents WHERE source_id=?", (sid,))}
+        candidates=discover(source,get,max_items,known_ids=known_ids)
         status["candidates"]=len(candidates)
     except Exception as exc:
         status["errors"].append("discovery: "+type(exc).__name__+": "+str(exc)[:200])
@@ -503,19 +537,26 @@ def ingest_source(registry, source, db_path: Path, max_items:int, getter=None):
 
 
 def run(*,registry:dict,db_path:Path,source_ids:list[str],max_items:int):
-    if not 1 <= max_items <= 3:raise ValueError("Limit is 1-3 per source")
+    if not 1 <= max_items <= 8:raise ValueError("Limit is 1-8 per source")
     sources = {x["source_id"]: x for x in registry["sources"]}
     if not source_ids or len(source_ids)!=len(set(source_ids)):
         raise ValueError("Duplicate/empty source selection")
     if any(x not in sources or x not in SUPPORTED for x in source_ids):
         raise ValueError("Unknown/unsupported source")
-    results=[ingest_source(registry,sources[sid],db_path,max_items) for sid in source_ids]
+    # Monthly MSRC CVRF XML can exceed 30 MiB; a larger fetch count would
+    # consume disproportionate GitHub Actions CPU/bandwidth.
+    caps = {"microsoft-msrc": 2, "ubuntu-security-api": 5, "yamaha-network": 4}
+    results=[ingest_source(registry,sources[sid],db_path,
+                           min(max_items,caps.get(sid,max_items)))
+             for sid in source_ids]
     with closing(connect(db_path)) as db:
         counts={"advisories":db.execute("SELECT COUNT(*) FROM vendor_documents").fetchone()[0],
                 "versions":db.execute("SELECT COUNT(*) FROM vendor_document_versions").fetchone()[0],
                 "events":db.execute("SELECT COUNT(*) FROM vendor_document_events").fetchone()[0],
                 "integrity":db.execute("PRAGMA quick_check").fetchone()[0]}
     return {"mode":"ONE_SHOT_OFFICIAL_UNREVIEWED_PILOT",
+        "discovery_strategy":"one_recent_recheck_plus_unseen_first_plus_one_historical_check",
+        "requested_max_items_per_source":max_items,
         "persistence":"local SQLite only; Actions artifact expires after 7 days",
         "production_polling":False,"source_results":results,"db_counts":counts,
         "sources_pass":sum(x["status"]=="PASS" for x in results),
