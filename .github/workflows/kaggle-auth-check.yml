@@ -1,0 +1,50 @@
+name: ECLIPSE Kaggle API token verification
+
+# One-time validation of the Kaggle API token in THIS repository.
+# Trigger only when this workflow file changes, or manually on demand.
+on:
+  push:
+    paths:
+      - '.github/workflows/kaggle-auth-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-kaggle-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official Kaggle CLI
+        run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Verify secret and authenticated Kaggle API (read only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${KAGGLE_API_TOKEN:-}" ]]; then
+            echo "::error::KAGGLE_API_TOKEN secret is not exposed to ECLIPSE Actions."
+            exit 2
+          fi
+          echo "KAGGLE_API_TOKEN_AVAILABLE=yes"
+          kaggle --version
+          # Do not expose secret, user identity, or private dataset names in logs.
+          if kaggle datasets list --mine --page 1 >/dev/null 2>/tmp/kaggle-auth-error.log; then
+            echo "KAGGLE_AUTHENTICATED_READ_OK=yes"
+            echo "ECLIPSE_KAGGLE_CONNECTION=VERIFIED"
+            echo "ECLIPSE Kaggle API token and authenticated read: VERIFIED" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Kaggle authenticated dataset listing failed. Check token format/permissions."
+            echo "ECLIPSE_KAGGLE_CONNECTION=FAILED"
+            exit 3
+          fi
+      - name: Cost and data safety
+        if: always()
+        run: |
+          echo 'GitHub standard CPU runner only.'
+          echo 'No dataset creates, uploads, deletes, persistent file caches, or credentials emitted.'
