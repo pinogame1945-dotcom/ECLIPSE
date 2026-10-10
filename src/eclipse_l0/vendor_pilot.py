@@ -236,7 +236,7 @@ def discover(source, getter, max_items, known_ids=None):
     if sid in ("juniper-jsa", "hpe-psirt", "ibm-security-bulletins", "netapp-psirt", "jenkins-security", "grafana-security", "nginx-security", "openssl-security", "tomcat-security", "wordpress-core-security"):
         from .vendor_wave3_sources import discover_wave3
         entries = discover_wave3(source, raw)
-    el   if sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
+    elif sid in ("cisco-public-advisories", "oracle-security-patches", "sap-security-patch-days", "vmware-broadcom-vmsa", "drupal-core-security", "apache-httpd-security"):
         from .vendor_enterprise_batch import discover_enterprise
         entries=discover_enterprise(source,raw)
     elif sid in ("apple-security-releases", "adobe-security-bulletins",
