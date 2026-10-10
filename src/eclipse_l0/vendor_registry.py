@@ -81,6 +81,21 @@ def validate(registry: dict) -> dict:
             raise ValueError("Commercial reuse statement changed without rights review: "+sid)
         if source.get("coverage_assurance") != "not_established":
             raise ValueError("Coverage has not been established: "+sid)
+        pilot = source.get("one_shot_evidence_pipeline")
+        if pilot is not None:
+            if state != "read_parse_verified" or not isinstance(pilot, dict):
+                raise ValueError("Only verified sources can claim successful ingestion pilots: "+sid)
+            if pilot.get("status") != "local_sqlite_probe_pass":
+                raise ValueError("Invalid pilot status: "+sid)
+            if pilot.get("review_state") != "parsed_unreviewed":
+                raise ValueError("No human-reviewed status has been certified: "+sid)
+            if pilot.get("persistence_state") != "one_run_local_sqlite_artifact_7_days_only":
+                raise ValueError("No production-persistent vendor DB is certified: "+sid)
+            if pilot.get("advisory_sample_count") != 1 or pilot.get("baseline_event_count") != 1 or pilot.get("idempotent_replay_count") != 1:
+                raise ValueError("Pilot result count not backed by one-shot evidence: "+sid)
+            if not re.fullmatch(r"https://github\.com/pinogame1945-dotcom/ECLIPSE/actions/runs/[0-9]+",str(pilot.get("run_url",""))):
+                raise ValueError("Missing official Actions pilot evidence: "+sid)
+            _date(pilot.get("last_run_utc"))
         evidence = source.get("evidence_run_url")
         when = source.get("last_verified_utc")
         if state == "read_parse_verified":
