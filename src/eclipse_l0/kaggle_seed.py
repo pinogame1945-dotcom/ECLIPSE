@@ -98,8 +98,8 @@ def verify(download_dir: Path, recovery_dir: Path, *, expected_records: int = 10
     """Read back downloaded files, verify every byte, rebuild SQLite from scratch."""
     index_path = download_dir / INDEX_NAME
     bundle = download_dir / BUNDLE_NAME
-    if not index_path.is_file() or not bundle.is_file():
-        raise ValueError('Kaggle retrieval missing required original files')
+    if not index_path.is_file():
+        raise ValueError('Kaggle retrieval missing archive index')
     index_raw = index_path.read_bytes()
     if expected_index_sha256 and digest(index_raw) != expected_index_sha256:
         raise ValueError('Kaggle index does not match prepared snapshot')
@@ -110,6 +110,32 @@ def verify(download_dir: Path, recovery_dir: Path, *, expected_records: int = 10
     members = index.get('members')
     if not isinstance(members, dict) or not 2 <= len(members) <= MAX_MEMBERS:
         raise ValueError('Invalid archive member manifest')
+    # Kaggle's server sometimes AUTO-EXTRACTS uploaded *.zip files and
+    # serves the original members under a stem-named folder. Never mistake
+    # that for lost source data. Verify each member SHA and repack with the
+    # exact same deterministic ZIP metadata, then compare to the original
+    # archive's *byte-identical* signed-in-the-manifest SHA-256.
+    transport = 'ORIGINAL_ZIP_DOWNLOADED'
+    if not bundle.is_file():
+        extracted = download_dir / Path(BUNDLE_NAME).stem
+        if not extracted.is_dir():
+            raise ValueError('Kaggle retrieval has neither ZIP nor extracted source folder')
+        files = {p.relative_to(extracted).as_posix():p for p in extracted.rglob('*') if p.is_file()}
+        if set(files) != set(members):
+            raise ValueError('Kaggle auto-extraction contains extra/missing source files')
+        with zipfile.ZipFile(bundle, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+            for name, path in sorted(files.items()):
+                spec = members[name]
+                if not isinstance(spec, dict) or not isinstance(spec.get('sha256'), str):
+                    raise ValueError('Invalid extracted member metadata')
+                raw = path.read_bytes()
+                if len(raw) != spec['bytes'] or digest(raw) != spec['sha256']:
+                    raise ValueError('Kaggle auto-extracted raw member checksum mismatch')
+                zi = zipfile.ZipInfo(name, (2020, 1, 1, 0, 0, 0))
+                zi.compress_type = zipfile.ZIP_DEFLATED
+                zi.external_attr = 0o444 << 16
+                z.writestr(zi, raw)
+        transport = 'KAGGLE_AUTO_EXTRACTED_MEMBERS_BYTE_EXACT_REPACK'
     if (bundle.stat().st_size > MAX_BUNDLE_BYTES
             or bundle.stat().st_size != index.get('bundle_bytes')
             or digest(bundle.read_bytes()) != index.get('bundle_sha256')):
@@ -148,6 +174,7 @@ def verify(download_dir: Path, recovery_dir: Path, *, expected_records: int = 10
         raise ValueError('Kaggle restore inconsistent with original validated CVE seed')
     return {
         'status': 'VERIFIED_KAGGLE_DOWNLOAD_AND_SQLITE_RESTORE',
+        'transport': transport,
         'cve_records': expected_records,
         'archive_sha256': index['bundle_sha256'],
         'index_sha256': digest(index_raw),

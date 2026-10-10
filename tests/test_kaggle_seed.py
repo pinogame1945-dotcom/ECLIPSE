@@ -2,6 +2,7 @@
 import json
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 from eclipse_l0.cve_seed import run_batch
@@ -32,6 +33,17 @@ class KaggleSeedTransportTests(unittest.TestCase):
         restored=verify(src,self.root/'restore',expected_records=2)
         self.assertEqual(restored['sqlite_cve_count'],2)
         self.assertEqual(restored['sqlite_quick_check'],'ok')
+
+    def test_real_kaggle_auto_extract_zip_round_trip(self):
+        stage=self.root/'staged'
+        prepare(self.state,stage,expected_records=2)
+        root=stage/'eclipse-cve-source-seed'
+        with zipfile.ZipFile(stage/BUNDLE_NAME) as z:
+            z.extractall(root)
+        (stage/BUNDLE_NAME).unlink()
+        result=verify(stage,self.root/'restore',expected_records=2)
+        self.assertEqual(result['sqlite_cve_count'],2)
+        self.assertEqual(result['transport'],'KAGGLE_AUTO_EXTRACTED_MEMBERS_BYTE_EXACT_REPACK')
 
     def test_wrong_expected_count_and_reused_staging_refused(self):
         src=self.root/'staged'
