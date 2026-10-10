@@ -11,7 +11,7 @@ import gzip
 import hashlib
 import json
 from itertools import chain
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from .core import CVE_ID
@@ -75,17 +75,35 @@ def select_scores(archive: Path, watched: set[str], output: Path, *, min_scored:
                 found[cve] = {'epss': score, 'percentile': percentile}
     if count < min_scored:
         raise ValueError(f'EPSS file too small ({count} < {min_scored})')
+    # FIRST's current CSV combines metadata on ONE line, e.g.
+    # #model_version:v2026.06.15,score_date:2026-10-10T12:02:09Z
+    # Older feed variants may use separate #score_date: lines.
+    metadata = {}
+    for comment in comments:
+        for part in comment.lstrip('#').split(','):
+            key, separator, value = part.strip().partition(':')
+            key = key.strip().lower()
+            value = value.strip()
+            if separator and key in ('model_version', 'score_date') and value:
+                if key in metadata and metadata[key] != value:
+                    raise ValueError('Conflicting EPSS metadata: ' + key)
+                metadata[key] = value
+    score_timestamp = metadata.get('score_date')
     score_date = None
-    for line in comments:
-        if line.lower().startswith('#score_date:'):
-            score_date = line.split(':', 1)[1].strip()
-    if score_date:
-        date.fromisoformat(score_date)
+    if score_timestamp:
+        # Preserve the upstream timestamp separately; use YYYY-MM-DD for
+        # client reports and date comparison.
+        score_date = date.fromisoformat(score_timestamp[:10]).isoformat()
+        if len(score_timestamp) > 10:
+            stamp = datetime.fromisoformat(score_timestamp.replace('Z', '+00:00'))
+            if stamp.tzinfo is None:
+                raise ValueError('EPSS score timestamp lacks timezone')
     if observed_day and score_date and date.fromisoformat(score_date) > observed_day:
         raise ValueError('Future EPSS score date')
     result = {
         'schema_version': 1, 'source': SOURCE, 'source_sha256': sha,
-        'score_date': score_date, 'total_feed_rows': count,
+        'score_date': score_date, 'score_timestamp': score_timestamp,
+        'model_version': metadata.get('model_version'), 'total_feed_rows': count,
         'watched_count': len(watched), 'matched_count': len(found),
         'missing_ids': sorted(watched - found.keys()),
         'scores': dict(sorted(found.items())),
