@@ -41,6 +41,22 @@ class VendorSourceRegistryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "lacks evidence"):
             validate(data)
 
+    def test_pilot_evidence_never_misreported_as_durable(self):
+        data = copy.deepcopy(self.registry)
+        good = next(s for s in data["sources"] if s["source_id"] == "fortinet-psirt")
+        self.assertEqual(good["one_shot_evidence_pipeline"]["advisory_sample_count"], 1)
+        good["one_shot_evidence_pipeline"]["persistence_state"] = "durable_production"
+        with self.assertRaisesRegex(ValueError, "production-persistent"):
+            validate(data)
+
+    def test_unverified_source_cannot_claim_successful_ingest(self):
+        data = copy.deepcopy(self.registry)
+        cisco = next(s for s in data["sources"] if s["source_id"] == "cisco-openvuln")
+        example = next(s for s in data["sources"] if s["source_id"] == "fortinet-psirt")
+        cisco["one_shot_evidence_pipeline"] = copy.deepcopy(example["one_shot_evidence_pipeline"])
+        with self.assertRaisesRegex(ValueError, "Only verified"):
+            validate(data)
+
     def test_duplicate_source_rejected(self):
         data = copy.deepcopy(self.registry)
         data["sources"].append(copy.deepcopy(data["sources"][0]))
