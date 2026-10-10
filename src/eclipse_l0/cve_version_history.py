@@ -14,6 +14,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 import hashlib
+import gzip
 import io
 import json
 import os
@@ -39,6 +40,7 @@ MAX_PACK_BYTES = 70 * 1024 * 1024
 MAX_INDEX_BYTES = 30 * 1024 * 1024
 MAX_REPORT_BYTES = 5 * 1024 * 1024
 FILENAME = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{12}\.cvepack$")
+EVENTFILE = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{12}\.jsonl.gz$")
 CVE = re.compile(r"^CVE-\d{4}-\d{4,}$")
 HEX = re.compile(r"^[0-9a-f]{64}$")
 
@@ -126,7 +128,7 @@ def _validated_delta(delta):
 
 def _initial():
     return {"schema_version": SCHEMA, "kind": "CVE_V5_ROLLING_ORIGINAL_RECORD_HISTORY",
-            "retention_days": HORIZON_DAYS, "latest": {}, "archives": {},
+            "retention_days": HORIZON_DAYS, "latest": {}, "archives": {}, "event_logs": {},
             "last_watermark_utc": None, "last_observed_utc": None,
             "latest_store_not_complete_all_CVEs": True,
             "publisher_revision_date_not_verified": True,
@@ -146,9 +148,11 @@ def _load(root):
             or manifest.get("kind") != "CVE_V5_ROLLING_ORIGINAL_RECORD_HISTORY"
             or manifest.get("retention_days") != HORIZON_DAYS
             or not isinstance(manifest.get("latest"), dict)
-            or not isinstance(manifest.get("archives"), dict)):
+            or not isinstance(manifest.get("archives"), dict)
+            or not isinstance(manifest.get("event_logs"), dict)):
         raise ValueError("Unrecognized CVE source history; refusing reset")
-    if len(manifest["latest"]) > MAX_LATEST or len(manifest["archives"]) > MAX_ARCHIVES:
+    if (len(manifest["latest"]) > MAX_LATEST or len(manifest["archives"]) > MAX_ARCHIVES
+            or len(manifest["event_logs"]) > MAX_ARCHIVES):
         raise ValueError("History ledger over cap")
     return manifest
 
@@ -200,6 +204,7 @@ def audit(root):
         counts["latest_v5_records"] += 1
     return {"integrity": "VERIFIED_ROLLING_ORIGINAL_RECORD_BYTES",
             "latest": counts["latest_v5_records"], "shards": len(tracked),
+            "transition_logs": len(m["event_logs"]),
             "archive_bytes": sum(x["bytes"] for x in m["archives"].values()),
             "last_watermark_utc": m.get("last_watermark_utc"),
             "retention_days": HORIZON_DAYS,
@@ -246,6 +251,11 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
     seen, watermark = _validated_delta(delta)
     root = state_dir / "cve-version-history"
     old = _load(root)
+    out = Path(out)
+    if out.exists() or out.is_symlink():
+        raise ValueError("Refusing overwrite of CVE history report")
+    if old.get("last_observed_utc") and observed < _time(old["last_observed_utc"]):
+        raise ValueError("History observation time regressed")
     if old["last_watermark_utc"] is not None:
         past = _time(old["last_watermark_utc"])
         if watermark < past:
@@ -284,6 +294,8 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
         raw_digest = sha(raw)
         source_at = seen[cid]["newest_fetch_utc"]
         descriptor = {"cve_id": cid,
+                      "before_archive": previous["archive"] if previous else None,
+                      "before_raw_sha256": previous["raw_sha256"] if previous else None,
                       "delta_event_count_collapsed": seen[cid]["count"],
                       "intermediate_revisions_recoverable": seen[cid]["count"] == 1,
                       "source_fetch_utc": source_at,
@@ -348,7 +360,7 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
             latest[cid]["archive"] = pack_name
     if len(latest)>MAX_LATEST or len(archives)>MAX_ARCHIVES or sum(a["bytes"] for a in archives.values())>MAX_STORE_BYTES:
         raise ValueError("Rolling Git history budget exhausted; private Kaggle archive required")
-    next_state = dict(old, latest=latest, archives=archives,
+    next_state = dict(old, latest=latest, archives=archives, event_logs=event_logs,
                       last_watermark_utc=watermark.isoformat(timespec="milliseconds"),
                       last_observed_utc=observed.isoformat(timespec="seconds"),
                       last_batch_event_sha256=sha(_canonical_bytes(delta)))
@@ -376,19 +388,21 @@ def collect(delta, state_dir, out, *, observed_at=None, fetcher=None,
     # checks. A failing action never runs the subsequent git commit/push.
     root.mkdir(parents=True,exist_ok=True)
     (root/"archives").mkdir(exist_ok=True)
+    (root/"events").mkdir(exist_ok=True)
+    for fname in set(old["event_logs"])-set(event_logs):
+        (root/"events"/fname).unlink()
     for fname in set(old["archives"])-set(archives):
         (root/"archives"/fname).unlink()
     if pack is not None:
         with (root/"archives"/pack_name).open("xb") as w:w.write(pack)
+    if event_blob is not None:
+        with (root/"events"/event_name).open("xb") as w:w.write(event_blob)
     temp = root/"manifest.next.json"
     if temp.exists():
         raise ValueError("Orphan partial history state: refusing blind reset")
     temp.write_bytes(_canonical_bytes(next_state))
     os.replace(temp,root/"manifest.json")
-    out = Path(out)
     out.parent.mkdir(parents=True,exist_ok=True)
-    if out.exists() or out.is_symlink():
-        raise ValueError("Refusing overwrite of CVE history execution report")
     out.write_bytes(report_bytes)
     return summary
 
