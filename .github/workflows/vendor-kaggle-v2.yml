@@ -18,7 +18,7 @@ concurrency:
 jobs:
   create-successor:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 32
     env:
       PYTHONPATH: src
       GH_TOKEN: ${{ github.token }}
