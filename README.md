@@ -307,3 +307,18 @@ only as a derived searchable view.
 Evidence: [successful Kaggle upload/readback run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045830690) and [independent restore run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38045881683). JSON audit receipts are short-lived GitHub Actions artifacts; the PRIVATE Kaggle dataset is retained. The account handle/API token is not in this public repository's commit or artifact receipts.
 
 **Scope:** This is still only 100 KEV-linked CVEs. Complete CVE baseline from the official release, capacity bounds, throughput benchmarks, crash recovery, source licensing and independent count reconciliation must be established before turning on mass BACKFILL. No paid runners, GPU, public Kaggle data publication, or customer data were used.
+
+## Vendor/source verification registry — design gate (2026-10-10)
+
+- Canonical review ledger: [config/vendor_source_registry.json](config/vendor_source_registry.json)
+- Architecture, limits and production acceptance: [docs/VENDOR_SOURCE_DESIGN.md](docs/VENDOR_SOURCE_DESIGN.md)
+- Verified one-shot source read/parse only: Fortinet, Microsoft, Palo Alto Networks,
+  Red Hat CSAF, Siemens, Yamaha, GitLab, Canonical Ubuntu and Atlassian.
+- Not verified: Google Chrome release Atom (insecure FeedBurner redirect) and Cisco (OAuth required).
+- **No manufacturer feed is enabled for production polling or customer delivery.**
+  Data-storage prototype (`src/eclipse_l0/vendor_store.py`) is local/offline, not connected to live feeds.
+- Offline check: `PYTHONPATH=src python -m eclipse_l0.vendor_registry`
+- Live experimental one-shot evidence:
+  [Fortinet](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047330191),
+  [five-vendor batch](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38047802167),
+  [four-vendor batch](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38048161575).
