@@ -199,9 +199,38 @@ def probe_redhat():
                 "has_details": bool(obj.get("details") or obj.get("statement")),
                 "has_affected_releases": bool(obj.get("affected_release") or obj.get("package_state")),
                 "has_mitigation": bool(obj.get("mitigation"))}
+    def csaf_change_index():
+        csaf_hosts = {"security.access.redhat.com"}
+        metadata, mev = json_source("https://security.access.redhat.com/data/csaf/v2/provider-metadata.json",
+                                    csaf_hosts)
+        if not isinstance(metadata, dict) or not metadata.get("distributions"):
+            raise ValueError("No Red Hat CSAF provider distributions")
+        raw, ev = fetch("https://security.access.redhat.com/data/csaf/v2/advisories/releases.csv",
+                         csaf_hosts, max_bytes=5 * 1024 * 1024)
+        import csv
+        from io import StringIO
+        parser = csv.reader(StringIO(raw.decode("utf-8-sig", "replace")))
+        rows = []
+        for row in parser:
+            if row:
+                rows.append(row)
+            if len(rows) >= 4:
+                break
+        if len(rows) < 2:
+            raise ValueError("No CSAF releases feed rows")
+        return {"provider_metadata": mev, "index_evidence": ev,
+                "publisher": metadata.get("publisher", {}).get("name"),
+                "header_fields": rows[0][:15], "sample_records": [row[:4] for row in rows[1:]]}
+
     a = call(r, "cve_list", listing)
     b = call(r, "cve_detail", detail)
-    r["verdict"] = "PASS" if a and b else "PARTIAL" if a or b else "FAIL"
+    c = call(r, "csaf_change_index", csaf_change_index)
+    if b and c:
+        r["verdict"] = "PASS"
+        if not a:
+            r["limitations"].append("Legacy CVE list API did not provide usable data in this run; CSAF release index is the viable discovery path.")
+    else:
+        r["verdict"] = "PARTIAL" if a or b or c else "FAIL"
     return r
 
 
