@@ -1,0 +1,123 @@
+name: ECLIPSE L2 history: EPSS as-of versus future CISA KEV catalog additions
+
+# Fixed, preregistered 17-month retrospective. Do not add a schedule or write to
+# vendor source verification. No new Kaggle dataset and no full SQLite rebuild.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-shot-historical-kev-backtest.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: eclipse-l2-2025-2026-epss-kev-backtest
+  cancel-in-progress: false
+
+jobs:
+  retrospective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: src
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test no-lookahead, immutability and all denominator decisions
+        run: python -m unittest discover -s tests -p test_kev_backtest.py -v
+      - name: Install authenticated Kaggle CLI
+        run: python -m pip install --disable-pip-version-check 'kaggle>=1.7,<2'
+      - name: Retrieve original GitHub-pinned warehouse evidence manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: eclipse-warehouse-trusted-receipts
+          path: trusted
+          run-id: 38050051810
+          github-token: ${{ github.token }}
+      - name: Validate original KEV source SHA and initial quotas
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${KAGGLE_API_TOKEN:-}" || { echo '::error::Kaggle token missing';exit 2; }
+          echo '2b86adb90258a5b2cc196dfcb0598977d802324c0c98642d133ca63efad39aa9  trusted/upload/warehouse-index.json' | sha256sum -c -
+          available="$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')"
+          test "$available" -ge 1048576 || { echo '::error::Less than 1GiB free';exit 3; }
+          mkdir -p "$RUNNER_TEMP/ecl-identity" "$RUNNER_TEMP/ecl-kev" "$RUNNER_TEMP/ecl-epss" "$RUNNER_TEMP/ecl-evaluation"
+          kaggle datasets init -p "$RUNNER_TEMP/ecl-identity" >/dev/null
+          dataset_ref="$(python - <<'PY'
+          import json,os
+          from pathlib import Path
+          t=json.loads((Path(os.environ['RUNNER_TEMP'])/'ecl-identity/dataset-metadata.json').read_text())['id']
+          if not isinstance(t,str) or not t.endswith('/INSERT_SLUG_HERE'):
+              raise SystemExit('Unexpected authenticated Kaggle identity')
+          print(t.replace('INSERT_SLUG_HERE','eclipse-cve-warehouse-20261010-v1'))
+          PY
+          )"
+          echo "::add-mask::$dataset_ref"
+          kaggle datasets download "$dataset_ref" \
+            --file kev-original.payload \
+            --path "$RUNNER_TEMP/ecl-kev" --unzip --force --quiet >/dev/null
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          trusted=json.loads(Path('trusted/upload/warehouse-index.json').read_text())
+          expected=trusted['evidence_files']['kev-original.payload']
+          original=Path(os.environ['RUNNER_TEMP'])/'ecl-kev/kev-original.payload'
+          if (not original.is_file() or original.is_symlink()
+              or original.stat().st_size!=expected['bytes'] or original.stat().st_size>25*1024*1024):
+              raise SystemExit('Immutable CISA KEV source missing or wrong length')
+          actual=hashlib.sha256(original.read_bytes()).hexdigest()
+          if actual!=expected['sha256'] or actual!=trusted['kev_source_sha256']:
+              raise SystemExit('Immutable CISA KEV evidence SHA-256 mismatch')
+          print('ORIGINAL_CISA_KEV_EVIDENCE_VERIFIED=YES',flush=True)
+          PY
+      - name: Evaluate 17 original historical FIRST EPSS dates, before KEV listing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m eclipse_l2.kev_backtest \
+            --kev "$RUNNER_TEMP/ecl-kev/kev-original.payload" \
+            --archive-folder "$RUNNER_TEMP/ecl-epss" \
+            --out "$RUNNER_TEMP/ecl-evaluation/historical-early-warning.json" \
+            --cutoff-date 2026-10-10 \
+            > "$RUNNER_TEMP/ecl-evaluation/progress-and-summary.log"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'ecl-evaluation/historical-early-warning.json'
+          doc=json.loads(p.read_text())
+          assert doc['result']=='HISTORICAL_EPSS_TO_FUTURE_KEV_BACKTEST_EVALUATED'
+          assert len(doc['anchors'])==17
+          assert len({r['as_of'] for r in doc['anchors']})==17
+          assert all(int(d['new_kev_rankable_in_historical_epss'])<=int(d['new_kev_all_catalog'])
+                     for row in doc['anchors'] for d in row['evaluations'].values())
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('## Historical FIRST EPSS vs future CISA KEV catalog inclusion\n\n')
+              f.write('17 pinned monthly historical score files; 7/30-day KEV first-listing labels.\n\n')
+              for group in ('EPSS_V4','EPSS_V5'):
+                  d=doc['summary'][group]['30']
+                  f.write(f'### {group}: 30-day forecast\n')
+                  f.write(f"- First CISA KEV listings: {d['new_kev_all_catalog']:,}. ")
+                  f.write(f"EPSS-scored: {d['new_kev_rankable_in_historical_epss']:,}.\n")
+                  for k in ('100','500','1000'):
+                      x=d['top_k'][k]
+                      f.write(f"- Top {k}: {x['hits']} KEV additions in {x['reviewed']:,} reviewed; ")
+                      f.write(f"precision {x['precision']:.4%} vs random expected hits {x['random_expected_hits']:.3f}.\n")
+              f.write('\n**Caution:** predicts KEV catalog registration only, not first exploitation or customer compromise.\n')
+          print('HISTORICAL_EARLY_WARNING_RESEARCH_COMPLETE=YES',flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-historical-epss-kev-validation-receipt
+          path: ${{ runner.temp }}/ecl-evaluation/historical-early-warning.json
+          retention-days: 7
+          if-no-files-found: warn
