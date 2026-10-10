@@ -136,6 +136,24 @@ class SourcePilotOfflineTest(unittest.TestCase):
         self.assertEqual(facts["remediations_unreviewed"][1]["status"],"unreviewed")
         self.assertNotIn("verified_fixed_version",facts)
 
+    def test_palo_alto_pan_sa_is_an_advisory_not_a_fabricated_cve(self):
+        source=self.sources["paloalto-advisories"]
+        item={"id":"PAN-SA-2024-0010","title":"SYNTHETIC PAN advisory",
+              "url":"https://security.paloaltonetworks.com/json/PAN-SA-2024-0010"}
+        body=json.dumps({"cveMetadata":{"cveId":"PAN-SA-2024-0010"},
+            "containers":{"cna":{"descriptions":[
+                {"lang":"en","value":"Related CVE-2024-98765 is only an unreviewed textual candidate"}],
+                "affected":[{"vendor":"Palo Alto Networks","product":"PAN-OS",
+                             "versions":[]}]}}}).encode()
+        facts=normalize(source,item,body)
+        self.assertEqual(facts["cve_ids"],[])
+        self.assertEqual(facts["unreviewed_article_cve_candidates"],["CVE-2024-98765"])
+        self.assertTrue(facts["affected"])
+        malicious=json.dumps({"cveMetadata":{"cveId":"PAN-SA-2024-9999"},
+                               "containers":{"cna":{}},"title":"SYNTHETIC"}).encode()
+        with self.assertRaisesRegex(ValueError,"identity"):
+            normalize(source,item,malicious)
+
     def test_ubuntu_release_packages_evidence_does_not_claim_fixed_packages(self):
         source=self.sources["ubuntu-security-api"]
         item={"id":"USN-9999-1","title":"SYNTHETIC Ubuntu patch",
