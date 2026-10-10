@@ -96,6 +96,24 @@ class SourcePilotOfflineTest(unittest.TestCase):
         self.assertEqual(result["saved"],0)
         self.assertIn("outside official allowlist",result["errors"][0])
 
+    def test_article_candidates_exclude_nav_and_stay_unlinked(self):
+        source=self.sources["gitlab-security-releases"]
+        item={"id":"gitlab-notice-example","title":"SYNTHETIC security patch release",
+              "url":"https://docs.gitlab.com/releases/patch-example/"}
+        page=b"""<html><head><script>CVE-2026-99901</script></head>
+          <nav>CVE-2026-99902</nav><main><article>
+          <h1>Patch release</h1><p>Example CVE-2026-99903 was addressed.
+          This content is entirely synthetic, serving only as a parser regression test.</p>
+          <aside>CVE-2026-99904</aside>
+          </article></main><footer>CVE-2026-99905</footer>
+          <p>More background information to satisfy the content-length threshold.
+          No claim of real vendor activity is made in this fixture and no real
+          security advisory is represented by the sample data herein.</p></html>"""
+        result=normalize(source,item,page)
+        self.assertEqual(result["cve_ids"],[])
+        self.assertEqual(result["unreviewed_article_cve_candidates"],["CVE-2026-99903"])
+        self.assertIn("CVE-2026-99902",result["unreviewed_page_cve_candidates"])
+
     def test_atlassian_navigation_cves_not_promoted_to_facts(self):
         source=self.sources["atlassian-security"]
         item={"id":"CVE-2026-21589","title":"CVE-2026-21589 bulletin",
