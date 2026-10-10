@@ -42,6 +42,7 @@ jobs:
           python -m eclipse_l0.kev_monitor --feed downloads/kev.json --state-dir ../observed/data --out output/kev-repeat.json
           python -m eclipse_l0.cve_delta --log downloads/deltaLog.json --state-dir ../observed/data --out output/cve-index.json --max-events 5000
           python -m eclipse_l0.epss --file downloads/epss.csv.gz --kev-state ../observed/data/kev-current.json --out ../observed/data/epss-selected.json
+          python -c 'import json; from pathlib import Path; p=json.loads(Path("../observed/data/epss-selected.json").read_text()); assert p["score_date"] and p["model_version"], "EPSS date/model provenance missing"; print("EPSS verified:",p["score_date"],p["model_version"],p["matched_count"],"/",p["watched_count"])'
       - name: Persist public state on dedicated branch
         working-directory: observed
         run: |
