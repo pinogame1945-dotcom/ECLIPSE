@@ -108,7 +108,7 @@ def compute(source_bytes, *, vendor_material=None,cve_material=None,watch_limit=
                   "UPDATE_REASON_ONLY_BEFORE_STATE_UNAVAILABLE_OR_NO_MATERIAL_PROOF")
         cvss=(row.get("cvss") or {}).get("base_score")
         epss=(row.get("epss") or {}).get("probability")
-        score,_=publication_signals(row,matched_vendor=False)
+        score,_,_=publication_signals(row,vendor_matched=False)
         # Source score is for *manual inspection priority only*, not
         # evidence a revision changed security severity.
         item={"cve_id":cid,"state":category,
