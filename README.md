@@ -1,4 +1,4 @@
-# PROJECT ECLIPSE — L0 + KEV PowerPoint pipeline v0.3
+# PROJECT ECLIPSE — Threat Intelligence L0/L1 v0.5
 
 Cybersecurity intelligence prototype using authoritative public CISA KEV and CVE List V5 releases. This repository is **PUBLIC** and intentionally contains **no real customer details or private asset inventories**.
 
@@ -115,3 +115,53 @@ PYTHONPATH=src python -m eclipse_reports.event_report \
 The last command intentionally refuses baseline and no-change input. Long-term
 roadmap: source license audit, genuine advisories (including pre-CVE information),
 severity triage validated by human review, and approved private client delivery.
+
+
+## v0.5 — CVE change index + FIRST EPSS + source-adapter + evidence dossier
+
+**Validated locally:** offline unit/integration tests for previous L0/KEV/PPTX and new components.
+**Deployed as source:** new scheduled workflows below; runner success/network access is **not** yet verified.
+
+### What runs automatically (GitHub Actions)
+
+| Workflow | Interval | What it does | Persistence |
+| --- | --- | --- | --- |
+| `ECLIPSE durable KEV monitor` | Best-effort hourly | Existing full CISA KEV diff / incident PPTX | `eclipse-state` branch |
+| `ECLIPSE CVE change-index observer` | Best-effort every 4 hours | Observes new/updated identifiers from official rolling `cves/deltaLog.json` | `eclipse-state` branch; recent public event window |
+| `ECLIPSE EPSS daily selected-CVE enrichment` | Best-effort daily | Downloads FIRST's entire latest daily CSV, keeps **only KEV-listed** CVE scores/percentiles | `eclipse-state` branch (`data/epss-selected.json`) |
+
+Cross-workflow public-state Git pushes share one concurrency group. First CVE poll is a baseline, **never a list of new incidents**. A rolling CVE log is not a full historical database. If the checkpoint is older than the official rolling retention, the program **fails** rather than pretending the missing days were covered. Recovery requires a controlled full-snapshot reconciliation. The CVE index deliberately does **not** download all new/updated source JSON documents; vendor filtering and definitive affected versions need the corresponding CVE records and vendor security notices. The periodic runner's database is temporary, and only **public** summaries may be committed. Recent raw change-index entries are kept for roughly two months, not forever.
+
+EPSS: the selected scores are a **daily model estimate** for the next 30 days and are not a client's attack probability. This project does not interpret EPSS as confirmed exploitation. Daily rows are joined by exact CVE ID; if the KEV watchlist baseline has not yet been created the EPSS job explicitly skips. The entire EPSS CSV is **not** committed.
+
+### Vendor feed adapter (manual only)
+
+`eclipse_l0.advisory_feeds` supports official RSS 2.0 / Atom items with explicit allowed official hostnames, content size limit, safe XML parsing, source-by-source state, first-poll baseline, and subsequent item edits. **It is not automatically connected to any actual vendor feed.** Vendor-specific endpoints/credentials, permissible reuse, rate limits, and patch/impact extraction must be reviewed before enabling live monitoring or commercial redistribution. Cisco's openVuln API needs authorized credentials and Fortinet's public PSIRT-blog RSS is not a substitute for authoritative product PSIRT advisories. Entries are pointers to vendor notices; they are not vulnerability assertions.
+
+```bash
+PYTHONPATH=src python -m eclipse_l0.advisory_feeds \
+  --xml downloaded-verified-feed.xml \
+  --state-dir local-public-state/data \
+  --out output/advisory-events.json \
+  --source-id verified-vendor \
+  --vendor 'Verified Vendor' \
+  --allowed-host security.vendor.example
+```
+
+`security.vendor.example` is a **synthetic placeholder**; never poll it in production.
+
+### Local standalone L1 evidence dossier (manual only)
+
+The `eclipse_l1.evidence` module accepts a CVE v5 record JSON, the official KEV catalog, and (optionally) the **selected** official FIRST EPSS extract, then emits a structured JSON dossier with each fact tied to its original source field. It preserves vendor-reported affected version structures **without declaring local asset exposure**. Missing KEV input is reported as "not supplied" rather than "no exploitation". It is deterministic, **not yet AI analysis**.
+
+```bash
+PYTHONPATH=src python -m eclipse_l1.evidence \
+  --cve-json downloaded-CVE-record.json \
+  --kev-json downloaded-official-KEV.json \
+  --epss-json public-state/data/epss-selected.json \
+  --out output/evidence-dossier.json
+```
+
+The KEV change-briefing PowerPoint now **optionally** enriches detail slides with EPSS evidence if a verified `data/epss-selected.json` is already present; it falls back to `EPSS: 未取得` when not. Historical score date and SHA-256 appear in the report manifest. No autonomous technical deep-dive or client delivery is claimed.
+
+Official feeds: [CVE Project](https://github.com/CVEProject/cvelistV5), [FIRST EPSS](https://www.first.org/epss/data.html), [CISA KEV](https://github.com/cisagov/kev-data). Enabling commercial redistribution or a specific vendor feed requires a separate rights assessment.

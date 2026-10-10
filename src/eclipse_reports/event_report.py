@@ -10,7 +10,7 @@ from eclipse_reports.daily import _base, _filter_row, _rect, _strip, _txt, C, HR
 
 
 def render_events(events_path: Path, profile_path: Path, output_path: Path,
-                  *, max_details: int = 5) -> dict:
+                  *, max_details: int = 5, epss_json: Path | None = None) -> dict:
     payload = json.loads(events_path.read_text(encoding='utf-8'))
     config = json.loads(profile_path.read_text(encoding='utf-8'))
     if not isinstance(config.get('customer_name'), str) or not config['customer_name'].strip():
@@ -20,6 +20,11 @@ def render_events(events_path: Path, profile_path: Path, output_path: Path,
     if payload.get('baseline') or not payload.get('events'):
         raise ValueError('Refusing to describe baseline/no-change as new alerts')
     events = [x for x in payload['events'] if x.get('material_change') and _filter_row(x['record'], config)]
+    epss = json.loads(epss_json.read_text(encoding='utf-8')) if epss_json and epss_json.exists() else None
+    scores = epss.get('scores', {}) if epss else {}
+    if epss and (epss.get('source') != 'https://epss.empiricalsecurity.com/epss_scores-current.csv.gz'
+                 or not isinstance(scores, dict)):
+        raise ValueError('Untrusted EPSS enrichment data')
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -76,13 +81,16 @@ def render_events(events_path: Path, profile_path: Path, output_path: Path,
         _txt(slide, 'CISA掲載の対応文', 1.02, 4.1, 10.8, .36, size=15, bold=True)
         _txt(slide, _strip(row.get('requiredAction', '未記載'), 300), 1.02, 4.57, 10.8, .8, size=12)
         update = ', '.join(event['changed_fields']) if event['kind']=='updated' else 'CISA KEV catalog membership'
-        _txt(slide, f"変更項目: {_strip(update, 130)}\nKEV dateAdded: {row.get('dateAdded','-')}  |  ECLIPSE observed: {event['observed_utc']}",
-             1.02, 5.72, 11, .66, size=10, color='muted')
+        score = scores.get(event['cve_id'])
+        epss_line = ('EPSS (' + str(epss.get('score_date') or 'date unknown') + '): ' +
+                     f"{score['epss']:.3f} / percentile {score['percentile']:.3f}") if score else 'EPSS: 未取得'
+        _txt(slide, f"変更項目: {_strip(update, 130)}\nKEV dateAdded: {row.get('dateAdded','-')} | ECLIPSE observed: {event['observed_utc']}\n{epss_line}",
+             1.02, 5.53, 11, .95, size=10, color='muted')
 
     sources = _base(prs, '出典と解釈', 'SOURCE / REPRODUCIBILITY')
     _txt(sources, HREF + '\n' + payload['source'] + '\n' + 'Feed SHA-256: '+payload['source_sha256'],
          .85, 2.15, 11.6, 1.15, size=13)
-    _txt(sources, 'このレポートはCISA KEVの項目追加・内容更新・削除を検知した結果。\n実際の攻撃発生日、顧客影響、緊急度を独自に認定するものではない。\nメーカー公式の影響条件と修正版は別途確認が必要。',
+    _txt(sources, 'このレポートはCISA KEVの項目追加・内容更新・削除を検知した結果。\n実際の攻撃発生日、顧客影響、緊急度を独自に認定するものではない。\nEPSSは今後30日間の母集団レベルの悪用可能性推定。顧客への攻撃確率ではない。\nメーカー公式の影響条件と修正版は別途確認が必要。',
          .85, 4.2, 11.6, 1.7, size=15)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
@@ -90,6 +98,8 @@ def render_events(events_path: Path, profile_path: Path, output_path: Path,
         'observed_utc': payload['observed_utc'], 'kev_feed_sha256': payload['source_sha256'],
         'customer_name': config['customer_name'], 'selected_count': len(events),
         'selected_events': [e['event_id'] for e in events], 'counts': counts,
+        'epss_score_date': epss.get('score_date') if epss else None,
+        'epss_feed_sha256': epss.get('source_sha256') if epss else None,
         'interpretation': 'Changes in CISA KEV catalog since last persisted observed state (not exploitation start).',
     }
     output_path.with_suffix('.manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -101,8 +111,9 @@ def main() -> None:
     parser.add_argument('--events', required=True, type=Path)
     parser.add_argument('--customer', required=True, type=Path)
     parser.add_argument('--out', required=True, type=Path)
+    parser.add_argument('--epss-json', type=Path)
     args = parser.parse_args()
-    print(json.dumps(render_events(args.events, args.customer, args.out), ensure_ascii=False, indent=2))
+    print(json.dumps(render_events(args.events, args.customer, args.out, epss_json=args.epss_json), ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':

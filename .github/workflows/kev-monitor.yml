@@ -10,7 +10,7 @@ permissions:
   contents: write  # scoped to this workflow: commits ONLY public KEV state branch
 
 concurrency:
-  group: eclipse-kev-state-branch
+  group: eclipse-public-state-writer
   cancel-in-progress: false
 
 jobs:
@@ -75,11 +75,13 @@ jobs:
           python -m eclipse_reports.event_report \
             --events output/observed-changes.json \
             --customer config/customer-all-example.json \
-            --out output/eclipse-all-kev-observed-changes.pptx
+            --out output/eclipse-all-kev-observed-changes.pptx \
+            --epss-json ../observed/data/epss-selected.json
           python -m eclipse_reports.event_report \
             --events output/observed-changes.json \
             --customer config/customer-network-example.json \
-            --out output/eclipse-network-kev-observed-changes.pptx
+            --out output/eclipse-network-kev-observed-changes.pptx \
+            --epss-json ../observed/data/epss-selected.json
 
       - name: Commit official-only baseline or diff to durable branch
         working-directory: observed
