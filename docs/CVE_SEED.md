@@ -6,7 +6,7 @@ ECLIPSE already holds 1,739 public CISA KEV entries and a rolling CVE change **i
 
 An explicitly frozen list of the KEV catalog's CVE IDs (`dateAdded` descending; CVE ID tie-break) prevents moving targets when the upstream KEV catalog changes. Its SHA-256 and provenance are saved at `eclipse-state:data/cve-seed/cohort.json` and indexed in `manifest.json`.
 
-Each bounded shard (`shards/0000-0024.jsonl`) holds exactly the original official UTF-8 CVE record text, a source SHA-256 and its deterministic official CVEProject raw URL. Each stage downloads **up to 25** original CVE records with **2 MiB** per-record, **3 MiB** per-shard, **12 MiB** total archive limits and an **absolute 100-CVE cap** in the engine. The workflow is further limited to **50** records and runs once or on manual replay; there is **no new recurring CVE backfill workflow**.
+Each bounded shard (`shards/0000-0024.jsonl`) holds exactly the original official UTF-8 CVE record text, a source SHA-256 and its deterministic official CVEProject raw URL. Each stage downloads **up to 25** original CVE records with **2 MiB** per-record, **3 MiB** per-shard, **12 MiB** total archive limits and an **absolute 100-CVE cap** in the engine. The workflow is currently limited to **100** records and runs once or on manual replay; there is **no new recurring CVE backfill workflow**.
 
 ### Crash safety & recovery
 
@@ -34,6 +34,6 @@ Audit enforces contiguous shard indexes, checksums over original bytes, CVE IDs 
 1. Verify this small bounded source cohort against the upstream and failure/replay scenarios.
 2. Choose and test a **durable capacity-controlled** object store (not unlimited Git commits) for full upstream CVE ZIP and incremental raw updates; verify licensing and quotas.
 3. Implement a frozen-date full release baseline with archive checksum, extraction limits, chunk checkpoints, atomic commits, version history, reconciliation with the rolling delta cursor, resume semantics, and an end-to-end independent source count audit.
-4. Only then consider scaling beyond the explicit 50-CVE pilot. Do not equate 50 KEV-linked records with arbitrary CVE coverage.
+4. Only then consider scaling beyond the explicit 100-CVE pilot. Do not equate 50 KEV-linked records with arbitrary CVE coverage.
 
 All paths here contain **PUBLIC upstream CVE source records** only. Customer profiles, asset inventories, private incident details, credentials, and client deliverables must never enter this public repo.
