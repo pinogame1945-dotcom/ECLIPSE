@@ -141,7 +141,7 @@ class StrictInventoryMonitorTest(unittest.TestCase):
     def test_oversized_official_csaf_names_are_skipped_not_privacy_errors(self):
         db=connect(self.db)
         try:
-            huge="Hardware bundle "+("device "+40)*7
+            huge="Hardware bundle "+("device "*40)
             facts=normalize_csaf({
               "document":{"title":"SYNTHETIC long officially named product"},
               "product_tree":{"full_product_names":[{"product_id":"LONG:SKU","name":huge}]},
