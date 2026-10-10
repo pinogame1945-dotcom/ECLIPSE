@@ -1,0 +1,4 @@
+# Changing frozen V1.0 template/signatures requires user approval.
+/templates/weekly_v1/ @pinogame1945-dotcom
+/.github/workflows/weekly-design-lock-v1.yml @pinogame1945-dotcom
+/weekly_reports/locked_v1/ @pinogame1945-dotcom
