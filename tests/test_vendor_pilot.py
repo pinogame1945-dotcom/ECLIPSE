@@ -100,7 +100,7 @@ class SourcePilotOfflineTest(unittest.TestCase):
         source=self.sources["atlassian-security"]
         item={"id":"CVE-2026-21589","title":"CVE-2026-21589 bulletin",
               "url":"https://confluence.atlassian.com/security/cve-2026-21589.html"}
-        page=b"<html><body><h1>CVE-2026-21589 bulletin</h1><nav>CVE-2025-99999 irrelevant</nav><main>Official bulletin concerning the affected product and patched versions. Review needed.</main></body></html>"
+        page=b"<html><body><h1>CVE-2026-21589 bulletin</h1><nav>CVE-2025-99999 irrelevant</nav><main>Official bulletin concerning the affected product and patched versions. Review needed. Publisher claims should be source-scoped and reviewed, and this fixture deliberately contains irrelevant navigation references that must not become asserted facts. Example contextual text for extraction safeguards and normalized processing.</main></body></html>"
         facts=normalize(source,item,page)
         self.assertEqual(facts["cve_ids"],["CVE-2026-21589"])
         self.assertIn("CVE-2025-99999",facts["unreviewed_page_cve_candidates"])
