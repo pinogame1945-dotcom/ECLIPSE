@@ -24,7 +24,10 @@ class ThirdWaveTests(unittest.TestCase):
  def test_index_identification_and_scoped_article(self):
   for sid,ident,url,title in cases:
    with self.subTest(sid=sid):
-    listing=("<header>CVE-2026-789456</header><main><a href='"+url+"'>"+title+"</a></main>").encode()
+    listing=(("<rss><channel><item><title>"+title+"</title><link>"+url+
+              "</link></item></channel></rss>") if sid=="netapp-psirt"
+             else ("<header>CVE-2026-789456</header><main><a href='"+url+"'>"+title+
+                   "</a></main>")).encode()
     item=discover_wave3(S[sid],listing)[0]
     self.assertEqual(item["id"],ident)
     article=("<nav>CVE-2026-785111</nav><main><h1>"+title+"</h1><p>"+
