@@ -138,6 +138,23 @@ class StrictInventoryMonitorTest(unittest.TestCase):
         self.assertEqual(d["coverage"]["candidate_status_rows"],0)
         self.assertEqual(d["coverage"]["inventory_entries_without_exact_evidence"],1)
 
+    def test_oversized_official_csaf_names_are_skipped_not_privacy_errors(self):
+        db=connect(self.db)
+        try:
+            huge="Hardware bundle "+("device "+40)*7
+            facts=normalize_csaf({
+              "document":{"title":"SYNTHETIC long officially named product"},
+              "product_tree":{"full_product_names":[{"product_id":"LONG:SKU","name":huge}]},
+              "vulnerabilities":[{"cve":"CVE-2026-10054",
+                  "product_status":{"known_affected":["LONG:SKU"]}}]
+            },"fallback")
+            observe(db,registry=REGISTRY,source_id="siemens-csaf",
+                    advisory_id="SYNTH-LONG-PRODUCT",source_url=SOURCES["siemens-csaf"]["detail_sample_url"],
+                    source_sha256="4"*64,observed_utc="2026-10-10T11:56:00Z",facts=facts)
+        finally:db.close()
+        result=match_customer_products(self.db,self.inventory,REGISTRY)
+        self.assertEqual(result["coverage"]["candidate_status_rows"],3)
+
     def test_never_read_semver_to_claim_customer_is_unaffected(self):
         self._write_inventory([{"id":"switch-a","vendor":"Siemens",
                                 "product":"SIMATIC Field PG M5","installed_version":"1.2"}])
