@@ -76,6 +76,15 @@ jobs:
               for key,count in b['counts_by_bucket'].items():
                   f.write(f'- {key}: {count:,}\n')
               f.write('**Historical snapshot only, NOT a complete weekly-monitoring certification.**\n')
+          print('THREE_LAYER_REAL_DATA_COUNTS='+json.dumps({
+              'L1_all_CVEs':b['l1_total'],
+              'L2_prioritized_CVEs':b['l2_total'],
+              'L3_deep_dive_CVEs':b['l3_total'],
+              'L1_only_or_inactive':b['watch_or_inactive'],
+              'bucket_counts':b['counts_by_bucket'],
+              'triage_zip_bytes':a['bytes'],
+              'triage_zip_sha256':a['zip_sha256']
+          },sort_keys=True))
           print('REAL_6355_CVE_NO_DROP_PRIORITY_HANDOFF_BUILT')
           PY
       - uses: actions/upload-artifact@v4
