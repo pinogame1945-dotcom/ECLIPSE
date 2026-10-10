@@ -1,9 +1,9 @@
 {
   "schema": "eclipse.weekly.design-lock.v1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "approved_sample_sha256": "67b11361f2fa5e5187713be683c92b91069d54afe262fe972bbc76aedfceb77a",
   "golden_name": "WEEKLY_GOLDEN_V1.0.pptx",
-  "golden_delivery": "ECLIPSE_WEEKLY_TEMPLATE_V1.0.zip — original PPTX and full 45-part protection manifest; not included in this PUBLIC repository",
+  "golden_delivery": "ECLIPSE_WEEKLY_TEMPLATE_V1.0.1.zip — unchanged original PPTX, full validator supporting added approved pages; not in public repo",
   "size_emu": [
     12191695,
     6858000
@@ -36,5 +36,12 @@
     "ppt/slideMasters/slideMaster1.xml": "44cc65956f47c1cf689803dcc7a1d9225c93d3fd90754a9f85e2bdcea27565bc",
     "ppt/slideLayouts/slideLayout7.xml": "e4d86b009a8ca6ca9ecfadc97c68b7123b60544df09a7ea42864a4f5f74ce09c"
   },
-  "content_status": "UNVERIFIED_SAMPLE_NOT_FOR_CUSTOMERS"
+  "content_status": "UNVERIFIED_SAMPLE_NOT_FOR_CUSTOMERS",
+  "pagination": {
+    "allow_increase": true,
+    "minimum_reference_pages": 19,
+    "max_pages": 250,
+    "only_approved_page_design_signatures": true,
+    "reference_pages_preserved_in_order": true
+  }
 }
