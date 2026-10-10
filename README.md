@@ -263,65 +263,28 @@ The pilot does not generate or send customer reports, does not download EPSS, an
 
 **CVE vs KEV**: Full KEV catalog validation is safe as a small baseline; do **not** confuse that with downloading every CVE in history. Source observations are not proof of exploitation at a customer. Do not put customer profiles or private work data in public GitHub Actions artifacts.
 
+## v0.9 — Kaggle private CVE source-seed transport acceptance
 
-## 2026-10-10 verified live-data preflight
+Workflow: `ECLIPSE Kaggle private CVE-100 durable roundtrip`, source:
+`.github/workflows/kaggle-cve-seed-roundtrip.yml`. This is one-shot on creation
+and manually replayable. Uses the **ECLIPSE repository** `KAGGLE_API_TOKEN`
+GitHub secret; all dataset creation is PRIVATE (does not use `--public`).
 
-**Real official GitHub Actions execution, NOT a synthetic fixture.**
+The workflow first runs the existing full CVE seed audit on the 100 verified
+KEV-linked records. It builds a deterministic lossless ZIP containing the
+original UTF-8 official CVE record bodies, their checksums, frozen cohort and
+manifest; publishes this as a private Kaggle dataset with the fixed account-local
+slug `eclipse-cve-seed-100-v1`. It then downloads all uploaded files to a
+clean directory, verifies archive/member SHA-256 and CVE record identities, and
+rebuilds SQLite from the restored source bodies. A matching existing Kaggle
+dataset is read-only verified on rerun, never overwritten.
 
-| Check | Observed result | Evidence |
-| --- | --- | --- |
-| Complete CISA KEV feed | 1,739 rows parsed; SQLite integrity ok | [10-record pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043491174) |
-| Latest-KEV-linked CVE records, 10 | 10 / 10 imported | [10-record pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043491174) |
-| Same selection logic, 25 | 25 / 25 imported | [staged 25/50 pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043566592) |
-| Same selection logic, 50 | 50 / 50 imported; 50 network fetches total via cache | [staged 25/50 pilot](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043566592) |
-| Durable KEV baseline | 1,739 rows; initial observation emitted **zero** fresh alerts | [bootstrap run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043619104), [state commit](https://github.com/pinogame1945-dotcom/ECLIPSE/commit/44a1fbd1625b43c1e7cc7b82d927d5a697f9578a) |
-
-**Important limitations:** These are 50 *KEV-selected* CVE documents, not a random or
-representative CVE sample. The disposable pilot SQLite DB is not a durable/full
-CVE master database. The durable `eclipse-state` branch presently stores the
-public KEV baseline only. Daily EPSS/CVE change-index scheduling and complete
-historic CVE BACKFILL require separate verified executions and persistence
-capacity planning. No real customer assets or confidential data were accessed.
-
-**Next gate:** Verify a repeated KEV no-change poll, initialize durable CVE
-change-index checkpoint and selected EPSS state, then test the actual daily
-source-grounded report; only afterward design a quota-bounded complete CVE
-snapshot import with resumability and checksum audit.
-
-## 2026-10-10 — Live source acceptance verified
-
-Completed [official-feed run](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38043972659) on GitHub Actions (standard runner).
-
-| Check | Verified observation |
-| --- | --- |
-| KEV full catalog | 1,739 records; repeat poll was a no-op (0 new events) |
-| CVE delta index | Durable checkpoint 2026-10-10T09:25:14.092+00:00; not full CVE records |
-| FIRST EPSS | 384,993 scored CVEs examined; all 1,739 watched KEV IDs matched |
-| EPSS provenance | Score date 2026-10-09, model v2026.06.15 (header parsing regression fixed) |
-| PowerPoint | Editable observed-event report + 7-day KEV dateAdded report; both exported |
-| Date-based KEV report | 6 matching entries for the 7-day window |
-| Observed event report | 0 new observations after baselining; NOT a claim of no threats |
-| Offline tests | GitHub Actions CI passed |
-
-IMPORTANT: The rolling CVE delta is only an update INDEX, not a durable complete CVE archive. EPSS scores are limited to the official KEV watchlist, not every CVE. Current reports use synthetic PUBLIC customer profiles and must not be interpreted as customer-specific exposure assessments. Github schedule is best-effort; recurring success has not yet been verified.
-
-## 2026-10-10 verified durable CVE source-body backfill (100-record cap)
-
-A real, **bounded** GitHub Actions source-body archive is now stored on the public `eclipse-state` branch:
-
-| Verification | Observed result |
-| --- | --- |
-| Frozen watch cohort | 1,739 CVE IDs from the official public CISA KEV baseline; KEV-weighted selection, not a general CVE sample |
-| Round 1 | 25 official CVE JSON bodies committed and checksummed |
-| Round 2 | 50 total bodies in 2 shards, Git state persisted |
-| Round 3 | 100 total bodies in 4 immutable 25-record shards; Git commits per stage |
-| Size | 1,336,082 JSONL shard bytes, under 12 MiB approved storage cap |
-| Audit/recovery | All source body hashes/identities verified, rebuilt SQLite `PRAGMA quick_check=ok`, CVE count 100 |
-| Idempotence | Third batch at 100 cap made 0 changes; a separate replay GitHub Actions run also made 0 new CVE commits |
-| CI | Offline tests incl. 9 additional resumability/guard tests passed (70 total) |
-
-Run results: [25+25 first archive](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38044358569) · [50→100 expansion](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38044413191) · [replay no-op verification](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38044453877).
-
-Source records and immutable manifest: [eclipse-state/data/cve-seed](https://github.com/pinogame1945-dotcom/ECLIPSE/tree/eclipse-state/data/cve-seed). Temporary SQLite export is included in the Actions artifacts (7-day retention); original public source JSON texts are durable in the bounded Git branch.
-
-**NOT YET:** all historical CVEs, automated model/version impact verification, full CVE record refresh reconciliation, or manufacturer source ingestion. For total CVE corpus coverage, first design a storage backend that avoids unbounded public Git growth, establish quotas and immutable release digests, and verify end-to-end count/checksum reconciliation. Do not silently raise the hard limit without capacity and cost review.
+Scope: **exactly 100 public KEV-selected CVEs**, not the complete historical CVE
+corpus. The Kaggle dataset is intentionally retained after success as a seed
+storage proof. Private Kaggle handles, credentials and customer information are
+not put into the public Git repository or published GitHub Actions receipt.
+This is NOT automatic full-history backfill. Before expanding to full CVE
+snapshots, use a capacity/version/retention plan and a separate independent
+full-snapshot ingestion + restoration audit; no endless Git history or Kaggle
+uploads on schedule. The zip source records are lossless; Parquet may be added
+only as a derived searchable view.
