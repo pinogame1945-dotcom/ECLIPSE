@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_utc": "2026-10-10T14:30:00Z",
+  "updated_utc": "2026-10-10T15:27:03Z",
   "purpose": "Verification registry for 126 candidate product groups; each record is one official source, not a vendor certification",
   "proof_levels": [
     "not_tested",
@@ -1660,7 +1660,7 @@
     "cve_and_vendor_data_modified": false
   },
   "vendor_private_kaggle_generations": {
-    "status": "TWO_IMMUTABLE_PRIVATE_SNAPSHOTS_INDEPENDENTLY_RESTORED",
+    "status": "THREE_IMMUTABLE_PRIVATE_SNAPSHOTS_INDEPENDENTLY_RESTORED",
     "generation_1": {
       "slug": "eclipse-vendor-evidence-20261010-v1",
       "advisories": 125,
@@ -1687,7 +1687,26 @@
     "customer_assets_included": false,
     "vendor_content_human_reviewed": false,
     "original_cve_kaggle_untouched": true,
-    "operational_constraint": "Further generations need pinned source index, strict transactional continuity and fresh-runner independent readback; do not use the 7-day Actions artifact as permanent state."
+    "operational_constraint": "V1→V2→V3 immutable PRIVATE Kaggle generation ancestry verified on fresh Actions runner. Each one-shot cohort is representative-only; future append-only V4 needs a separate safely identified successor. No scheduled production ingestion or customer-version impact enabled.",
+    "generation_3": {
+      "slug": "eclipse-vendor-evidence-20261010-v3",
+      "advisories": 175,
+      "versions": 256,
+      "events": 256,
+      "new_advisories": 15,
+      "new_versions": 15,
+      "parent_generation": 2,
+      "new_source_cohort_attempted": 15,
+      "new_source_cohort_successful": 15,
+      "new_source_cohort_failed": 0,
+      "source_sample_completeness": "15 official samples only, NOT complete advisory/vendor coverage",
+      "create_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063589601",
+      "independent_restore_run": "https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063589601",
+      "independent_restore_job": "114246760354",
+      "prior_version_and_event_rows_preserved": true,
+      "sha256_and_index_chain_independently_checked": true,
+      "cve_store_modified": false
+    }
   },
   "actual_cve_warehouse_v2_read_only_join": {
     "status": "INDEPENDENT_REAL_403696_CVE_V2_MATCH_VERIFIED",

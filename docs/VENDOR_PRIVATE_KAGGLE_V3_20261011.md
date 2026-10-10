@@ -20,3 +20,17 @@ The 25 sample-proven *publisher source IDs* are **not** 25 reliable production s
 The 126 important product groups are a distinct candidate scope and MUST NOT be equated with the number of implemented source IDs. Any row-by-row matching requires the original spreadsheet's exact rows and product aliases.
 
 An automatically created V3 or saved Actions artifact without **independent readback SUCCESS** is not a verified permanent snapshot. Review GitHub Actions proof before writing confirmed counts here.
+
+## Actual GitHub Actions result: V3 created and independently restored — SUCCESS
+
+GitHub Actions [38063589601](https://github.com/pinogame1945-dotcom/ECLIPSE/actions/runs/38063589601) passed the immutable creation job **and** a completely separate runner's readback job `114246760354`.
+
+| PRIVATE Kaggle immutable generation | Distinct source documents | Saved versions | Events |
+|---|---:|---:|---:|
+| V1 | 125 | 202 | 202 |
+| V2 | 160 | 241 | 241 |
+| **V3** | **175** | **256** | **256** |
+
+**V3 increased by +15 official publisher documents, +15 versions, +15 events.** 15 candidate new official source IDs attempted; **15/15 PASS, 0 FAILED, 0 PARTIAL**. The source bodies are excluded from the public repository and private archive; only normalized unreviewed fields, hashes, URLs and audit entries were preserved. The fresh independent runner compared the private provider bytes against the preupload trusted V3 index, recursively validated V2/V1 predecessor indices, and checked SQLite integrity and source counts. Older V1/V2 and 403,696 CVE warehouse remained unchanged.
+
+**Scope limit:** Source-document counts are *not* the count of unique newly published CVEs. Only **one sample per new source** was collected. No weekly completeness certification, affected/fixed version extraction certification, confirmed exploitation or commercial redistribution approval. Kaggle V3 exists, but a future automatic V4 generation/rolling schedule is NOT deployed.
