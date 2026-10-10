@@ -1,0 +1,136 @@
+name: ECLIPSE important ~50 (new KEV + approved 126 vendors + risk)
+
+# Manual, research-only until the actual approved 126-row list is present.
+# Does NOT claim production monitoring or generate a weekly report.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target review count (mandatory matches can exceed it)"
+        default: "50"
+        type: string
+      min_score:
+        description: "Minimum discretionary heuristic score"
+        default: "55"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: eclipse-important-50-historical
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: src
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline no-loss and mandatory-override tests
+        run: python -m unittest discover -s tests -p test_weekly_important.py -v
+      - name: Require actual user-approved 126-row vendor policy
+        run: |
+          set -euo pipefail
+          if [ ! -f config/important_vendor_126.json ]; then
+            echo "::error::Approved 126-row Excel has not been converted to config/important_vendor_126.json. Do not invent the missing vendors."
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from eclipse_l0.weekly_important import validate_policy
+          p=Path('config/important_vendor_126.json')
+          vendor_aliases,unique=validate_policy(json.loads(p.read_text()))
+          print(f'Approved vendor candidate rows=126, unique canonical vendors={unique}, aliases={len(vendor_aliases)}')
+          PY
+      - name: Restore fixed independently verified L1 weekly evidence
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          gh run download 38057989531 --repo "$GITHUB_REPOSITORY" \
+            --name eclipse-weekly-evidence-snapshot-20261004-20261010 --dir output
+          echo '74a0290d92de7aad1303d160ed93bd8b7764aabd7c9c49c4818594d5113f60af  output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip' | sha256sum -c -
+          python -m eclipse_l0.weekly_evidence verify --zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip
+      - name: Create auditable important candidates with all L1 data
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important build \
+            --source-weekly-zip output/ECLIPSE_WEEKLY_EVIDENCE_20261004_20261010.zip \
+            --vendor-policy config/important_vendor_126.json \
+            --target "${{ inputs.target }}" --min-score "${{ inputs.min_score }}" \
+            --out output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            | tee output/important-build-receipt.json
+          python -m eclipse_l0.weekly_important verify \
+            --zip output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            > output/important-verify-receipt.json
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/important-verify-receipt.json').read_text())
+          assert p['l1_total']==6355
+          assert not p['weekly_coverage_certified']
+          print('### Fixed historical snapshot — NOT certified live weekly coverage')
+          print(f"- All L1 CVEs retained: **{p['l1_total']}**")
+          print(f"- Important review candidates: **{p['selected']}** (target {p['target']})")
+          print(f"- New KEV: **{p['mandatory_kev']}**")
+          print(f"- Approved 126-vendor matches excluding overlapping KEV: **{p['mandatory_vendor_only']}**")
+          print(f"- Other risk-selected: **{p['risk_selected']}**")
+          print(f"- Mandatory count overflow: **{p['mandatory_overflow']}**")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-important-50-historical-week-20261004-20261010
+          path: |
+            output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip
+            output/important-build-receipt.json
+            output/important-verify-receipt.json
+          if-no-files-found: error
+          retention-days: 7
+
+  independent-reader:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: eclipse-important-50-historical-week-20261004-20261010
+          path: output
+      - name: Independently rederive decisions from original L1 and embedded 126-vendor policy
+        run: |
+          set -euo pipefail
+          python -m eclipse_l0.weekly_important verify \
+            --zip output/ECLIPSE_IMPORTANT_50_20261004_20261010.zip \
+            > output/important-independent-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('output/important-independent-proof.json').read_text())
+          assert p['result']=='INDEPENDENT_126_VENDOR_AND_KEV_IMPORTANT_CANDIDATE_CONTRACT_VERIFIED'
+          assert p['l1_total']==6355
+          assert not p['weekly_coverage_certified']
+          print('INDEPENDENT_PRIORITY_REVIEW_VERIFIED',p)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eclipse-important-50-independent-recheck
+          path: output/important-independent-proof.json
+          if-no-files-found: error
+          retention-days: 7
